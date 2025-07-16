@@ -52,7 +52,7 @@ export default function Home() {
 
   return (
    <motion.div
-  className="min-h-screen bg-[linear-gradient(135deg,var(--background)_85%,var(--primary)_85%)] flex flex-col items-center px-6 py-10 sm:px-10 sm:py-20 space-y-12 text-foreground"
+  className=" min-h-screen bg-[linear-gradient(135deg,var(--background)_85%,var(--primary)_85%)] flex flex-col items-center px-6 py-6 sm:px-10 sm:py-12 space-y-10 text-foreground"
   variants={containerVariants}
   initial="initial"
   animate="animate"
@@ -60,15 +60,16 @@ export default function Home() {
 
 
       {/* Hero Section */}
-      <motion.div className="w-full max-w-5xl" variants={textVariants}>
-        <Card className="rounded-none">
+      <motion.div className="w-full max-w-8xl" variants={textVariants}>
+        <Card className="rounded-[3em]">
           <CardHeader className="flex flex-col items-center gap-2 text-center">
-            <div
+            <p
               ref={logoRef}
-              className="text-8xl font-extrabold flex items-center text-primary"
+              className="text-6xl font-extrabold flex items-center text-primary"
             >
-              T2MS
-            </div>
+
+              T<span className="text-foreground">2</span>MS
+            </p>
             <CardDescription className="text-lg max-w-xl text-muted-foreground">
               Update your website by sending a text. Instantly show popups, banners, or alerts —
               no code, no login, no delay.
@@ -76,19 +77,22 @@ export default function Home() {
           </CardHeader>
           <CardFooter className="justify-center">
             <motion.div className="flex flex-col sm:flex-row gap-4" variants={buttonVariants}>
-              <Button asChild size="lg" className="text-foreground rounded-none">
-                <Link href="/sign-in">Register Your Site</Link>
-              </Button>
-            </motion.div>
+        <Button asChild size="lg" className="text-foreground">
+          <Link href="/sign-in">Register Your Site</Link>
+        </Button>
+        <Button asChild variant="outline" size="lg">
+          <Link href="/learn-more">Learn More</Link>
+        </Button>
+      </motion.div>
           </CardFooter>
         </Card>
       </motion.div>
 
       {/* How It Works Section */}
-      <motion.div className="w-full max-w-5xl" variants={textVariants}>
-        <Card className="rounded-none">
+      <motion.div className="w-full max-w-8xl" variants={textVariants}>
+        <Card className="rounded-[3em]">
           <CardHeader>
-            <CardTitle className="text-4xl">How It Works</CardTitle>
+            <CardTitle className="text-4xl font-bold">How It Works</CardTitle>
             <CardDescription>
               Send a message. We deliver it to your site — in seconds.
             </CardDescription>
@@ -99,7 +103,7 @@ export default function Home() {
               <Card className="bg-muted/40">
                 <CardHeader>
                   <Rocket className="h-20 w-20 mb-2 text-primary" />
-                  <CardTitle className="text-4xl">Send a Text</CardTitle>
+                  <CardTitle className="text-4xl font-bold">Send a Text</CardTitle>
                   <CardDescription className="text-sm">
                     Send a message from your registered phone number.
                   </CardDescription>
@@ -110,7 +114,7 @@ export default function Home() {
               <Card className="bg-muted/40">
                 <CardHeader>
                   <MessageSquare className="h-20 w-20 mb-2 text-primary" />
-                  <CardTitle className="text-4xl">We Match It</CardTitle>
+                  <CardTitle className="text-4xl font-bold">We Match It</CardTitle>
                   <CardDescription className="text-sm">
                     We link your text to your connected site automatically.
                   </CardDescription>
@@ -121,7 +125,7 @@ export default function Home() {
               <Card className="bg-muted/40">
                 <CardHeader>
                   <Globe className="h-20 w-20 mb-2 text-primary" />
-                  <CardTitle className="text-4xl">Display Instantly</CardTitle>
+                  <CardTitle className="text-4xl font-extrabold">Display Instantly</CardTitle>
                   <CardDescription className="text-sm">
                     Your message shows live on your site as a banner or popup or fullscreen.
                   </CardDescription>
@@ -132,14 +136,32 @@ export default function Home() {
         </Card>
       </motion.div>
 
-      
       {/* Footer */}
-      <motion.footer
-        ref={footerRef}
-        className="text-base text-foreground text-center mt-10"
-      >
+<motion.div className="w-full max-w-8xl px-4" variants={textVariants}>
+  <Card className="rounded-[3em] bg-muted/50 shadow-md border-none">
+    <CardContent className="flex flex-col items-center justify-center gap-6 py-10 text-center">
+      <div>
+        <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
+          Ready to simplify your website updates?
+        </h2>
+        <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
+          Text2MySite lets you update your site with a simple SMS. No login, no hassle.
+        </p>
+      </div>
+
+      <motion.div className="flex flex-col sm:flex-row gap-4" variants={buttonVariants}>
+        <Button asChild size="lg" className="text-foreground">
+          <Link href="/sign-in">Register Your Site</Link>
+        </Button>
+      
+      </motion.div>
+
+      <div className="text-xs text-muted-foreground pt-6 border-t border-border w-full">
         &copy; {new Date().getFullYear()} Text2MySite. All rights reserved.
-      </motion.footer>
+      </div>
+    </CardContent>
+  </Card>
+</motion.div>
     </motion.div>
   );
 }

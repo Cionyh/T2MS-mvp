@@ -17,11 +17,6 @@ export const auth = betterAuth({
         defaultValue: "user",
         input: false, // don't allow user to set role
       },
-      phone: {
-        type: "string",
-        required: false,
-        defaultValue: "+15551234567",
-      },
     },
   },
 

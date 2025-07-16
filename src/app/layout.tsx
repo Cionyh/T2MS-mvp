@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "T2MS",
-  description: "Realtime website contents delivery system",
+  description: "Realtime website message delivery system",
 };
 
 export default function RootLayout({

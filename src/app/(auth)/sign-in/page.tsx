@@ -48,12 +48,12 @@ export default function Page() {
     <div className="w-full min-h-screen flex items-center justify-center bg-background">
       <motion.div
         ref={containerRef}
-        className="relative rounded-none overflow-hidden md:w-[500px] w-full max-w-md bg-background p-6"
+        className="relative rounded-[3em] overflow-hidden md:w-[500px] w-full max-w-md bg-background p-6"
       >
-        <Tabs defaultValue="sign-in" className="w-full rounded-none">
-          <TabsList className="grid w-full grid-cols-2 border-none rounded-none">
-            <TabsTrigger value="sign-in" className="data-[state=active]:bg-primary data-[state=active]:text-foreground rounded-none">Sign In</TabsTrigger>
-            <TabsTrigger value="sign-up" className="data-[state=active]:bg-primary data-[state=active]:text-foreground rounded-none">Sign Up</TabsTrigger>
+        <Tabs defaultValue="sign-in" className="w-full rounded-[3em]">
+          <TabsList className="grid w-full grid-cols-2 border-none rounded-[3em]">
+            <TabsTrigger value="sign-in" className="data-[state=active]:bg-primary data-[state=active]:text-foreground rounded-[3em]">Sign In</TabsTrigger>
+            <TabsTrigger value="sign-up" className="data-[state=active]:bg-primary data-[state=active]:text-foreground rounded-[3em]">Sign Up</TabsTrigger>
           </TabsList>
           <TabsContent value="sign-in" className="pt-2">
             <motion.div variants={tabVariants} initial="initial" animate="animate" exit="exit">

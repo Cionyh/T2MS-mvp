@@ -18,12 +18,11 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  role          String?
 
-  role  String?
-  phone String?
+  clients       Client[]  @relation("UserClients") // 👈 Add this line
 
   @@unique([email])
-  @@unique([phone])
   @@map("user")
 }
 
@@ -70,3 +69,27 @@ model Verification {
 
   @@map("verification")
 }
+
+model Client {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("UserClients", fields: [userId], references: [id], onDelete: Cascade) // ✅ separate line
+  name      String
+  domain    String   @unique
+  phone     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  messages  Message[]
+}
+
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  type      String
+  createdAt DateTime @default(now())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+
