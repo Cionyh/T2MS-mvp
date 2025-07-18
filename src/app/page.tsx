@@ -14,6 +14,7 @@ import { motion, Variants } from "framer-motion";
 import gsap from "gsap";
 import { useEffect, useRef } from "react";
 import { Rocket, MessageSquare, Globe } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const containerVariants: Variants = {
   initial: { opacity: 0 },
@@ -51,14 +52,12 @@ export default function Home() {
   }, []);
 
   return (
-   <motion.div
-  className=" min-h-screen bg-[linear-gradient(135deg,var(--background)_85%,var(--primary)_85%)] flex flex-col items-center px-6 py-6 sm:px-10 sm:py-12 space-y-10 text-foreground"
-  variants={containerVariants}
-  initial="initial"
-  animate="animate"
->
-
-
+    <motion.div
+      className=" min-h-screen bg-[linear-gradient(135deg,var(--background)_85%,var(--primary)_85%)] flex flex-col items-center px-6 py-6 sm:px-10 sm:py-12 space-y-10 text-foreground"
+      variants={containerVariants}
+      initial="initial"
+      animate="animate"
+    >
       {/* Hero Section */}
       <motion.div className="w-full max-w-8xl" variants={textVariants}>
         <Card className="rounded-[3em]">
@@ -67,23 +66,22 @@ export default function Home() {
               ref={logoRef}
               className="text-6xl font-extrabold flex items-center text-primary"
             >
-
               T<span className="text-foreground">2</span>MS
             </p>
             <CardDescription className="text-lg max-w-xl text-muted-foreground">
-              Update your website by sending a text. Instantly show popups, banners, or alerts —
-              no code, no login, no delay.
+              Update your website by sending a text. Instantly show popups, banners, or alerts
+              — no code, no login, no delay.
             </CardDescription>
           </CardHeader>
           <CardFooter className="justify-center">
             <motion.div className="flex flex-col sm:flex-row gap-4" variants={buttonVariants}>
-        <Button asChild size="lg" className="text-foreground">
-          <Link href="/sign-in">Register Your Site</Link>
-        </Button>
-        <Button asChild variant="outline" size="lg">
-          <Link href="/learn-more">Learn More</Link>
-        </Button>
-      </motion.div>
+              <Button asChild size="lg" className="text-foreground">
+                <Link href="/sign-in">Register Your Site</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/learn-more">Learn More</Link>
+              </Button>
+            </motion.div>
           </CardFooter>
         </Card>
       </motion.div>
@@ -137,31 +135,35 @@ export default function Home() {
       </motion.div>
 
       {/* Footer */}
-<motion.div className="w-full max-w-8xl px-4" variants={textVariants}>
-  <Card className="rounded-[3em] bg-muted/50 shadow-md border-none">
-    <CardContent className="flex flex-col items-center justify-center gap-6 py-10 text-center">
-      <div>
-        <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
-          Ready to simplify your website updates?
-        </h2>
-        <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
-          Text2MySite lets you update your site with a simple SMS. No login, no hassle.
-        </p>
-      </div>
+      <motion.div className="w-full max-w-8xl px-4" variants={textVariants}>
+        <Card className="rounded-[3em] bg-muted/50 shadow-md border-none">
+          <CardContent className="flex flex-col items-center justify-center gap-6 py-10 text-center">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
+                Ready to simplify your website updates?
+              </h2>
+              <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
+                Text2MySite lets you update your site with a simple SMS. No login, no hassle.
+              </p>
+            </div>
 
-      <motion.div className="flex flex-col sm:flex-row gap-4" variants={buttonVariants}>
-        <Button asChild size="lg" className="text-foreground">
-          <Link href="/sign-in">Register Your Site</Link>
-        </Button>
-      
+            <motion.div className="flex flex-col sm:flex-row gap-4" variants={buttonVariants}>
+              <Button asChild size="lg" className="text-foreground">
+                <Link href="/sign-in">Register Your Site</Link>
+              </Button>
+            </motion.div>
+
+            <div className="flex flex-col items-center w-full">
+              <div className="text-xs text-muted-foreground pt-6 border-t border-border w-full">
+                © {new Date().getFullYear()} Text2MySite. All rights reserved.
+              </div>
+              <div className="pt-2">
+                <ThemeToggle />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
-
-      <div className="text-xs text-muted-foreground pt-6 border-t border-border w-full">
-        &copy; {new Date().getFullYear()} Text2MySite. All rights reserved.
-      </div>
-    </CardContent>
-  </Card>
-</motion.div>
     </motion.div>
   );
 }

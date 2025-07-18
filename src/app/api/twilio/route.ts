@@ -31,7 +31,7 @@ async function buffer(req: NextRequest) {
 export async function POST(req: NextRequest) {
     const rawBody = await buffer(req);
     const headers = Object.fromEntries(req.headers.entries());
-    const twilioSignature = headers["x-twilio-signature"] as string; // Explicitly type as string
+    const twilioSignature = headers["x-twilio-signature"];
     const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/twilio`; // Ensure this matches Twilio webhook URL exactly
 
     try {

@@ -20,4 +20,5 @@ export const {
 	signIn,
 	signOut,
 	useSession,
+	getSession,
 } = client;
