@@ -23,12 +23,12 @@ export function Hero({
 }>) {
   return (
     <motion.div
-      className="w-full max-w-screen-xl px-4 sm:px-8 mx-auto mt-12"
+      className="w-full max-w-screen-2xl px-4 sm:px-8 mx-auto mt-12"
       variants={textVariants}
       initial="hidden"
       animate="show"
     >
-      <Card className="rounded-[3em] bg-background/80 backdrop-blur-lg border-2 border-primary">
+      <Card className="rounded-[3em] bg-muted backdrop-blur-lg border-none">
         <CardHeader className="flex flex-col items-center gap-4 text-center py-12 px-4 sm:px-10">
           <h1
             ref={logoRef}
@@ -56,7 +56,7 @@ export function Hero({
               size="lg"
               className="w-full sm:w-auto"
             >
-              <Link href="/learn-more">Learn More</Link>
+              <Link href="/">Learn More</Link>
             </Button>
           </motion.div>
         </CardFooter>

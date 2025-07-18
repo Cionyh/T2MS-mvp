@@ -43,7 +43,7 @@ export function How({ textVariants }: HowProps) {
   return (
     <motion.section
       id="how"
-      className="w-full max-w-8xl mx-auto px-4 md:px-10 py-20"
+      className="w-full max-w-14xl mx-auto px-4 md:px-10 py-20"
       variants={textVariants}
     >
       <motion.div
@@ -52,7 +52,7 @@ export function How({ textVariants }: HowProps) {
         transition={{ duration: 0.5 }}
         viewport={{ once: true }}
       >
-        <Card className="rounded-[3em] bg-gradient-to-b from-background via-background to-primary backdrop-blur-md py-20">
+        <Card className="rounded-[3em] bg-gradient-to-b from-background via-background to-primary border-none backdrop-blur-md py-20">
           <CardHeader className="text-center space-y-2">
             <CardTitle className="text-5xl font-extrabold tracking-tight">
               How It Works

@@ -15,7 +15,7 @@ export function Footer({
   return (
     <motion.div
       ref={footerRef}
-      className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+      className="w-full max-w-10xl mx-auto px-4 sm:px-6 lg:px-8"
       variants={textVariants}
     >
       <Card className="rounded-[3em] bg-gradient-to-br from-muted/50 to-muted/40 border-2 border-primary">

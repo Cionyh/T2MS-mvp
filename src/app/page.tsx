@@ -47,7 +47,7 @@ export default function Home() {
     <div className="relative min-h-screen w-full overflow-hidden bg-background font-sans">
       <Navbar />
     <motion.div
-      className=" min-h-screen bg-[linear-gradient(135deg,var(--background)_85%,var(--primary)_85%)] flex flex-col items-center px-6 py-6 sm:px-10 sm:py-12 space-y-10 text-foreground"
+      className=" min-h-screen bg-[linear-gradient(135deg,var(--background)_85%,var(--primary)_85%)] flex flex-col items-center px-0 py-6 sm:px-0 sm:py-12 space-y-10 text-foreground"
       variants={containerVariants}
       initial="initial"
       animate="animate"
