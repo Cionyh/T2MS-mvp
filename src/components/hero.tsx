@@ -1,7 +1,6 @@
 "use client";
 /* eslint-disable */
 
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,7 +8,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import Link from "next/link";
 
 export function Hero({
@@ -21,14 +20,29 @@ export function Hero({
   textVariants: any;
   buttonVariants: any;
 }>) {
+
+  const heroVariants: Variants = {
+    hidden: { opacity: 0, y: -50 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.7,
+        ease: "easeInOut",
+      },
+    },
+  };
+
+
   return (
     <motion.div
-      className="w-full max-w-screen-2xl px-4 sm:px-8 mx-auto mt-12"
-      variants={textVariants}
+      className="w-full  min-h-screen flex items-center justify-center px-4 sm:px-6 mx-auto"
+      variants={heroVariants}
       initial="hidden"
       animate="show"
     >
-      <Card className="rounded-[3em] bg-muted backdrop-blur-lg border-none">
+      <Card
+       className="rounded-[3em] max-w-10xl bg-[linear-gradient(0deg,var(--muted)_85%,var(--primary)_85%)] backdrop-blur-lg border-none w-full min-h-screen overflow-auto pt-20">
         <CardHeader className="flex flex-col items-center gap-4 text-center py-12 px-4 sm:px-10">
           <h1
             ref={logoRef}

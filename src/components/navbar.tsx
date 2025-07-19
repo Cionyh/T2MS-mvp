@@ -35,7 +35,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/40 backdrop-blur-sm border-b border-primary shadow-xs rounded-b-[3em]">
+    <header className="sticky top-0 z-50 w-full bg-background/40 backdrop-blur-sm border-b border-muted shadow-xs rounded-b-[3em]">
       <div className="container flex items-center justify-between py-3 px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="text-lg font-semibold text-foreground">

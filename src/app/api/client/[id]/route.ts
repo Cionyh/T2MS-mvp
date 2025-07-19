@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-interface Params {
-  id: string;
-}
-
-interface Context {
-  params: Params;
-  // you can add other properties if needed
-}
-
 export async function PUT(
   req: NextRequest,
-  context: Context
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
 
     if (!id) {
       return NextResponse.json({ error: "Missing client ID" }, { status: 400 });

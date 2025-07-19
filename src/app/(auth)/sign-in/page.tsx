@@ -45,7 +45,7 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center bg-background">
+    <div className="w-full bg-[linear-gradient(90deg,var(--background)_85%,var(--primary)_85%)] min-h-screen flex items-center justify-center bg-background">
       <motion.div
         ref={containerRef}
         className="relative rounded-[3em] overflow-hidden md:w-[500px] w-full max-w-md bg-background p-6"
