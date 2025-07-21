@@ -64,7 +64,7 @@ export function Navbar() {
           ))}
           <ThemeToggle />
           <Link href="/sign-in">
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md shadow-sm transition-colors">
+            <Button className="bg-primary text-foreground hover:bg-primary/90 px-4 py-2 rounded-md shadow-sm transition-colors">
               Sign In
             </Button>
           </Link>

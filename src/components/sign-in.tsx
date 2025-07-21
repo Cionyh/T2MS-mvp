@@ -11,6 +11,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
+import { BorderBeam } from "@/components/magicui/border-beam";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -85,6 +86,7 @@ export default function SignIn() {
         <CardTitle className="text-lg md:text-xl">Sign In | T2MS</CardTitle>
         <CardDescription className="text-xs md:text-sm">
           Enter your email and password below to login to your account
+          
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -109,6 +111,7 @@ export default function SignIn() {
                   </FormItem>
                 )}
               />
+              
             </div>
 
             <div className="grid gap-2">
@@ -139,6 +142,7 @@ export default function SignIn() {
                   </FormItem>
                 )}
               />
+              
             </div>
 
             <div className="flex items-center gap-2">
@@ -170,9 +174,12 @@ export default function SignIn() {
               )}
             ></div>
           </form>
+          
         </Form>
+
       </CardContent>
       <CardFooter></CardFooter>
+    
     </Card>
   );
 }

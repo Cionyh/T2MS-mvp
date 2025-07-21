@@ -1,4 +1,4 @@
-// app/dashboard/page.tsx or similar
+/* eslint-disable */
 
 import ClientWidgetBuilder from "@/components/widget-builder";
 

@@ -2,8 +2,9 @@
 
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import ClientDashboardPage from "@/components/app/home";
+import DashboardClient from "@/components/app/sites"; 
 import { getWebsitesByUserId } from "@/lib/queries/getWebsites";
+
 
 interface Website {
   id: string;
@@ -13,7 +14,8 @@ interface Website {
   userId: string;
 }
 
-export default async function DashboardServerPage() {  // Changed the component name
+
+export default async function DashboardPage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -25,5 +27,5 @@ export default async function DashboardServerPage() {  // Changed the component 
     websites = await getWebsitesByUserId(userId);
   }
 
-  return <ClientDashboardPage websites={websites} />; 
+  return <DashboardClient initialWebsites={websites} />;
 }

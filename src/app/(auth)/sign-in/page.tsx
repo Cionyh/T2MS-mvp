@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useRef } from "react";
 import { motion, Variants } from "framer-motion"; // Import Variants
 import gsap from "gsap";
+import { BorderBeam } from "@/components/magicui/border-beam";
 
 const tabVariants: Variants = { 
   initial: {
@@ -45,7 +46,7 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="w-full bg-[linear-gradient(90deg,var(--background)_85%,var(--primary)_85%)] min-h-screen flex items-center justify-center bg-background">
+    <div className="w-full bg-[linear-gradient(140deg,var(--background)_85%,var(--primary)_85%)] min-h-screen flex items-center justify-center bg-background">
       <motion.div
         ref={containerRef}
         className="relative rounded-[3em] overflow-hidden md:w-[500px] w-full max-w-md bg-background p-6"
@@ -55,7 +56,7 @@ export default function Page() {
             <TabsTrigger value="sign-in" className="data-[state=active]:bg-primary data-[state=active]:text-foreground rounded-[3em]">Sign In</TabsTrigger>
             <TabsTrigger value="sign-up" className="data-[state=active]:bg-primary data-[state=active]:text-foreground rounded-[3em]">Sign Up</TabsTrigger>
           </TabsList>
-          <TabsContent value="sign-in" className="pt-2">
+          <TabsContent value="sign-in" className="pt-2 border-none">
             <motion.div variants={tabVariants} initial="initial" animate="animate" exit="exit">
               <SignIn />
             </motion.div>
@@ -66,6 +67,8 @@ export default function Page() {
             </motion.div>
           </TabsContent>
         </Tabs>
+                      <BorderBeam duration={8} size={100} />
+
       </motion.div>
     </div>
   );

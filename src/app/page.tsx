@@ -7,6 +7,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer2";
 import { Hero } from "@/components/hero";
 import { How } from "@/components/how";
+import { Title } from "@/components/title";
 
 const containerVariants: Variants = {
   initial: { opacity: 0 },
@@ -71,6 +72,11 @@ export default function Home() {
 
       {/* How It Works Section */}
       <How  textVariants={textVariants}/>
+
+
+      <Title />
+
+
 
       {/* Footer */}
       <Footer footerRef={footerRef} textVariants={textVariants} buttonVariants={buttonVariants}/>
