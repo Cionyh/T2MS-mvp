@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Ripple } from "./magicui/ripple";
 
 export function Footer({
   footerRef,
@@ -18,7 +19,9 @@ export function Footer({
       className="w-full max-w-7xl mt-10 mx-auto px-4 sm:px-6 lg:px-8"
       variants={textVariants}
     >
-      <Card className="rounded-[3em] bg-gradient-to-br from-muted/50 to-muted/40 border-2 border-primary">
+      <Card className="rounded-[3em] bg-gradient-to-br from-muted/50 to-muted/40 border-2 border-muted">
+             <Ripple />
+
         <CardContent className="flex flex-col items-center justify-center gap-8 py-14 px-4 sm:px-10 text-center">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-3">
@@ -34,6 +37,7 @@ export function Footer({
             variants={buttonVariants}
             whileHover={{ scale: 1.02 }}
           >
+
             <Button
               asChild
               size="lg"

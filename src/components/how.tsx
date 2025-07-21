@@ -12,10 +12,14 @@ import {
 import { motion } from "framer-motion";
 import { Rocket, MessageSquare, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
+
+import { LineShadowText } from "./magicui/line-shadow-text";
 
 interface HowProps {
   readonly textVariants: any;
 }
+
 
 const steps = [
   {
@@ -40,6 +44,8 @@ const steps = [
 ];
 
 export function How({ textVariants }: HowProps) {
+  const theme = useTheme();
+  const shadowColor = theme.resolvedTheme === "dark" ? "white" : "black";
   return (
     <motion.section
       id="how"
@@ -55,7 +61,7 @@ export function How({ textVariants }: HowProps) {
         <Card className="rounded-[3em] bg-gradient-to-b from-background via-background to-primary border-none backdrop-blur-md py-20">
           <CardHeader className="text-center space-y-2">
             <CardTitle className="text-5xl font-extrabold tracking-tight">
-              How It Works
+                                 How It<LineShadowText className="italic" shadowColor={shadowColor}>Works</LineShadowText>
             </CardTitle>
             <CardDescription className="text-lg text-muted-foreground">
               Send a message. We deliver it to your site — in seconds.
@@ -83,7 +89,7 @@ export function How({ textVariants }: HowProps) {
                           <Icon className="h-10 w-10" />
                         </div>
                         <CardTitle className="text-2xl font-bold">
-                          {step.title}
+               {step.title}
                         </CardTitle>
                         <CardDescription className="text-sm text-muted-foreground">
                           {step.description}

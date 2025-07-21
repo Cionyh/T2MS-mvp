@@ -11,6 +11,8 @@ import {
 import { motion, Variants } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { DotPattern } from "./magicui/dot-pattern";
+import { cn } from "@/lib/utils";
 
 
 export function Hero({
@@ -41,7 +43,13 @@ export function Hero({
       initial="hidden"
       animate="show"
     >
+        
     <Card className="rounded-[3em] max-w-7xl bg-[linear-gradient(50deg,var(--muted)_85%,var(--primary)_85%)] backdrop-blur-lg border-none w-full min-h-screen overflow-auto pt-2">
+       <DotPattern
+              className={cn(
+                "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
+              )}
+            />
   <CardHeader className="flex flex-col items-center gap-4 text-center py-12 px-4 sm:px-10">
     <h1
       ref={logoRef}
