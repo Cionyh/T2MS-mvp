@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ import {
   Eye,
   EyeOff,
   Copy,
+  Target,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, Variants } from "framer-motion";
@@ -40,6 +41,24 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "../ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Website {
   id: string;
@@ -72,6 +91,12 @@ export default function DashboardClient({
   const [showClientId, setShowClientId] = useState<Record<string, boolean>>(
     {}
   ); // State to manage visibility of client IDs
+  const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null); // Track which website's embed dialog is open
+  const [widgetType, setWidgetType] = useState("banner");
+  const [bgColor, setBgColor] = useState("#222");
+  const [textColor, setTextColor] = useState("#fff");
+  const [font, setFont] = useState("sans-serif");
 
   useEffect(() => {
     if (initialWebsites) {
@@ -164,6 +189,34 @@ export default function DashboardClient({
     toast.success("Client ID copied to clipboard!");
   };
 
+  const handleOpenEmbedDialog = (websiteId: string) => {
+    setSelectedWebsiteId(websiteId);
+    setEmbedDialogOpen(true);
+  };
+
+  const handleCloseEmbedDialog = () => {
+    setEmbedDialogOpen(false);
+  };
+
+  const embedCode = useMemo(() => {
+    if (!selectedWebsiteId) return "";
+    return `<script 
+  src="https://t2ms-production.up.railway.app/widget"
+  data-client-id="${selectedWebsiteId}"
+  data-type="${widgetType}"
+  data-bg="${bgColor}"
+  data-color="${textColor}"
+  data-font="${font}"
+  data-api="https://t2ms-production.up.railway.app"
+  defer
+></script>`;
+  }, [selectedWebsiteId, widgetType, bgColor, textColor, font]);
+
+  const handleCopyEmbedCode = () => {
+    navigator.clipboard.writeText(embedCode);
+    toast.success("Embed code copied to clipboard!");
+  };
+
   return (
     <div className="container mx-auto py-10">
       {/* Header */}
@@ -242,6 +295,13 @@ export default function DashboardClient({
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
+                        <Button
+                          variant="ghost"
+                          className="justify-start w-full rounded-md hover:bg-secondary/50"
+                          onClick={() => handleOpenEmbedDialog(website.id)}
+                        >
+                          <Target className="mr-2 h-4 w-4" /> Embed Script
+                        </Button>
                       </PopoverContent>
                     </Popover>
                   )}
@@ -252,7 +312,7 @@ export default function DashboardClient({
                   {editingWebsiteId === website.id ? (
                     <div className="space-y-3">
                       <div>
-                        <Label htmlFor={`name-${website.id}`}>
+                        <Label htmlFor={`name-${website.id}`} className="mb-2">
                           Business Name
                         </Label>
                         <Input
@@ -263,7 +323,7 @@ export default function DashboardClient({
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`domain-${website.id}`}>Domain</Label>
+                        <Label htmlFor={`domain-${website.id}`} className="mb-2">Domain</Label>
                         <Input
                           id={`domain-${website.id}`}
                           value={editedDomain}
@@ -272,7 +332,7 @@ export default function DashboardClient({
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`phone-${website.id}`}>Phone</Label>
+                        <Label htmlFor={`phone-${website.id}`} className="mb-2">Phone</Label>
                         <Input
                           id={`phone-${website.id}`}
                           value={editedPhone}
@@ -337,6 +397,102 @@ export default function DashboardClient({
           ))}
         </div>
       )}
+
+      {/* Embed Script Dialog */}
+<Dialog open={embedDialogOpen} onOpenChange={setEmbedDialogOpen}>
+  <DialogContent className="sm:max-w-[550px] w-full max-h-[90vh] overflow-y-auto">
+    <DialogHeader>
+      <DialogTitle>Embed Script Configuration</DialogTitle>
+      <DialogDescription>
+        Configure the widget and copy the embed code.
+      </DialogDescription>
+    </DialogHeader>
+    <div className="grid gap-4 py-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Widget Type */}
+        <div>
+          <Label htmlFor="widget-type" className="mb-2">Widget Type</Label>
+          <Select onValueChange={setWidgetType} defaultValue={widgetType}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="banner">Banner</SelectItem>
+              <SelectItem value="popup">Popup</SelectItem>
+              <SelectItem value="fullscreen">Fullscreen</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Font */}
+        <div>
+          <Label htmlFor="font" className="mb-2">Font</Label>
+          <Input
+            id="font"
+            value={font}
+            onChange={(e) => setFont(e.target.value)}
+            placeholder="sans-serif"
+            className="w-full"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Background Color */}
+        <div>
+          <Label htmlFor="bg-color" className="mb-2">Background Color</Label>
+          <Input
+            type="color"
+            id="bg-color"
+            value={bgColor}
+            onChange={(e) => setBgColor(e.target.value)}
+            className="w-full"
+          />
+        </div>
+
+        {/* Text Color */}
+        <div>
+          <Label htmlFor="text-color" className="mb-2">Text Color</Label>
+          <Input
+            type="color"
+            id="text-color"
+            value={textColor}
+            onChange={(e) => setTextColor(e.target.value)}
+            className="w-full"
+          />
+        </div>
+      </div>
+
+      {/* Embed Code */}
+      <div>
+        <Label className="mb-2">Embed Code</Label>
+        <Textarea
+          value={embedCode}
+          rows={4}
+          readOnly
+          className="font-mono w-full" // Added w-full
+        />
+      </div>
+
+      {/* Copy Button */}
+      <Button onClick={handleCopyEmbedCode} className="w-full">
+        <Copy className="w-4 h-4 mr-2" /> Copy Embed Code
+      </Button>
+    </div>
+
+    <DialogFooter>
+      <DialogClose asChild>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={handleCloseEmbedDialog}
+        >
+          Close
+        </Button>
+      </DialogClose>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
     </div>
   );
 }

@@ -111,7 +111,7 @@ export default function ClientWidgetBuilder() {
   const embedCode = useMemo(() => {
     if (!clientId) return "";
     return `<script 
-  src="https://t2ms-production.up.railway.app//widget.js"
+  src="https://t2ms-production.up.railway.app/widget"
   data-client-id="${clientId}"
   data-type="${type}"
   data-bg="${bgColor}"
