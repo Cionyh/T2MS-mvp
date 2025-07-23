@@ -25,6 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { DotPattern } from "@/components/magicui/dot-pattern";
 
 const navItems = [
   { label: "Dashboard", href: "/app", icon: LayoutDashboard },
@@ -46,6 +47,13 @@ export default function ClientDashboardLayout({
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/40">
+       <DotPattern
+  className={cn(
+    "-z-50", 
+    "[mask-image:radial-gradient(10000px_circle_at_center,white,transparent)]"
+  )}
+/>
+
       {/* Top Nav */}
       <header className="sticky top-0 z-40 w-full border-b bg-background px-4 py-3 flex justify-between items-center">
         {/* Left: Mobile Menu Trigger + Desktop Nav */}

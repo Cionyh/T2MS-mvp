@@ -47,7 +47,8 @@ export function Hero({
     <Card className="rounded-[3em] max-w-7xl bg-[linear-gradient(50deg,var(--muted)_85%,var(--primary)_85%)] backdrop-blur-lg border-none w-full min-h-screen overflow-auto pt-2">
        <DotPattern
               className={cn(
-                "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
+                "-z-50", 
+                "[mask-image:radial-gradient(1000px_circle_at_center,white,transparent)]",
               )}
             />
   <CardHeader className="flex flex-col items-center gap-4 text-center py-12 px-4 sm:px-10">

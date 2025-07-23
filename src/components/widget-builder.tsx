@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/select";
 import { AnimatePresence, motion } from "framer-motion"; // Import AnimatePresence and motion
 import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton for loading states
+import { DotPattern } from "./magicui/dot-pattern";
+import { cn } from "@/lib/utils";
 
 // Validation schema for client information
 const clientSchema = z.object({
@@ -155,6 +157,12 @@ export default function ClientWidgetBuilder() {
 
   return (
     <div className="container mx-auto py-2">
+       <DotPattern
+        className={cn(
+          "-z-50", 
+          "[mask-image:radial-gradient(10000px_circle_at_center,white,transparent)]"
+        )}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Side: Forms */}
         <div className="space-y-8">

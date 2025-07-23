@@ -59,6 +59,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { DotPattern } from "../magicui/dot-pattern";
+import { cn } from "@/lib/utils";
 
 interface Website {
   id: string;
@@ -218,7 +220,13 @@ export default function DashboardClient({
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-2">
+       <DotPattern
+        className={cn(
+          "-z-50", 
+          "[mask-image:radial-gradient(10000px_circle_at_center,white,transparent)]"
+        )}
+      />
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Registered Sites</h2>
