@@ -14,22 +14,43 @@ const getEnvVar = (name: string): string => {
 const twilioAccountSid = getEnvVar("TWILIO_ACCOUNT_SID");
 const twilioAuthToken = getEnvVar("TWILIO_AUTH_TOKEN");
 const twilioPhoneNumber = getEnvVar("TWILIO_PHONE_NUMBER");
-const webhookUrl = getEnvVar("WEBHOOK_URL"); // ← New: exact Twilio webhook URL
+const webhookUrl = getEnvVar("WEBHOOK_URL");
 
 const twilioClient = twilio.default(twilioAccountSid, twilioAuthToken);
+
+// Proper raw body reader
+async function readRawBody(stream: ReadableStream<Uint8Array>): Promise<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let result = "";
+  let done = false;
+
+  while (!done) {
+    const { value, done: doneReading } = await reader.read();
+    done = doneReading;
+    if (value) {
+      result += decoder.decode(value, { stream: !done });
+    }
+  }
+
+  return result;
+}
 
 export async function POST(req: NextRequest) {
   console.log("=== Twilio Webhook Debug Start ===");
 
   try {
-    const rawBody = await req.text();
+    const rawBody = await readRawBody(req.body!);
     const twilioSignature = req.headers.get("x-twilio-signature");
 
-    console.log("Raw Body:", rawBody);
+    // Log signature details
+    console.log("WEBHOOK_URL:", webhookUrl);
     console.log("Twilio Signature:", twilioSignature);
-    console.log("Expected URL:", webhookUrl);
+    console.log("Raw Body Length:", rawBody.length);
+    console.log("Raw Body Preview:", rawBody.slice(0, 500));
+    console.log("Raw Body (Full):", rawBody);
 
-    // Validate signature using fixed production webhook URL
+    // Validate signature
     const isValid = twilio.validateRequestWithBody(
       twilioAuthToken,
       twilioSignature ?? "",
@@ -38,12 +59,13 @@ export async function POST(req: NextRequest) {
     );
 
     console.log("Validation Result:", isValid);
+
     if (!isValid) {
       console.warn("⚠️ Twilio signature validation failed");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Parse form data from raw body
+    // Parse form-encoded body
     const searchParams = new URLSearchParams(rawBody);
     const formData: Record<string, string> = {};
     for (const [key, value] of searchParams.entries()) {
@@ -53,25 +75,26 @@ export async function POST(req: NextRequest) {
     const from = formData.From;
     const body = formData.Body?.trim();
 
-    console.log("From:", from);
-    console.log("Body:", body);
+    console.log("Parsed From:", from);
+    console.log("Parsed Body:", body);
 
     if (!from || !body) {
       return NextResponse.json({ error: "Missing data" }, { status: 400 });
     }
 
-    // Find client by phone number
+    // Find client
     const client = await prisma.client.findUnique({
       where: { phone: from },
     });
 
     console.log("Client:", client);
+
     if (!client) {
       console.warn("❌ Unknown phone number:", from);
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
 
-    // Process message type
+    // Determine message type
     let type = "banner";
     let content = body;
 
@@ -82,7 +105,7 @@ export async function POST(req: NextRequest) {
 
     console.log("Creating message:", { content, type, clientId: client.id });
 
-    // Save message to database
+    // Store message
     await prisma.message.create({
       data: {
         content,
@@ -91,7 +114,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Optional: Send confirmation SMS
+    // Send confirmation (non-blocking)
     try {
       await twilioClient.messages.create({
         body: `✅ Your message has been posted to your site!`,
@@ -102,7 +125,7 @@ export async function POST(req: NextRequest) {
       console.warn("⚠️ Failed to send confirmation SMS:", e);
     }
 
-    // Return TwiML response
+    // Return TwiML XML response
     return new NextResponse(
       `<Response><Message>Posted: "${content}"</Message></Response>`,
       {
