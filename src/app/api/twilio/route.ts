@@ -14,7 +14,11 @@ const getEnvVar = (name: string): string => {
 const twilioAccountSid = getEnvVar("TWILIO_ACCOUNT_SID");
 const twilioAuthToken = getEnvVar("TWILIO_AUTH_TOKEN");
 const twilioPhoneNumber = getEnvVar("TWILIO_PHONE_NUMBER");
-const webhookUrl = getEnvVar("WEBHOOK_URL");
+let webhookUrl = getEnvVar("WEBHOOK_URL"); // Make mutable so we can normalize
+if (webhookUrl.endsWith('/')) {
+    webhookUrl = webhookUrl.slice(0, -1); // Remove trailing slash
+    console.warn("WEBHOOK_URL had a trailing slash, which was removed. Ensure this is correct!");
+}
 
 const twilioClient = twilio.default(twilioAccountSid, twilioAuthToken);
 
@@ -44,11 +48,14 @@ export async function POST(req: NextRequest) {
     const twilioSignature = req.headers.get("x-twilio-signature");
 
     // Log signature details
-    console.log("WEBHOOK_URL:", webhookUrl);
-    console.log("Twilio Signature:", twilioSignature);
+    console.log("WEBHOOK_URL (from env):", webhookUrl);
+    console.log("Twilio Signature (from header):", twilioSignature);
     console.log("Raw Body Length:", rawBody.length);
     console.log("Raw Body Preview:", rawBody.slice(0, 500));
     console.log("Raw Body (Full):", rawBody);
+
+    //  ADDITIONAL LOGGING:  Log the full URL of the incoming request
+    console.log("Full Request URL:", req.url);
 
     // Validate signature
     const isValid = twilio.validateRequestWithBody(
