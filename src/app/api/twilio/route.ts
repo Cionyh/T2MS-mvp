@@ -14,15 +14,10 @@ const getEnvVar = (name: string): string => {
 const twilioAccountSid = getEnvVar("TWILIO_ACCOUNT_SID");
 const twilioAuthToken = getEnvVar("TWILIO_AUTH_TOKEN");
 const twilioPhoneNumber = getEnvVar("TWILIO_PHONE_NUMBER");
-let webhookUrl = getEnvVar("WEBHOOK_URL"); // Make mutable so we can normalize
-if (webhookUrl.endsWith('/')) {
-    webhookUrl = webhookUrl.slice(0, -1); // Remove trailing slash
-    console.warn("WEBHOOK_URL had a trailing slash, which was removed. Ensure this is correct!");
-}
 
 const twilioClient = twilio.default(twilioAccountSid, twilioAuthToken);
 
-// Proper raw body reader
+// Read raw body safely for signature verification
 async function readRawBody(stream: ReadableStream<Uint8Array>): Promise<string> {
   const reader = stream.getReader();
   const decoder = new TextDecoder("utf-8");
@@ -40,28 +35,33 @@ async function readRawBody(stream: ReadableStream<Uint8Array>): Promise<string> 
   return result;
 }
 
+// Reconstruct the exact URL Twilio used to sign the request
+function getWebhookUrl(req: NextRequest): string {
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  const proto = req.headers.get("x-forwarded-proto") || "https";
+  return `${proto}://${host}${req.nextUrl.pathname}`;
+}
+
 export async function POST(req: NextRequest) {
   console.log("=== Twilio Webhook Debug Start ===");
 
   try {
     const rawBody = await readRawBody(req.body!);
     const twilioSignature = req.headers.get("x-twilio-signature");
+    const reconstructedUrl = getWebhookUrl(req);
 
-    // Log signature details
-    console.log("WEBHOOK_URL (from env):", webhookUrl);
-    console.log("Twilio Signature (from header):", twilioSignature);
+    // Debug Logging
+    console.log("Reconstructed Webhook URL:", reconstructedUrl);
+    console.log("Twilio Signature (header):", twilioSignature);
     console.log("Raw Body Length:", rawBody.length);
     console.log("Raw Body Preview:", rawBody.slice(0, 500));
-    console.log("Raw Body (Full):", rawBody);
-
-    //  ADDITIONAL LOGGING:  Log the full URL of the incoming request
     console.log("Full Request URL:", req.url);
 
     // Validate signature
     const isValid = twilio.validateRequestWithBody(
       twilioAuthToken,
       twilioSignature ?? "",
-      webhookUrl,
+      reconstructedUrl,
       rawBody
     );
 
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing data" }, { status: 400 });
     }
 
-    // Find client
+    // Lookup client
     const client = await prisma.client.findUnique({
       where: { phone: from },
     });
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
 
     console.log("Creating message:", { content, type, clientId: client.id });
 
-    // Store message
+    // Save message
     await prisma.message.create({
       data: {
         content,
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Send confirmation (non-blocking)
+    // Send confirmation SMS
     try {
       await twilioClient.messages.create({
         body: `✅ Your message has been posted to your site!`,
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
       console.warn("⚠️ Failed to send confirmation SMS:", e);
     }
 
-    // Return TwiML XML response
+    // Respond with TwiML
     return new NextResponse(
       `<Response><Message>Posted: "${content}"</Message></Response>`,
       {
