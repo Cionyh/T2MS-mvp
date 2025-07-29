@@ -14,53 +14,36 @@ const getEnvVar = (name: string): string => {
 const twilioAccountSid = getEnvVar("TWILIO_ACCOUNT_SID");
 const twilioAuthToken = getEnvVar("TWILIO_AUTH_TOKEN");
 const twilioPhoneNumber = getEnvVar("TWILIO_PHONE_NUMBER");
-const baseUrl = getEnvVar("NEXT_PUBLIC_BASE_URL");
 
 const twilioClient = twilio.default(twilioAccountSid, twilioAuthToken);
 
 export async function POST(req: NextRequest) {
   console.log("=== Twilio Webhook Debug Start ===");
-  
+
   try {
     const rawBody = await req.text();
+    const url = req.nextUrl.toString();
+    const twilioSignature = req.headers.get("x-twilio-signature");
+
     console.log("Raw Body:", rawBody);
-
-    const headers = Object.fromEntries(req.headers.entries());
-    const twilioSignature = headers["x-twilio-signature"];
-    
-    console.log("Headers:", headers);
     console.log("Twilio Signature:", twilioSignature);
-
-    const url = `${baseUrl}/api/twilio`;
     console.log("Expected URL:", url);
 
-    if (!twilioSignature) {
-      console.log("Missing signature");
-      return NextResponse.json({ error: "Missing signature" }, { status: 400 });
-    }
-
-    // Log validation parameters
-    console.log("Validation Params:");
-    console.log("- Auth Token length:", twilioAuthToken.length);
-    console.log("- Signature:", twilioSignature);
-    console.log("- URL:", url);
-    console.log("- Body:", rawBody);
-
+    // Validate signature
     const isValid = twilio.validateRequestWithBody(
       twilioAuthToken,
-      twilioSignature,
+      twilioSignature ?? "",
       url,
       rawBody
     );
 
     console.log("Validation Result:", isValid);
-
     if (!isValid) {
       console.warn("⚠️ Twilio signature validation failed");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Parse form data
+    // Parse form data from raw body
     const searchParams = new URLSearchParams(rawBody);
     const formData: Record<string, string> = {};
     for (const [key, value] of searchParams.entries()) {
@@ -77,19 +60,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing data" }, { status: 400 });
     }
 
-    // Find client
+    // Find client by phone number
     const client = await prisma.client.findUnique({
       where: { phone: from },
     });
 
     console.log("Client:", client);
-
     if (!client) {
       console.warn("❌ Unknown phone number:", from);
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
 
-    // Process message
+    // Process message type
     let type = "banner";
     let content = body;
 
@@ -100,7 +82,7 @@ export async function POST(req: NextRequest) {
 
     console.log("Creating message:", { content, type, clientId: client.id });
 
-    // Save message
+    // Save message to database
     await prisma.message.create({
       data: {
         content,
@@ -109,7 +91,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Send confirmation
+    // Optional: Send confirmation SMS
     try {
       await twilioClient.messages.create({
         body: `✅ Your message has been posted to your site!`,
@@ -120,7 +102,7 @@ export async function POST(req: NextRequest) {
       console.warn("⚠️ Failed to send confirmation SMS:", e);
     }
 
-    // Return TwiML
+    // Return TwiML response
     return new NextResponse(
       `<Response><Message>Posted: "${content}"</Message></Response>`,
       {
@@ -129,7 +111,7 @@ export async function POST(req: NextRequest) {
       }
     );
   } catch (error) {
-    console.error("Twilio webhook error:", error);
+    console.error("❌ Twilio webhook error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   } finally {
     console.log("=== Twilio Webhook Debug End ===");
