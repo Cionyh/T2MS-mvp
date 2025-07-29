@@ -32,7 +32,9 @@ async function readRawBody(stream: ReadableStream<Uint8Array>): Promise<string> 
 function getWebhookUrl(req: NextRequest): string {
   const proto = req.headers.get("x-forwarded-proto") || "https";
   const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
-  const path = req.nextUrl.pathname;
+
+  // ✅ Hardcoded path to match Twilio Console setting exactly
+  const path = "/api/twilio";
   return `${proto}://${host}${path}`;
 }
 
@@ -44,17 +46,19 @@ export async function POST(req: NextRequest) {
     const twilioSignature = req.headers.get("x-twilio-signature");
     const webhookUrl = getWebhookUrl(req);
 
-    // Log request details
+    // Log headers
     console.log("🚩 Headers:");
     for (const [key, value] of req.headers.entries()) {
       console.log(`  ${key}: ${value}`);
     }
 
+    // Log environment
     console.log("🚩 Environment:");
     console.log("  TWILIO_ACCOUNT_SID:", twilioAccountSid);
     console.log("  TWILIO_AUTH_TOKEN: [REDACTED]");
     console.log("  TWILIO_PHONE_NUMBER:", twilioPhoneNumber);
 
+    // Log request info
     console.log("🚩 Request Info:");
     console.log("  Method:", req.method);
     console.log("  Full req.url:", req.url);
@@ -69,6 +73,23 @@ export async function POST(req: NextRequest) {
     if (!contentType?.includes("application/x-www-form-urlencoded")) {
       console.warn("⚠️ Content-Type is NOT application/x-www-form-urlencoded — this may break signature verification");
     }
+
+    // Log expected signature
+    // Convert rawBody string to an object
+const formObject: Record<string, string> = {};
+const signatureParams = new URLSearchParams(rawBody);
+for (const [key, value] of signatureParams.entries()) {
+  formObject[key] = value;
+}
+
+const expectedSignature = twilio.getExpectedTwilioSignature(
+  twilioAuthToken,
+  webhookUrl,
+  formObject 
+);
+
+    console.log("🔐 Expected Signature:", expectedSignature);
+    console.log("🧮 Signature Match:", expectedSignature === twilioSignature);
 
     // Validate signature
     const isValid = twilio.validateRequestWithBody(
@@ -90,7 +111,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Parse form body
+    // Parse form-urlencoded body
     const searchParams = new URLSearchParams(rawBody);
     const formData: Record<string, string> = {};
     for (const [key, value] of searchParams.entries()) {
@@ -108,6 +129,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // Look up client by phone
     const client = await prisma.client.findUnique({ where: { phone: from } });
 
     if (!client) {
