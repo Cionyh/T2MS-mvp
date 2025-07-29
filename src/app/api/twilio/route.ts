@@ -14,6 +14,7 @@ const getEnvVar = (name: string): string => {
 const twilioAccountSid = getEnvVar("TWILIO_ACCOUNT_SID");
 const twilioAuthToken = getEnvVar("TWILIO_AUTH_TOKEN");
 const twilioPhoneNumber = getEnvVar("TWILIO_PHONE_NUMBER");
+const webhookUrl = getEnvVar("WEBHOOK_URL"); // ← New: exact Twilio webhook URL
 
 const twilioClient = twilio.default(twilioAccountSid, twilioAuthToken);
 
@@ -22,18 +23,17 @@ export async function POST(req: NextRequest) {
 
   try {
     const rawBody = await req.text();
-    const url = req.nextUrl.toString();
     const twilioSignature = req.headers.get("x-twilio-signature");
 
     console.log("Raw Body:", rawBody);
     console.log("Twilio Signature:", twilioSignature);
-    console.log("Expected URL:", url);
+    console.log("Expected URL:", webhookUrl);
 
-    // Validate signature
+    // Validate signature using fixed production webhook URL
     const isValid = twilio.validateRequestWithBody(
       twilioAuthToken,
       twilioSignature ?? "",
-      url,
+      webhookUrl,
       rawBody
     );
 
