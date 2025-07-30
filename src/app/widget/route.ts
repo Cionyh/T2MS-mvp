@@ -4,6 +4,9 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const js = `
 (function () {
+  if (window.__T2MS_WIDGET_INITIALIZED__) return;
+  window.__T2MS_WIDGET_INITIALIZED__ = true;
+
   const script = document.currentScript;
   const clientId = script.dataset.clientId;
   const type = script.dataset.type || "banner";
@@ -13,6 +16,11 @@ export async function GET() {
   const interval = 15000;
   const WIDGET_ID = "t2ms-widget";
   const API_BASE = script.dataset.api || window.location.origin;
+
+  if (!clientId) {
+    console.error("T2MS widget: Missing data-client-id");
+    return;
+  }
 
   async function fetchMessage() {
     try {
@@ -73,7 +81,7 @@ export async function GET() {
   fetchMessage();
   setInterval(fetchMessage, interval);
 })();
-  `.trim();
+`.trim();
 
   return new NextResponse(js, {
     headers: {
