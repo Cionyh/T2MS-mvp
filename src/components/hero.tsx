@@ -38,13 +38,14 @@ export function Hero({
 
   return (
     <motion.div
-      className="w-full min-h-screen flex items-center justify-center px-4 sm:px-6 mx-auto"
+      className="w-full min-h-screen flex items-center justify-center px-4 pt-14 sm:pt-18 sm:px-6 mx-auto bg-background"
       variants={heroVariants}
       initial="hidden"
       animate="show"
     >
         
-    <Card className="rounded-[3em] max-w-7xl bg-[linear-gradient(50deg,var(--muted)_85%,var(--primary)_85%)] backdrop-blur-lg border-none w-full min-h-screen overflow-auto pt-2">
+    <Card className="rounded-[3em] max-w-7xl bg-background border-muted  backdrop-blur-lg w-full min-h-screen overflow-auto pt-2">      
+        
        <DotPattern
               className={cn(
                 "-z-50", 
@@ -81,10 +82,10 @@ export function Hero({
       className="flex flex-col gap-4 w-full items-center"
       variants={buttonVariants}
     >
-      <Button asChild size="lg" className="text-foreground w-full max-w-xs">
+      <Button asChild size="lg" className="text-foreground w-full max-w-xs py-4">
         <Link href="/sign-in">Register Your Site</Link>
       </Button>
-      <Button asChild variant="outline" size="lg" className="w-full max-w-xs">
+      <Button asChild variant="outline" size="lg" className="w-full max-w-xs border-2 border-primary py-4">
         <Link href="/">Learn More</Link>
       </Button>
     </motion.div>

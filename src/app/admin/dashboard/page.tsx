@@ -1,7 +1,6 @@
 "use client";
 
 import SignIn from "@/components/auth/sign-in";
-import { SignUp } from "@/components/auth/sign-up";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useRef } from "react";
 import { motion, Variants } from "framer-motion"; // Import Variants
@@ -49,24 +48,18 @@ export default function Page() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-       <RetroGrid lightLineColor="orange" darkLineColor="orange" opacity={0.5} cellSize={15} className="absolute inset-0 z-0" />
+       <RetroGrid className="absolute inset-0 z-0" />
       <motion.div
         ref={containerRef}
-        className="relative rounded-[3em] overflow-hidden md:w-[500px] w-full max-w-md bg-transparent p-6"
+        className="relative rounded-[3em] overflow-hidden md:w-[500px] w-full max-w-md bg-background p-6"
       >
         <Tabs defaultValue="sign-in" className="w-full rounded-[3em]">
           <TabsList className="grid w-full grid-cols-2 border-none rounded-[3em]">
             <TabsTrigger value="sign-in" className="data-[state=active]:bg-primary data-[state=active]:text-foreground rounded-[3em]">Sign In</TabsTrigger>
-            <TabsTrigger value="sign-up" className="data-[state=active]:bg-primary data-[state=active]:text-foreground rounded-[3em]">Sign Up</TabsTrigger>
           </TabsList>
           <TabsContent value="sign-in" className="pt-2 border-none">
             <motion.div variants={tabVariants} initial="initial" animate="animate" exit="exit">
               <SignIn />
-            </motion.div>
-          </TabsContent>
-          <TabsContent value="sign-up" className="pt-2">
-            <motion.div variants={tabVariants} initial="initial" animate="animate" exit="exit">
-              <SignUp />
             </motion.div>
           </TabsContent>
         </Tabs>

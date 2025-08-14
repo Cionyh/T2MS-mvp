@@ -2,7 +2,7 @@ import { VelocityScroll } from "@/components/magicui/scroll-based-velocity";
 
 export function Title() {
   return (
-    <div className="relative flex w-full flex-col items-center justify-center overflow-hidden my-20">
+    <div className="relative flex w-full flex-col items-center justify-center overflow-hidden my-4">
       <VelocityScroll>Text<span className="text-primary">2</span>MySite</VelocityScroll>
       <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background"></div>
       <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background"></div>

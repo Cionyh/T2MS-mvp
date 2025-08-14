@@ -74,12 +74,12 @@ export default function Home() {
       <How  textVariants={textVariants}/>
 
 
-      <Title />
 
 
 
       {/* Footer */}
       <Footer footerRef={footerRef} textVariants={textVariants} buttonVariants={buttonVariants}/>
+              <Title />
     </motion.div>
         </div>
 
