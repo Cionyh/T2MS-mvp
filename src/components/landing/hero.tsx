@@ -11,7 +11,7 @@ import {
 import { motion, Variants } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { DotPattern } from "./magicui/dot-pattern";
+import { DotPattern } from "../magicui/dot-pattern";
 import { cn } from "@/lib/utils";
 
 
@@ -55,24 +55,24 @@ export function Hero({
   <CardHeader className="flex flex-col items-center gap-4 text-center py-12 px-4 sm:px-10">
     <h1
       ref={logoRef}
-      className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-foreground tracking-tight"
+      className="text-3xl sm:text-4xl md:text-5xl font-serif font-extrabold text-foreground tracking-tight bg-gradient-to-b from-foreground via-foreground to-background bg-clip-text text-transparent"
     >
-      Introducing T<span className="text-primary">2</span>MS
+      UPDATE YOUR WEBSITE WITH A <span className="text-primary">SIMPLE TEXT</span>
     </h1>
     <CardDescription className="text-base sm:text-lg max-w-2xl text-muted-foreground">
-      Update your website by sending a text. Instantly show popups, banners, or alerts — no code, no login, no delay.
+      Text2MySite (T2MS) lets small business owners easily update key sections of their websites by simply sending a text message. It's fast, smart, and doesn't require any tech skills. Just text and it's live.
     </CardDescription>
   </CardHeader>
 
   {/* Image and buttons container */}
   <div className="flex flex-col lg:flex-row items-center justify-center gap-4 px-4 sm:px-30">
-    <div className="w-full max-w-xs flex justify-center px-4 mb-6">
+    <div className="w-full max-w-xs flex justify-center px-4 mb-3">
       <Image
         src="/images/promotional.svg"
         alt="Promotional"
         width={0}
         height={0}
-        sizes="30vw"
+        sizes="10vw"
         className="w-full h-auto"
         priority
       />

@@ -3,11 +3,16 @@
 import { motion, Variants } from "framer-motion";
 import gsap from "gsap";
 import { useEffect, useRef } from "react";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer2";
-import { Hero } from "@/components/hero";
-import { How } from "@/components/how";
-import { Title } from "@/components/title";
+import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer2";
+import { Hero } from "@/components/landing/hero";
+import { How } from "@/components/landing/how";
+import { Title } from "@/components/landing/title";
+import { About } from "@/components/landing/about";
+import { Clients } from "@/components/landing/clients";
+import { FAQSection } from "@/components/landing/FAQ";
+import { CompatibilityCard } from "@/components/landing/co-card";
+import { PricingSection } from "@/components/landing/pricing";
 
 const containerVariants: Variants = {
   initial: { opacity: 0 },
@@ -71,14 +76,23 @@ export default function Home() {
       <Hero logoRef={logoRef} textVariants={textVariants} buttonVariants={buttonVariants}/>
 
       {/* How It Works Section */}
-      <How  textVariants={textVariants}/>
+      <How  textVariants={textVariants}/> 
+
+      <CompatibilityCard />     
+
+       <Clients textVariants={textVariants}/>
+
+       <PricingSection />
 
 
+             <About footerRef={footerRef} textVariants={textVariants} buttonVariants={buttonVariants} />
 
+
+        <FAQSection />
 
 
       {/* Footer */}
-      <Footer footerRef={footerRef} textVariants={textVariants} buttonVariants={buttonVariants}/>
+      <Footer footerRef={footerRef}/>
               <Title />
     </motion.div>
         </div>

@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-import ClientWidgetBuilder from "@/components/widget-builder";
+import ClientWidgetBuilder from "@/components/app/widget-builder";
 
 export default function DashboardPage() {
   return (

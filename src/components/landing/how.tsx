@@ -14,7 +14,7 @@ import { Rocket, MessageSquare, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 
-import { LineShadowText } from "./magicui/line-shadow-text";
+import { LineShadowText } from "../magicui/line-shadow-text";
 
 interface HowProps {
   readonly textVariants: any;
@@ -58,13 +58,13 @@ export function How({ textVariants }: HowProps) {
         transition={{ duration: 0.5 }}
         viewport={{ once: true }}
       >
-        <Card className="rounded-[3em] bg-gradient-to-b from-background via-background to-primary border-none backdrop-blur-md py-20">
+        <Card className="rounded-[3em] bg-gradient-to-b from-background via-background to-muted border-none backdrop-blur-md py-20">
           <CardHeader className="text-center space-y-2">
-            <CardTitle className="text-5xl font-extrabold tracking-tight">
-                                 How It<LineShadowText className="italic" shadowColor={shadowColor}>Works</LineShadowText>
+            <CardTitle className="font-extrabold tracking-tight bg-gradient-to-b from-foreground via-foreground to-background bg-clip-text text-transparent text-3xl sm:text-4xl md:text-5xl font-serif">
+                                 How It Works
             </CardTitle>
             <CardDescription className="text-lg text-muted-foreground">
-              Send a message. We deliver it to your site — in seconds.
+              You register your website with T2MS. We assign you a unique keyword and set up specific sections of your site — like banners, tickers, or pop-ups — to receive text-based updates.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
-import { Inter, Crimson_Text } from "next/font/google";
+import { Poppins, Lora } from 'next/font/google';
 import "./globals.css";
 import { ToastProvider } from "@/components/toaster-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 
-const inter = Inter({
+const poppins = Poppins({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-poppins',
   display: 'swap',
+  weight: ['400', '500', '600', '700'],
 });
 
-const crimson = Crimson_Text({
+const lora = Lora({
   subsets: ['latin'],
-  variable: '--font-serif', 
+  variable: '--font-serif',
   display: 'swap',
   weight: ['400', '600', '700'],
 });
@@ -35,7 +36,7 @@ export default function RootLayout({
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
-      <body className={`${inter.variable} ${crimson.variable} antialiased font-sans`}>
+      <body className={`${poppins.variable} ${lora.variable} antialiased font-sans`}>
         <ThemeProvider
   attribute="class"
   defaultTheme="system"

@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { AnimatePresence, motion } from "framer-motion"; // Import AnimatePresence and motion
 import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton for loading states
-import { DotPattern } from "./magicui/dot-pattern";
+import { DotPattern } from "../magicui/dot-pattern";
 import { cn } from "@/lib/utils";
 
 // Validation schema for client information

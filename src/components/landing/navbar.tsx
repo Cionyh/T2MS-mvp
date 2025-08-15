@@ -24,6 +24,11 @@ type NavLink = {
 const navLinks: NavLink[] = [
   { label: 'Home', href: '/' },
   { label: 'How it works', href: '#how' },
+  { label: 'Pricing', href: '#pricing' },
+  { label: 'Contact', href: '#footer' },
+  { label: 'Blog', href: '#blog' },
+  { label: 'About Us', href: '#about' },
+
 ];
 
 export function Navbar() {
@@ -41,7 +46,7 @@ export function Navbar() {
         <Link href="/" className="text-lg font-semibold text-foreground">
              <motion.p
               variants={FADE_UP_ANIMATION_VARIANTS}
-              className="text-xl font-extrabold tracking-tighter sm:text-xl md:text-2xl lg:text-3xl"
+              className="text-xl font-extrabold tracking-tighter sm:text-xl md:text-2xl lg:text-3xl font-serif"
             >
               <span
                 className="text-primary [text-shadow:0_0_20px_theme(colors.primary/20%)]"
