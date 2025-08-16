@@ -48,6 +48,8 @@ export function Hero({
         
        <DotPattern
                glow={true}
+               height={20}
+               width={20}
               className={cn(
                 "-z-50", 
                 "[mask-image:radial-gradient(500px_circle_at_center,white,transparent)]",
@@ -61,23 +63,27 @@ export function Hero({
       Text It, See It Live<br/> <span className="text-primary">Website Updates Made Easy</span>
     </h1>
     <CardDescription className="text-base sm:text-lg max-w-2xl text-muted-foreground">
-      Text2MySite (T2MS) lets small business owners easily update key sections of their websites by simply sending a text message. It's fast, smart, and doesn't require any tech skills. Just text and it's live.
+      T2MS lets small business owners easily update key sections of their websites by simply sending a text message. It's fast, smart, and doesn't require any tech skills.
     </CardDescription>
   </CardHeader>
 
   {/* Image and buttons container */}
-  <div className="flex flex-col lg:flex-row items-center justify-center gap-4 px-4 sm:px-30">
-    <div className="w-full max-w-xs flex justify-center px-4 mb-3">
-      <Image
-        src="/images/promotional.svg"
-        alt="Promotional"
-        width={0}
-        height={0}
-        sizes="10vw"
-        className="w-full h-auto"
-        priority
-      />
-    </div>
+  <div className="flex flex-col lg:flex-row items-center justify-center gap-2 px-4 sm:px-30">
+    {/* Image and buttons container */}
+<div className="flex flex-col lg:flex-row items-center justify-center gap-2 px-4 sm:px-8">
+  <div className="w-full flex justify-center px-4 mb-2">
+    <Image
+      src="/images/promotional.svg"
+      alt="Promotional"
+      width={400}
+      height={400}
+      sizes="(max-width: 768px) 80vw, (max-width: 1000px) 40vw, 400px"
+      className="w-full h-auto max-w-[300px] sm:max-w-[350px] lg:max-w-[400px] object-contain"
+      priority
+    />
+  </div>
+</div>
+
 
     <motion.div
       className="flex flex-col gap-4 w-full items-center"
