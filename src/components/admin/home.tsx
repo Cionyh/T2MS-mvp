@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable */
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 
 // ** Shadcn Components
@@ -12,7 +12,6 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 // ** Lucide React Icons
 import {
@@ -23,56 +22,24 @@ import {
   Globe,
   ArrowUpRight,
   ArrowDownRight,
-  Plus,
-  LayoutDashboard,
   ArrowRight,
 } from "lucide-react";
 
 // ** Recharts
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  AreaChart,
-  Area,
 } from "recharts";
 
-interface Website {
-  id: string;
-  name: string;
-  domain: string;
-  phone: string;
-  userId: string;
-}
-
-interface Props {
-  websites?: Website[];
-}
-
-// ** Dummy Analytics Data
-const usersData = [
-  { name: "Mon", value: 20 },
-  { name: "Tue", value: 35 },
-  { name: "Wed", value: 30 },
-  { name: "Thu", value: 50 },
-  { name: "Fri", value: 45 },
-  { name: "Sat", value: 60 },
-  { name: "Sun", value: 55 },
-];
-
-const messagesData = [
-  { name: "Mon", value: 5 },
-  { name: "Tue", value: 15 },
-  { name: "Wed", value: 10 },
-  { name: "Thu", value: 25 },
-  { name: "Fri", value: 20 },
-  { name: "Sat", value: 30 },
-  { name: "Sun", value: 25 },
-];
+// ** Hooks
+import { useAdminClients } from "@/lib/hooks/useAdminClients";
+import { useTotalUsers } from "@/lib/hooks/useTotalUsers";
+import { useAdminMessages } from "@/lib/hooks/useAdminMessage";
 
 // ** Custom Tooltip for Charts
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -84,21 +51,41 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       </div>
     );
   }
-
   return null;
 };
 
-export default function DashboardPage({ websites }: Readonly<Props>) {
-  const [siteCount, setSiteCount] = useState<number>(0);
+export default function DashboardPage() {
+  // ** Fetch total clients
+  const { data: clientsData, isLoading: clientsLoading } = useAdminClients({
+    page: 1,
+    limit: 1, // just need total
+    enabled: true,
+  });
+  const totalClients = clientsData?.pagination.total ?? 0;
+
+  // ** Fetch total users
+  const { total: totalUsers, isLoading: usersLoading } = useTotalUsers();
+
+  // ** Fetch total messages
+  const { data: messagesData, isLoading: messagesLoading } = useAdminMessages({
+    page: 1,
+    limit: 1, // only need pagination.total
+    enabled: true,
+  });
+  const totalMessages = messagesData?.pagination.total ?? 0;
+
+  // ** Chart for total clients
+  const chartData = useMemo(
+    () => [{ name: "Total Websites", value: totalClients }],
+    [totalClients]
+  );
 
   return (
     <div className="space-y-4 p-4 md:p-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">
-            Welcome back,
-          </h2>
+          <h2 className="text-xl font-bold tracking-tight">Welcome back,</h2>
           <p className="text-muted-foreground">
             Here's a snapshot of T2MS performance.
           </p>
@@ -108,101 +95,88 @@ export default function DashboardPage({ websites }: Readonly<Props>) {
       {/* KPI Cards */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <Link href={"/admin/dashboard/sites"}>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Sites</CardTitle>
-            <Globe className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{siteCount}</div>
-            <p className="text-xs text-muted-foreground flex items-center">
-              <ArrowUpRight className="h-4 w-4 text-green-500" />
-              +2 since last month
-            </p>
-          </CardContent>
-        </Card>
-
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Sites</CardTitle>
+              <Globe className="h-5 w-5 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {clientsLoading ? "Loading..." : totalClients}
+              </div>
+              <p className="text-xs text-muted-foreground flex items-center">
+                <ArrowUpRight className="h-4 w-4 text-green-500" />
+                Manage all the registered sites
+              </p>
+            </CardContent>
+          </Card>
         </Link>
 
         <Link href={"/admin/dashboard/clients"}>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
-            <Users className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">120</div>
-            <p className="text-xs text-muted-foreground flex items-center">
-              <ArrowUpRight className="h-4 w-4 text-green-500" />
-              +15.2% from last month
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-5 w-5 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {usersLoading ? "Loading..." : totalUsers}
+              </div>
+              <p className="text-xs text-muted-foreground flex items-center">
+                <ArrowUpRight className="h-4 w-4 text-green-500" />
+                Manage all the registered users
+              </p>
+            </CardContent>
+          </Card>
         </Link>
 
         <Link href={"/admin/dashboard/messages"}>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Messages Received
-            </CardTitle>
-            <MessageSquare className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">45</div>
-            <p className="text-xs text-muted-foreground flex items-center">
-              <ArrowDownRight className="h-4 w-4 text-red-500" />
-              -5.1% from last month
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Messages Served</CardTitle>
+              <MessageSquare className="h-5 w-5 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {messagesLoading ? "Loading..." : totalMessages}
+              </div>
+              <p className="text-xs text-muted-foreground flex items-center">
+                <ArrowUpRight className="h-4 w-4 text-green-500" />
+                Track all messages sent by clients
+              </p>
+            </CardContent>
+          </Card>
         </Link>
 
         <Link href={"/admin/dashboard/analytics"}>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Overall Analytics
-            </CardTitle>
-            <BarChart3 className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+18%</div>
-            <p className="text-xs text-muted-foreground">
-              Growth this quarter
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Overall Analytics</CardTitle>
+              <BarChart3 className="h-5 w-5 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">+18%</div>
+              <p className="text-xs text-muted-foreground">Growth this quarter</p>
+            </CardContent>
+          </Card>
         </Link>
       </div>
 
-      {/* Main Content Area */}
+      {/* Chart Section */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Charts Section */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Clients Growth</CardTitle>
-              <CardDescription>
-                Weekly new client registrations
-              </CardDescription>
+              <CardTitle>Total Websites</CardTitle>
+              <CardDescription>Current total number of registered websites</CardDescription>
             </CardHeader>
             <CardContent className="h-[350px] p-2">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={usersData}>
+                <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                      <stop
-                        offset="5%"
-                        stopColor="#12970dff"
-                        stopOpacity={0.8}
-                      />
-                      <stop
-                        offset="95%"
-                        stopColor="#12970dff"
-                        stopOpacity={0}
-                      />
+                      <stop offset="5%" stopColor="#12970dff" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#12970dff" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -223,7 +197,7 @@ export default function DashboardPage({ websites }: Readonly<Props>) {
           </Card>
         </div>
 
-        {/* Quick Links/Actions Section */}
+        {/* Quick Links */}
         <div className="lg:col-span-1 space-y-6">
           <Card>
             <CardHeader>

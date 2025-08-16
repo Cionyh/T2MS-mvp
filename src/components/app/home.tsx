@@ -1,7 +1,6 @@
 "use client";
 /* eslint-disable */
 
-
 import {
   Card,
   CardContent,
@@ -10,9 +9,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, MessageSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+
+// ** Hook for fetching messages
+import { useMessages } from "@/lib/hooks/useMessages";
 
 interface Website {
   id: string;
@@ -24,10 +26,20 @@ interface Website {
 
 interface Props {
   websites?: Website[];
+  userId: string; // Needed to fetch messages
 }
 
-export default function DashboardPage({ websites }: Readonly<Props>) {  // Kept this component name
+export default function DashboardPage({ websites, userId }: Readonly<Props>) {
   const [siteCount, setSiteCount] = useState<number>(0);
+
+  // Fetch messages for this user
+  const { data: messagesData, isLoading: messagesLoading } = useMessages({
+    userId,
+    page: 1,
+    limit: 1, // only need total
+  });
+
+  const totalMessages = messagesData?.pagination.total ?? 0;
 
   useEffect(() => {
     setSiteCount(websites ? websites.length : 0);
@@ -42,31 +54,48 @@ export default function DashboardPage({ websites }: Readonly<Props>) {  // Kept 
             Here’s a quick overview of your activity.
           </p>
         </div>
-        <Link href="app/build">
-        <Button className="text-foregound">
-          <Plus className="mr-2 h-4 w-4 text-foreground" />
-          New Site
-        </Button>
+        <Link href="/app/build">
+          <Button className="text-foreground">
+            <Plus className="mr-2 h-4 w-4 text-foreground" />
+            New Site
+          </Button>
         </Link>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-         <Link href="/app/sites">
-        <Card  className="hover:bg-background bg-muted transition-colors">
-          <CardHeader>
-            <CardTitle>Sites</CardTitle>
-            <CardDescription>Manage your connected websites</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{siteCount}</p>
-            <p className="text-muted-foreground text-sm mt-1">
-              Active websites
-            </p>
-           
-            
-          </CardContent>
-        </Card>
-            </Link>
+        {/* Sites Card */}
+        <Link href="/app/sites">
+          <Card className="hover:bg-background bg-muted transition-colors">
+            <CardHeader>
+              <CardTitle>Sites</CardTitle>
+              <CardDescription>Manage your connected websites</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{siteCount}</p>
+              <p className="text-muted-foreground text-sm mt-1">
+                Active websites
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Messages Card */}
+        <Link href="/app/messages">
+          <Card className="hover:bg-background bg-muted transition-colors">
+            <CardHeader>
+              <CardTitle>Messages</CardTitle>
+              <CardDescription>Messages you have sent</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">
+                {messagesLoading ? "Loading..." : totalMessages}
+              </p>
+              <p className="text-muted-foreground text-sm mt-1">
+                Total messages
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );

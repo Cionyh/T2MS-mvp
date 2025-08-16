@@ -25,5 +25,5 @@ export default async function DashboardServerPage() {
     websites = await getWebsitesByUserId(userId);
   }
 
-  return <ClientDashboardPage websites={websites} />; 
+  return <ClientDashboardPage />; 
 }

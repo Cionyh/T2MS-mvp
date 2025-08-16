@@ -12,6 +12,7 @@ import {
   Settings,
   Menu,
   Database,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,11 +30,21 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { DotPattern } from "@/components/magicui/dot-pattern";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { signOut } from "@/lib/auth-client";
 
 const navItems = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Clients", href: "/admin/dashboard/clients", icon: Users },
- { label: "Sites", href: "/admin/dashboard/sites", icon: Database },
+  { label: "Sites", href: "/admin/dashboard/sites", icon: Database },
   { label: "Messages", href: "/admin/dashboard/messages", icon: MessageSquare },
   { label: "Analytics", href: "/admin/dashboard/analytics", icon: BarChart3 },
   { label: "Settings", href: "/admin/dashboard/settings", icon: Settings },
@@ -50,15 +61,27 @@ export default function ClientDashboardLayout({
 }: ClientDashboardLayoutProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [openSignOutDialog, setOpenSignOutDialog] = useState(false);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      setOpenSignOutDialog(false);
+      // Optionally redirect to login page
+      window.location.href = "/sign-in";
+    } catch (err) {
+      console.error("Sign out failed", err);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/40">
-       <DotPattern
-  className={cn(
-    "-z-50", 
-    "[mask-image:radial-gradient(10000px_circle_at_center,white,transparent)]"
-  )}
-/>
+      <DotPattern
+        className={cn(
+          "-z-50",
+          "[mask-image:radial-gradient(10000px_circle_at_center,white,transparent)]"
+        )}
+      />
 
       {/* Top Nav */}
       <header className="sticky top-0 z-40 w-full border-b bg-background px-4 py-3 flex justify-between items-center">
@@ -74,7 +97,9 @@ export default function ClientDashboardLayout({
             <SheetContent side="left" className="w-64 p-4">
               <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
               <div className="space-y-4">
-                <div className="text-lg font-semibold text-primary">T2MS Admin</div>
+                <div className="text-lg font-semibold text-primary">
+                  T2MS Admin
+                </div>
                 <nav className="flex flex-col gap-2">
                   {navItems.map(({ label, href, icon: Icon }) => {
                     const isActive = pathname === href;
@@ -123,7 +148,7 @@ export default function ClientDashboardLayout({
           </div>
         </div>
 
-        {/* Right: Theme + Avatar */}
+        {/* Right: Theme + Avatar + Sign Out */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <Popover>
@@ -146,6 +171,34 @@ export default function ClientDashboardLayout({
                 <p className="text-sm text-muted-foreground">
                   {session?.user.email}
                 </p>
+
+                {/* Sign Out Button inside popover */}
+                <Dialog open={openSignOutDialog} onOpenChange={setOpenSignOutDialog}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start mt-2 flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Confirm Sign Out</DialogTitle>
+                      <DialogDescription>
+                        Are you sure you want to sign out?
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setOpenSignOutDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleSignOut}>Sign Out</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </PopoverContent>
           </Popover>

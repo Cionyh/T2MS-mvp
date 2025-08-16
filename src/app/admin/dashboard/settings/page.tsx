@@ -94,95 +94,95 @@ export default function AdminDashboard() {
     },
   });
 
-    const handleCreateUser = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading("create");
-        try {
-            await client.admin.createUser({
-                email: newUser.email,
-                password: newUser.password,
-                name: newUser.name,
-                role: newUser.role,
-            });
-            toast.success("User created successfully");
-            setNewUser({ email: "", password: "", name: "", role: "user" });
-            setIsDialogOpen(false);
-            queryClient.invalidateQueries({
-                queryKey: ["users"],
-            });
-        } catch (error: any) {
-            toast.error(error.message || "Failed to create user");
-        } finally {
-            setIsLoading(undefined);
-        }
-    };
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading("create");
+    try {
+      await client.admin.createUser({
+        email: newUser.email,
+        password: newUser.password,
+        name: newUser.name,
+        role: newUser.role,
+      });
+      toast.success("User created successfully");
+      setNewUser({ email: "", password: "", name: "", role: "user" });
+      setIsDialogOpen(false);
+      queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create user");
+    } finally {
+      setIsLoading(undefined);
+    }
+  };
 
-    const handleDeleteUser = async (id: string) => {
-        setIsLoading(`delete-${id}`);
-        try {
-            await client.admin.removeUser({ userId: id });
-            toast.success("User deleted successfully");
-            queryClient.invalidateQueries({
-                queryKey: ["users"],
-            });
-        } catch (error: any) {
-            toast.error(error.message || "Failed to delete user");
-        } finally {
-            setIsLoading(undefined);
-        }
-    };
+  const handleDeleteUser = async (id: string) => {
+    setIsLoading(`delete-${id}`);
+    try {
+      await client.admin.removeUser({ userId: id });
+      toast.success("User deleted successfully");
+      queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete user");
+    } finally {
+      setIsLoading(undefined);
+    }
+  };
 
-    const handleRevokeSessions = async (id: string) => {
-        setIsLoading(`revoke-${id}`);
-        try {
-            await client.admin.revokeUserSessions({ userId: id });
-            toast.success("Sessions revoked for user");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to revoke sessions");
-        } finally {
-            setIsLoading(undefined);
-        }
-    };
+  const handleRevokeSessions = async (id: string) => {
+    setIsLoading(`revoke-${id}`);
+    try {
+      await client.admin.revokeUserSessions({ userId: id });
+      toast.success("Sessions revoked for user");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to revoke sessions");
+    } finally {
+      setIsLoading(undefined);
+    }
+  };
 
-    const handleImpersonateUser = async (id: string) => {
-        setIsLoading(`impersonate-${id}`);
-        try {
-            await client.admin.impersonateUser({ userId: id });
-            toast.success("Impersonated user");
-            router.push("/dashboard");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to impersonate user");
-        } finally {
-            setIsLoading(undefined);
-        }
-    };
+  const handleImpersonateUser = async (id: string) => {
+    setIsLoading(`impersonate-${id}`);
+    try {
+      await client.admin.impersonateUser({ userId: id });
+      toast.success("Impersonated user");
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to impersonate user");
+    } finally {
+      setIsLoading(undefined);
+    }
+  };
 
-    const handleBanUser = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(`ban-${banForm.userId}`);
-        try {
-            if (!banForm.expirationDate) {
-                throw new Error("Expiration date is required");
-            }
-            await client.admin.banUser({
-                userId: banForm.userId,
-                banReason: banForm.reason,
-                banExpiresIn: banForm.expirationDate.getTime() - new Date().getTime(),
-            });
-            toast.success("User banned successfully");
-            setIsBanDialogOpen(false);
-            queryClient.invalidateQueries({
-                queryKey: ["users"],
-            });
-        } catch (error: any) {
-            toast.error(error.message || "Failed to ban user");
-        } finally {
-            setIsLoading(undefined);
-        }
-    };
+  const handleBanUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(`ban-${banForm.userId}`);
+    try {
+      if (!banForm.expirationDate) {
+        throw new Error("Expiration date is required");
+      }
+      await client.admin.banUser({
+        userId: banForm.userId,
+        banReason: banForm.reason,
+        banExpiresIn: banForm.expirationDate.getTime() - new Date().getTime(),
+      });
+      toast.success("User banned successfully");
+      setIsBanDialogOpen(false);
+      queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to ban user");
+    } finally {
+      setIsLoading(undefined);
+    }
+  };
 
-    return (
-    <div className="container mx-auto p-4 space-y-8">
+  return (
+    <div className="container mx-auto px-4 space-y-4">
       <Toaster richColors />
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
@@ -190,12 +190,12 @@ export default function AdminDashboard() {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="flex items-center justify-center gap-2">
-                <Plus className="h-4 w-4" /> Create Client
+                <Plus className="h-4 w-4" /> Create New Client or Admin
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md sm:max-w-lg">
               <DialogHeader>
-                <DialogTitle>Create New User</DialogTitle>
+                <DialogTitle>Create New Client</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreateUser} className="space-y-4">
                 <div>
@@ -398,34 +398,7 @@ export default function AdminDashboard() {
                               <Trash className="h-4 w-4" />
                             )}
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRevokeSessions(user.id)}
-                            disabled={isLoading?.startsWith("revoke")}
-                          >
-                            {isLoading === `revoke-${user.id}` ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <RefreshCw className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => handleImpersonateUser(user.id)}
-                            disabled={isLoading?.startsWith("impersonate")}
-                            className="flex items-center gap-1"
-                          >
-                            {isLoading === `impersonate-${user.id}` ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <UserCircle className="h-4 w-4" />
-                                <span className="hidden sm:inline">Impersonate</span>
-                              </>
-                            )}
-                          </Button>
+    
                           <Button
                             variant="outline"
                             size="sm"

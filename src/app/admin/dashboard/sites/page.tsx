@@ -1,17 +1,12 @@
 "use client";
-/* eslint-disable */
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState, useEffect } from "react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  useAdminClients,
+  useDeleteClient,
+  useUpdateClient,
+  Client,
+} from "@/lib/hooks/useAdminClients";
 import {
   Table,
   TableBody,
@@ -20,470 +15,258 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast, Toaster } from "sonner";
-import { client } from "@/lib/auth-client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import {
-  Loader2,
-  Plus,
-  Trash,
-  RefreshCw,
-  UserCircle,
-  Calendar as CalendarIcon,
-} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Loader2, Trash2, Edit } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-type User = {
-  id: string;
-  email: string;
-  name: string;
-  role: "admin" | "user";
-};
+export default function AdminClientsPage() {
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [editingClient, setEditingClient] = useState<null | Client>(null);
+  const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
 
-export default function AdminDashboard() {
-  const queryClient = useQueryClient();
-  const router = useRouter();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({
-    email: "",
-    password: "",
-    name: "",
-    role: "user" as const,
-  });
-  const [isLoading, setIsLoading] = useState<string | undefined>();
-  const [isBanDialogOpen, setIsBanDialogOpen] = useState(false);
-  const [banForm, setBanForm] = useState({
-    userId: "",
-    reason: "",
-    expirationDate: undefined as Date | undefined,
+  const { data, isLoading, isError, refetch } = useAdminClients({
+    page,
+    limit: 10,
+    search,
+    enabled: true,
   });
 
-  const { data: users, isLoading: isUsersLoading } = useQuery({
-    queryKey: ["users"],
-    queryFn: async () => {
-      const data = await client.admin.listUsers(
-        {
-          query: {
-            limit: 10,
-            sortBy: "createdAt",
-            sortDirection: "desc",
-          },
+  const deleteClient = useDeleteClient();
+  const updateClient = useUpdateClient();
+
+  const isUpdating = updateClient.isPending;
+  const isDeleting = deleteClient.isPending;
+
+  useEffect(() => {
+    setPage(1);
+    refetch();
+  }, [search, refetch]);
+
+  const handleSave = () => {
+    if (!editingClient) return;
+    updateClient.mutate(
+      {
+        id: editingClient.id,
+        name: editingClient.name,
+        domain: editingClient.domain,
+        phone: editingClient.phone,
+      },
+      {
+        onSuccess: () => {
+          setEditingClient(null);
+          refetch();
         },
-        {
-          throw: true,
-        }
-      );
-      return data?.users || [];
-    },
-  });
+      }
+    );
+  };
 
-    const handleCreateUser = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading("create");
-        try {
-            await client.admin.createUser({
-                email: newUser.email,
-                password: newUser.password,
-                name: newUser.name,
-                role: newUser.role,
-            });
-            toast.success("User created successfully");
-            setNewUser({ email: "", password: "", name: "", role: "user" });
-            setIsDialogOpen(false);
-            queryClient.invalidateQueries({
-                queryKey: ["users"],
-            });
-        } catch (error: any) {
-            toast.error(error.message || "Failed to create user");
-        } finally {
-            setIsLoading(undefined);
-        }
-    };
+  const handleDelete = () => {
+    if (!deletingClientId) return;
+    deleteClient.mutate(deletingClientId, {
+      onSuccess: () => {
+        setDeletingClientId(null);
+        refetch();
+      },
+    });
+  };
 
-    const handleDeleteUser = async (id: string) => {
-        setIsLoading(`delete-${id}`);
-        try {
-            await client.admin.removeUser({ userId: id });
-            toast.success("User deleted successfully");
-            queryClient.invalidateQueries({
-                queryKey: ["users"],
-            });
-        } catch (error: any) {
-            toast.error(error.message || "Failed to delete user");
-        } finally {
-            setIsLoading(undefined);
-        }
-    };
+  return (
+    <div className="space-y-6 p-6 bg-muted rounded-2xl">
+      <h1 className="text-2xl font-bold">Sites Management</h1>
 
-    const handleRevokeSessions = async (id: string) => {
-        setIsLoading(`revoke-${id}`);
-        try {
-            await client.admin.revokeUserSessions({ userId: id });
-            toast.success("Sessions revoked for user");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to revoke sessions");
-        } finally {
-            setIsLoading(undefined);
-        }
-    };
+      {/* Search */}
+      <Input
+        placeholder="Search Sites by name, domain, or phone..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="max-w-md"
+      />
 
-    const handleImpersonateUser = async (id: string) => {
-        setIsLoading(`impersonate-${id}`);
-        try {
-            await client.admin.impersonateUser({ userId: id });
-            toast.success("Impersonated user");
-            router.push("/dashboard");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to impersonate user");
-        } finally {
-            setIsLoading(undefined);
-        }
-    };
-
-    const handleBanUser = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(`ban-${banForm.userId}`);
-        try {
-            if (!banForm.expirationDate) {
-                throw new Error("Expiration date is required");
-            }
-            await client.admin.banUser({
-                userId: banForm.userId,
-                banReason: banForm.reason,
-                banExpiresIn: banForm.expirationDate.getTime() - new Date().getTime(),
-            });
-            toast.success("User banned successfully");
-            setIsBanDialogOpen(false);
-            queryClient.invalidateQueries({
-                queryKey: ["users"],
-            });
-        } catch (error: any) {
-            toast.error(error.message || "Failed to ban user");
-        } finally {
-            setIsLoading(undefined);
-        }
-    };
-
-    return (
-    <div className="container mx-auto p-4 space-y-8">
-      <Toaster richColors />
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
-          <CardTitle className="text-2xl">Clients Management</CardTitle>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center justify-center gap-2">
-                <Plus className="h-4 w-4" /> Create Client
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Create New User</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreateUser} className="space-y-4">
-                <div>
-                  <Label className="mb-4" htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newUser.email}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, email: e.target.value })
-                    }
-                    required
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <Label className="mb-4" htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={newUser.password}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, password: e.target.value })
-                    }
-                    required
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <Label className="mb-4" htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    value={newUser.name}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, name: e.target.value })
-                    }
-                    required
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <Label className="mb-4" htmlFor="role">Role</Label>
-                  <Select
-                    value={newUser.role}
-                    onValueChange={(value: "admin" | "user") =>
-                      setNewUser({ ...newUser, role: value as "user" })
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="user">User</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading === "create"}
-                >
-                  {isLoading === "create" ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    "Create User"
-                  )}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-          <Dialog open={isBanDialogOpen} onOpenChange={setIsBanDialogOpen}>
-            <DialogContent className="max-w-md sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Ban User</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleBanUser} className="space-y-4">
-                <div>
-                  <Label htmlFor="reason">Reason</Label>
-                  <Input
-                    id="reason"
-                    value={banForm.reason}
-                    onChange={(e) =>
-                      setBanForm({ ...banForm, reason: e.target.value })
-                    }
-                    required
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="expirationDate">Expiration Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        id="expirationDate"
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !banForm.expirationDate && "text-muted-foreground"
-                        )}
+      {/* Table */}
+      <div className="overflow-x-auto">
+        {(() => {
+          if (isLoading) {
+            return (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="animate-spin h-6 w-6 text-muted" />
+              </div>
+            );
+          }
+          if (isError) {
+            return <p className="text-red-500">Failed to load clients.</p>;
+          }
+          return (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Domain</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>User Email</TableHead>
+                  <TableHead>Messages</TableHead>
+                  <TableHead>Created At</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data?.data.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell>{client.name}</TableCell>
+                    <TableCell>{client.domain}</TableCell>
+                    <TableCell>{client.phone}</TableCell>
+                    <TableCell>{client.user.email}</TableCell>
+                    <TableCell>{client._count.messages}</TableCell>
+                    <TableCell>
+                      {new Date(client.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="space-x-2">
+                      {/* Edit Dialog */}
+                      <Dialog
+                        open={!!editingClient && editingClient.id === client.id}
+                        onOpenChange={(open) => !open && setEditingClient(null)}
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {banForm.expirationDate ? (
-                          format(banForm.expirationDate, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={banForm.expirationDate}
-                        onSelect={(date: any) =>
-                          setBanForm({ ...banForm, expirationDate: date })
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading === `ban-${banForm.userId}`}
-                >
-                  {isLoading === `ban-${banForm.userId}` ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Banning...
-                    </>
-                  ) : (
-                    "Ban User"
-                  )}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent>
-          {isUsersLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table className="min-w-[640px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="whitespace-nowrap min-w-[150px]">
-                      Email
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap min-w-[120px]">
-                      Name
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap min-w-[100px]">
-                      Role
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap min-w-[100px]">
-                      Banned
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap min-w-[180px]">
-                      Actions
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users?.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="whitespace-nowrap min-w-[150px]">
-                        {user.email}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap min-w-[120px]">
-                        {user.name}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap min-w-[100px]">
-                        {user.role || "user"}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap min-w-[100px]">
-                        {user.banned ? (
-                          <Badge variant="destructive">Yes</Badge>
-                        ) : (
-                          <Badge variant="outline">No</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap min-w-[180px]">
-                        <div className="flex flex-wrap gap-2">
+                        <DialogTrigger asChild>
                           <Button
-                            variant="destructive"
                             size="sm"
-                            onClick={() => handleDeleteUser(user.id)}
-                            disabled={isLoading?.startsWith("delete")}
-                          >
-                            {isLoading === `delete-${user.id}` ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
                             variant="outline"
-                            size="sm"
-                            onClick={() => handleRevokeSessions(user.id)}
-                            disabled={isLoading?.startsWith("revoke")}
+                            onClick={() => setEditingClient(client)}
                           >
-                            {isLoading === `revoke-${user.id}` ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <RefreshCw className="h-4 w-4" />
-                            )}
+                            <Edit className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => handleImpersonateUser(user.id)}
-                            disabled={isLoading?.startsWith("impersonate")}
-                            className="flex items-center gap-1"
-                          >
-                            {isLoading === `impersonate-${user.id}` ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <UserCircle className="h-4 w-4" />
-                                <span className="hidden sm:inline">Impersonate</span>
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={async () => {
-                              setBanForm({
-                                userId: user.id,
-                                reason: "",
-                                expirationDate: undefined,
-                              });
-                              if (user.banned) {
-                                setIsLoading(`ban-${user.id}`);
-                                await client.admin.unbanUser(
-                                  {
-                                    userId: user.id,
-                                  },
-                                  {
-                                    onError(context) {
-                                      toast.error(
-                                        context.error.message ||
-                                          "Failed to unban user"
-                                      );
-                                      setIsLoading(undefined);
-                                    },
-                                    onSuccess() {
-                                      queryClient.invalidateQueries({
-                                        queryKey: ["users"],
-                                      });
-                                      toast.success("User unbanned successfully");
-                                    },
-                                  }
-                                );
-                                queryClient.invalidateQueries({
-                                  queryKey: ["users"],
-                                });
-                              } else {
-                                setIsBanDialogOpen(true);
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Edit Client</DialogTitle>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <Input
+                              placeholder="Name"
+                              value={editingClient?.name ?? ""}
+                              onChange={(e) =>
+                                setEditingClient((prev) =>
+                                  prev ? { ...prev, name: e.target.value } : null
+                                )
                               }
-                            }}
-                            disabled={isLoading?.startsWith("ban")}
+                            />
+                            <Input
+                              placeholder="Domain"
+                              value={editingClient?.domain ?? ""}
+                              onChange={(e) =>
+                                setEditingClient((prev) =>
+                                  prev ? { ...prev, domain: e.target.value } : null
+                                )
+                              }
+                            />
+                            <Input
+                              placeholder="Phone"
+                              value={editingClient?.phone ?? ""}
+                              onChange={(e) =>
+                                setEditingClient((prev) =>
+                                  prev ? { ...prev, phone: e.target.value } : null
+                                )
+                              }
+                            />
+                          </div>
+                          <DialogFooter>
+                            <Button onClick={handleSave} disabled={isUpdating}>
+                              {isUpdating ? (
+                                <Loader2 className="animate-spin h-4 w-4" />
+                              ) : (
+                                "Save"
+                              )}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+
+                      {/* Delete AlertDialog */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => setDeletingClientId(client.id)}
                           >
-                            {isLoading === `ban-${user.id}` ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : user.banned ? (
-                              "Unban"
-                            ) : (
-                              "Ban"
-                            )}
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete client "{client.name}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="space-x-2">
+                            <AlertDialogCancel
+                              onClick={() => setDeletingClientId(null)}
+                            >
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleDelete}
+                              disabled={isDeleting}
+                            >
+                              {isDeleting ? (
+                                <Loader2 className="animate-spin h-4 w-4" />
+                              ) : (
+                                "Delete"
+                              )}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          );
+        })()}
+      </div>
+
+      {/* Pagination */}
+      {data && data.pagination.totalPages > 1 && (
+        <div className="flex justify-between items-center mt-4">
+          <Button
+            disabled={page === 1}
+            onClick={() => setPage((prev) => prev - 1)}
+            variant="outline"
+          >
+            Previous
+          </Button>
+          <span>
+            Page {page} of {data.pagination.totalPages}
+          </span>
+          <Button
+            disabled={page === data.pagination.totalPages}
+            onClick={() => setPage((prev) => prev + 1)}
+            variant="outline"
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

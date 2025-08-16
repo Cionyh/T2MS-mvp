@@ -9,6 +9,8 @@ import {
   LayoutDashboard,
   Globe,
   MessageSquare,
+  LogOut,
+  LucideSettings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,11 +28,23 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { DotPattern } from "@/components/magicui/dot-pattern";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { signOut } from "@/lib/auth-client"; 
 
 const navItems = [
   { label: "Dashboard", href: "/app", icon: LayoutDashboard },
   { label: "Sites", href: "/app/sites", icon: Globe },
   { label: "Messages", href: "/app/messages", icon: MessageSquare },
+    { label: "Settings", href: "/app/settings", icon: LucideSettings },
+
 ];
 
 type ClientDashboardLayoutProps = {
@@ -44,21 +58,31 @@ export default function ClientDashboardLayout({
 }: ClientDashboardLayoutProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [openSignOutDialog, setOpenSignOutDialog] = useState(false);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      setOpenSignOutDialog(false);
+      window.location.href = "/sign-in";
+    } catch (err) {
+      console.error("Sign out failed", err);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/40">
-       <DotPattern
-  className={cn(
-    "-z-50", 
-    "[mask-image:radial-gradient(10000px_circle_at_center,white,transparent)]"
-  )}
-/>
+      <DotPattern
+        className={cn(
+          "-z-50",
+          "[mask-image:radial-gradient(10000px_circle_at_center,white,transparent)]"
+        )}
+      />
 
       {/* Top Nav */}
       <header className="sticky top-0 z-40 w-full border-b bg-background px-4 py-3 flex justify-between items-center">
-        {/* Left: Mobile Menu Trigger + Desktop Nav */}
+        {/* Left: Mobile Menu + Desktop Nav */}
         <div className="flex items-center gap-6">
-          {/* Mobile Menu Button */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
@@ -94,7 +118,6 @@ export default function ClientDashboardLayout({
             </SheetContent>
           </Sheet>
 
-          {/* Desktop Title + Nav */}
           <div className="hidden md:flex items-center gap-6">
             <div className="text-lg font-semibold text-primary">T2MS</div>
             <nav className="flex gap-4">
@@ -117,7 +140,7 @@ export default function ClientDashboardLayout({
           </div>
         </div>
 
-        {/* Right: Theme + Avatar */}
+        {/* Right: Theme + Avatar + Sign Out */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <Popover>
@@ -132,7 +155,7 @@ export default function ClientDashboardLayout({
                 </AvatarFallback>
               </Avatar>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-64">
+            <PopoverContent align="end" className="w-64 space-y-2">
               <div className="space-y-1">
                 <p className="text-sm font-medium leading-none">
                   {session?.user.name}
@@ -140,13 +163,40 @@ export default function ClientDashboardLayout({
                 <p className="text-sm text-muted-foreground">
                   {session?.user.email}
                 </p>
+
+                {/* Sign Out Button */}
+                <Dialog open={openSignOutDialog} onOpenChange={setOpenSignOutDialog}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start flex items-center gap-2 mt-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Confirm Sign Out</DialogTitle>
+                      <DialogDescription>
+                        Are you sure you want to sign out?
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setOpenSignOutDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleSignOut}>Sign Out</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </PopoverContent>
           </Popover>
         </div>
       </header>
 
-      {/* Main content area */}
       <main className="flex-1 px-4 sm:px-6 py-6 overflow-y-auto">
         {children}
       </main>
