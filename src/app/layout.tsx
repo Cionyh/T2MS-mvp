@@ -3,6 +3,7 @@ import { Poppins, Lora } from 'next/font/google';
 import "./globals.css";
 import { ToastProvider } from "@/components/toaster-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { QueryProvider } from "@/lib/providers/query-provider";
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -43,9 +44,10 @@ export default function RootLayout({
   enableSystem
   disableTransitionOnChange
 >
-
+        <QueryProvider>
         {children}
         <ToastProvider />
+        </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

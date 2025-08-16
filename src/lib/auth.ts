@@ -2,6 +2,7 @@
 import { betterAuth } from "better-auth";
 import { PrismaClient } from "@prisma/client";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { admin } from "better-auth/plugins";
 
 const db = new PrismaClient();
 
@@ -22,5 +23,9 @@ export const auth = betterAuth({
 
 	emailAndPassword: {
 		enabled: true,
-    }
+    },
+
+    plugins: [
+    admin(),
+  ],
 });

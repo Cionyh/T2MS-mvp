@@ -13,7 +13,7 @@ interface Website {
   userId: string;
 }
 
-export default async function DashboardServerPage() {  // Changed the component name
+export default async function DashboardServerPage() {  
   const session = await auth.api.getSession({
     headers: await headers(),
   });

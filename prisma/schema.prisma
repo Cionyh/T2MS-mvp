@@ -20,7 +20,11 @@ model User {
   accounts      Account[]
   role          String?
 
-  clients       Client[]  @relation("UserClients") // 👈 Add this line
+  clients Client[] @relation("UserClients") // 👈 Add this line
+
+  banned     Boolean?
+  banReason  String?
+  banExpires DateTime?
 
   @@unique([email])
   @@map("user")
@@ -36,6 +40,8 @@ model Session {
   userAgent String?
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  impersonatedBy String?
 
   @@map("session")
 }
@@ -71,17 +77,16 @@ model Verification {
 }
 
 model Client {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation("UserClients", fields: [userId], references: [id], onDelete: Cascade) // ✅ separate line
+  user      User      @relation("UserClients", fields: [userId], references: [id], onDelete: Cascade) // ✅ separate line
   name      String
-  domain    String   @unique
-  phone     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  domain    String    @unique
+  phone     String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   messages  Message[]
 }
-
 
 model Message {
   id        String   @id @default(cuid())
