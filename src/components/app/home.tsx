@@ -9,12 +9,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, MessageSquare } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 
-// ** Hook for fetching messages
-import { useMessages } from "@/lib/hooks/useMessages";
+// The `useMessages` hook is no longer needed here, so we can remove it.
 
 interface Website {
   id: string;
@@ -24,26 +22,24 @@ interface Website {
   userId: string;
 }
 
+// 1. UPDATE THE PROPS INTERFACE HERE
 interface Props {
   websites?: Website[];
-  userId: string; // Needed to fetch messages
+  userId: string;
+  initialMessageCount: number; // <-- ADD THIS LINE
 }
 
-export default function DashboardPage({ websites, userId }: Readonly<Props>) {
-  const [siteCount, setSiteCount] = useState<number>(0);
+export default function ClientDashboardPage({
+  websites,
+  userId,
+  initialMessageCount, // <-- Destructure the new prop
+}: Readonly<Props>) {
+  // 2. The useState and useEffect for siteCount can be removed.
+  //    We can calculate it directly from the props.
+  const siteCount = websites ? websites.length : 0;
 
-  // Fetch messages for this user
-  const { data: messagesData, isLoading: messagesLoading } = useMessages({
-    userId,
-    page: 1,
-    limit: 1, // only need total
-  });
-
-  const totalMessages = messagesData?.pagination.total ?? 0;
-
-  useEffect(() => {
-    setSiteCount(websites ? websites.length : 0);
-  }, [websites]);
+  // 3. The `useMessages` hook and all its related logic are GONE.
+  //    This makes the component lighter and faster.
 
   return (
     <div className="space-y-6">
@@ -87,9 +83,8 @@ export default function DashboardPage({ websites, userId }: Readonly<Props>) {
               <CardDescription>Messages you have sent</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">
-                {messagesLoading ? "Loading..." : totalMessages}
-              </p>
+              {/* 4. Display the message count directly from the prop. No more loading state! */}
+              <p className="text-3xl font-bold">{initialMessageCount}</p>
               <p className="text-muted-foreground text-sm mt-1">
                 Total messages
               </p>

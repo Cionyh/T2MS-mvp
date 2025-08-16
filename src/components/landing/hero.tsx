@@ -47,9 +47,10 @@ export function Hero({
     <Card className="rounded-[3em] max-w-7xl bg-background border-muted  backdrop-blur-lg w-full min-h-screen overflow-auto pt-2">      
         
        <DotPattern
+               glow={true}
               className={cn(
                 "-z-50", 
-                "[mask-image:radial-gradient(1000px_circle_at_center,white,transparent)]",
+                "[mask-image:radial-gradient(500px_circle_at_center,white,transparent)]",
               )}
             />
   <CardHeader className="flex flex-col items-center gap-4 text-center py-12 px-4 sm:px-10">
@@ -57,7 +58,7 @@ export function Hero({
       ref={logoRef}
       className="text-3xl sm:text-4xl md:text-5xl font-serif font-extrabold text-foreground tracking-tight bg-gradient-to-b from-foreground via-foreground to-background bg-clip-text text-transparent"
     >
-      UPDATE YOUR WEBSITE WITH A <span className="text-primary">SIMPLE TEXT</span>
+      Text It, See It Live<br/> <span className="text-primary">Website Updates Made Easy</span>
     </h1>
     <CardDescription className="text-base sm:text-lg max-w-2xl text-muted-foreground">
       Text2MySite (T2MS) lets small business owners easily update key sections of their websites by simply sending a text message. It's fast, smart, and doesn't require any tech skills. Just text and it's live.

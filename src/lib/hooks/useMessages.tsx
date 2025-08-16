@@ -32,7 +32,7 @@ interface UseMessagesOptions {
   page?: number;
   limit?: number;
   search?: string;
-  userId: string; 
+  userId: string;
   enabled?: boolean;
 }
 
@@ -54,11 +54,11 @@ export const useMessages = ({
         limit: limit.toString(),
         userId,
       });
-
       if (search) params.append("q", search);
 
       const res = await fetch(`/api/messages?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch messages");
+
       return res.json();
     },
     enabled: enabled && !!userId,
@@ -66,27 +66,20 @@ export const useMessages = ({
   });
 };
 
-
+/* ------------------ DELETE MESSAGE ------------------ */
 export const useDeleteMessage = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<
-    void,
-    Error,
-    string // messageId
-  >({
+  return useMutation<void, Error, string>({
     mutationFn: async (messageId: string) => {
-      const res = await fetch(`/api/messages/${messageId}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/messages/${messageId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to delete message");
       }
     },
-    onSuccess: (_, messageId) => {
-      // Invalidate messages query to refresh the table
-      queryClient.invalidateQueries({ queryKey: ["messages"] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["messages"], exact: false });
     },
   });
 };

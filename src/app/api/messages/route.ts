@@ -2,47 +2,41 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-
-/* ---------- GET /api/messages?userId=...&page=1&limit=10  ---------- */
+import { Prisma } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
-    // 1️⃣ Get the session
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
-    // 2️⃣ Confirm userId in query matches session
     const userIdParam = req.nextUrl.searchParams.get("userId");
     if (!userIdParam || userIdParam !== session.user.id) {
       return new NextResponse("Unauthorized or missing user ID", { status: 403 });
     }
 
-    // 3️⃣ Parse pagination
     const page = parseInt(req.nextUrl.searchParams.get("page") || "1", 10);
     const limit = parseInt(req.nextUrl.searchParams.get("limit") || "10", 10);
     const skip = (page - 1) * limit;
-
-    // 4️⃣ Optional search
     const q = req.nextUrl.searchParams.get("q") || "";
 
-    // 5️⃣ Fetch messages
+    const where: Prisma.MessageWhereInput = {
+      client: { userId: session.user.id },
+      ...(q
+        ? {
+            OR: [
+              { content: { contains: q, mode: "insensitive" } },
+              { type: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    };
+
+    // Use the *same* 'where' clause for both queries
     const [messages, total] = await Promise.all([
       prisma.message.findMany({
-        where: {
-          client: {
-            userId: session.user.id,
-            OR: q
-              ? [
-                  { name: { contains: q, mode: "insensitive" } },
-                  { domain: { contains: q, mode: "insensitive" } },
-                ]
-              : undefined,
-          },
-        },
+        where, // This includes the search filter
         include: {
           client: {
             select: {
@@ -58,11 +52,10 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: "desc" },
       }),
       prisma.message.count({
-        where: { client: { userId: session.user.id } },
+        where, // <-- CORRECTED: Use the same filter for the count
       }),
     ]);
 
-    // 6️⃣ Return paginated JSON
     return NextResponse.json({
       data: messages,
       pagination: {

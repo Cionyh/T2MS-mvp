@@ -12,7 +12,7 @@ export function Footer({ footerRef }: { footerRef?: any }) {
   const [privacyOpen, setPrivacyOpen] = useState(false);
 
   return (
-    <footer ref={footerRef} className="w-full bg-muted/20 border-t border-muted mt-12 rounded-t-[3em]">
+    <footer ref={footerRef} id="footer" className="w-full bg-muted/20 border-t border-muted mt-12 rounded-t-[3em]">
       <Card className="bg-transparent border-none rounded-none py-10 px-6 sm:px-12">
         <CardContent className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-8 sm:gap-0 text-center sm:text-left">
           {/* Branding / Site Title */}
