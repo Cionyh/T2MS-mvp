@@ -55,7 +55,8 @@ export function Footer({ footerRef }: { footerRef?: any }) {
         </CardContent>
 
         {/* Copyright */}
-        <div className="w-full border-t border-muted mt-8 pt-4 text-center">
+        <div className="w-full border-t
+        border-muted mt-8 pt-4 text-center">
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Text2MySite. All rights reserved.
           </p>

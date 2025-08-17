@@ -15,7 +15,7 @@ export function About({
   return (
     <motion.div
       ref={footerRef}
-      className="w-full max-w-7xl mt-10 mx-auto px-4 sm:px-6 lg:px-8"
+      className="w-full max-w-7xl mt-4 mx-auto px-4 sm:px-6 lg:px-8"
       variants={textVariants}
       id="about"
     >

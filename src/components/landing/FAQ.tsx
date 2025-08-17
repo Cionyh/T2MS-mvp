@@ -50,7 +50,7 @@ export function FAQSection() {
   const shadowColor = theme.resolvedTheme === "dark" ? "white" : "black";
 
   return (
-    <section className="w-full max-w-4xl mx-auto px-4 md:px-8 py-20">
+    <section className="w-full max-w-4xl mx-auto px-4 md:px-8 py-30">
       {/* Header */}
       <div className="text-center mb-12">
         <h2 className="font-extrabold bg-gradient-to-b from-foreground via-foreground to-background bg-clip-text text-transparent tracking-tight text-3xl sm:text-4xl md:text-5xl font-serif">

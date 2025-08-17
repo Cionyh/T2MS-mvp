@@ -7,7 +7,7 @@ export function CompatibilityCard() {
   return (
     <motion.div
       whileHover={{ scale: 1.03 }}
-      className="relative overflow-hidden rounded-4xl p-6 sm:p-10 lg:p-16 bg-gradient-to-br from-background via-background to-background border-t-2 border-t-muted border-r-2 border-r-muted text-foreground my-6 mx-4 sm:mx-8 lg:mx-auto"
+      className="relative overflow-hidden rounded-4xl p-6 sm:p-10 lg:p-16 bg-gradient-to-br from-background via-background to-background border-b-2 border-b-muted border-l-2 border-l-muted text-foreground my-6 mx-4 sm:mx-8 lg:mx-auto"
     >
       {/* Animated light streak */}
       <motion.div
@@ -31,7 +31,7 @@ export function CompatibilityCard() {
         </p>
 
         <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8">
-          <div className="flex items-center gap-2 sm:gap-3 bg-primary rounded-full px-4 sm:px-6 py-2 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3 bg-muted border-2 border-primary rounded-full px-4 sm:px-6 py-2 sm:py-3">
             <Webhook className="h-5 sm:h-6 w-5 sm:w-6" />
             <span className="font-semibold text-base sm:text-lg">WordPress</span>
           </div>
@@ -39,7 +39,7 @@ export function CompatibilityCard() {
             <Layout className="h-5 sm:h-6 w-5 sm:w-6" />
             <span className="font-semibold text-base sm:text-lg">Wix</span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 bg-primary rounded-full px-4 sm:px-6 py-2 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3 bg-muted border-2 border-primary rounded-full px-4 sm:px-6 py-2 sm:py-3">
             <Server className="h-5 sm:h-6 w-5 sm:w-6" />
             <span className="font-semibold text-base sm:text-lg">GoDaddy</span>
           </div>
@@ -47,7 +47,7 @@ export function CompatibilityCard() {
             <Globe className="h-5 sm:h-6 w-5 sm:w-6" />
             <span className="font-semibold text-base sm:text-lg">Joomla</span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 bg-muted rounded-full px-4 sm:px-6 py-2 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3 bg-muted border-2 border-primary rounded-full px-4 sm:px-6 py-2 sm:py-3">
             <Plus className="h-5 sm:h-6 w-5 sm:w-6" />
             <span className="font-semibold text-base sm:text-lg">and More</span>
           </div>

@@ -88,7 +88,7 @@ export function Clients({ textVariants }: HowProps) {
                   {/* Glowing gradient border */}
                   <div
                     className={cn(
-                      "absolute inset-0 rounded-3xl p-[2px] bg-gradient-to-br opacity-75 group-hover:opacity-100 transition-opacity",
+                      "absolute inset-0 rounded-2xl p-[1px] bg-gradient-to-br opacity-50 group-hover:opacity-70 transition-opacity",
                       step.color
                     )}
                   >
