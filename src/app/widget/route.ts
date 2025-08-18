@@ -24,7 +24,7 @@ export async function GET() {
 
   async function fetchMessage() {
     try {
-      const res = await fetch(\`\${API_BASE}/api/messages/\${clientId}\`);
+      const res = await fetch(\`\${API_BASE}/api/message/\${clientId}\`);
       if (!res.ok) return;
       const { content } = await res.json();
       if (!content) return;

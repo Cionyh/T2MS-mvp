@@ -113,13 +113,13 @@ export default function ClientWidgetBuilder() {
   const embedCode = useMemo(() => {
     if (!clientId) return "";
     return `<script 
-  src="https://t2ms-production.up.railway.app/widget"
+  src="https://www.t2ms.biz/widget"
   data-client-id="${clientId}"
   data-type="${type}"
   data-bg="${bgColor}"
   data-color="${textColor}"
   data-font="${font}"
-  data-api="https://t2ms-production.up.railway.app"
+  data-api="https://www.t2ms.biz"
   defer
 ></script>`;
   }, [clientId, type, bgColor, textColor, font]);

@@ -203,13 +203,13 @@ export default function DashboardClient({
   const embedCode = useMemo(() => {
     if (!selectedWebsiteId) return "";
     return `<script 
-  src="https://t2ms-production.up.railway.app/widget"
+  src="https://www.t2ms.biz/widget"
   data-client-id="${selectedWebsiteId}"
   data-type="${widgetType}"
   data-bg="${bgColor}"
   data-color="${textColor}"
   data-font="${font}"
-  data-api="https://t2ms-production.up.railway.app"
+  data-api="https://www.t2ms.biz"
   defer
 ></script>`;
   }, [selectedWebsiteId, widgetType, bgColor, textColor, font]);
