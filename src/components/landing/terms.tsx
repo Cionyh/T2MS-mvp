@@ -38,14 +38,14 @@ export const TermsOfUseDialog: React.FC<TermsOfUseDialogProps> = ({
         <ScrollArea className="h-[60vh] sm:h-[70vh] lg:h-[75vh] overflow-y-auto pr-2">
           <div className="space-y-6 text-sm sm:text-base leading-relaxed text-foreground">
             <p>
-              <strong>T2MS (Text2MySite)</strong>, a service owned and operated
+              <strong>Text2MySite</strong>, a service owned and operated
               by Morning Noon Night, LLC. By accessing or using our service,
               you agree to be bound by the following Terms of Use:
             </p>
 
             <h3 className="font-semibold">1. Overview</h3>
             <p>
-              T2MS allows users to send SMS messages to update designated
+              Text2MySite allows users to send SMS messages to update designated
               sections of their business website. The service is intended for
               lawful, professional use only.
             </p>
@@ -57,7 +57,7 @@ export const TermsOfUseDialog: React.FC<TermsOfUseDialogProps> = ({
             </p>
 
             <h3 className="font-semibold">3. Consent and Compliance</h3>
-            <p>By using T2MS, you confirm that:</p>
+            <p>By using Text2MySite, you confirm that:</p>
             <ul className="list-disc list-inside space-y-1">
               <li>
                 You have obtained proper consent from all phone numbers sending
@@ -73,12 +73,12 @@ export const TermsOfUseDialog: React.FC<TermsOfUseDialogProps> = ({
             <h3 className="font-semibold">4. Message Handling</h3>
             <ul className="list-disc list-inside space-y-1">
               <li>
-                T2MS integrates with third-party SMS providers (e.g., Twilio) and
+                Text2MySite integrates with third-party SMS providers (e.g., Twilio) and
                 does not guarantee message delivery.
               </li>
               <li>
                 Message delays, failures, or delivery inconsistencies may occur
-                and are not the liability of T2MS.
+                and are not the liability of Text2MySite.
               </li>
             </ul>
 
@@ -95,7 +95,7 @@ export const TermsOfUseDialog: React.FC<TermsOfUseDialogProps> = ({
 
             <h3 className="font-semibold">6. Service Limitations</h3>
             <p>
-              T2MS is not responsible for loss or damage due to message
+              Text2MySite is not responsible for loss or damage due to message
               misrouting, user error, or platform outages. Message history and
               logs are retained for security and audit purposes.
             </p>
@@ -114,7 +114,7 @@ export const TermsOfUseDialog: React.FC<TermsOfUseDialogProps> = ({
 
             <h3 className="font-semibold">9. Modifications</h3>
             <p>
-              T2MS reserves the right to change these Terms at any time. Continued
+              Text2MySite reserves the right to change these Terms at any time. Continued
               use of the service constitutes acceptance of any changes.
             </p>
 
@@ -122,10 +122,10 @@ export const TermsOfUseDialog: React.FC<TermsOfUseDialogProps> = ({
             <p>
               For support or questions, email us at:{" "}
               <a
-                href="mailto:support@t2ms.com"
+                href="mailto:support@text2mysite.com"
                 className="text-primary underline hover:text-primary/80 transition-colors"
               >
-                support@t2ms.com
+                support@text2mysite.com
               </a>
             </p>
           </div>

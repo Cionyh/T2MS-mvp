@@ -20,23 +20,23 @@ interface HowProps {
 
 const steps = [
   {
-    title: "Busy Business Owners",
+    title: "Business Owners",
     description:
-      "Perfect for owners who want to update their site in seconds without logging into a dashboard.",
+      "Update your website in seconds: no dashboard, no hassle.",
     icon: Briefcase,
     color: "from-pink-500 to-red-500",
   },
   {
     title: "Retail & Local Shops",
     description:
-      "Quickly announce new arrivals, flash sales, or changes — right from your phone.",
+      "The fastest way to update your website, stress-free.",
     icon: ShoppingBag,
     color: "from-blue-500 to-cyan-500",
   },
   {
     title: "Restaurants & Cafés",
     description:
-      "Easily update menus, daily specials, or important notices for your guests at any moment.",
+      "Keep your site fresh without logging in or hiring help.",
     icon: Utensils,
     color: "from-emerald-500 to-lime-500",
   },
@@ -64,7 +64,7 @@ export function Clients({ textVariants }: HowProps) {
               Who It's For
           </h2>
           <p className="text-lg text-muted-foreground mt-4">
-            T2MS is designed for busy business owners who need to update their websites quickly and easily.
+            Text2MySite empowers website owners to keep their sites fresh and up to date with quick, low-cost updates simply by sending a text.
           </p>
         </div>
 

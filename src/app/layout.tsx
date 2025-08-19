@@ -21,7 +21,7 @@ const lora = Lora({
 
 
 export const metadata: Metadata = {
-  title: "T2MS",
+  title: "Text2MySite",
   description: "Realtime website message delivery system",
 };
 

@@ -38,7 +38,7 @@ export const PrivacyPolicyDialog: React.FC<PrivacyPolicyDialogProps> = ({
         <ScrollArea className="h-[60vh] sm:h-[70vh] lg:h-[75vh] overflow-y-auto pr-2">
           <div className="space-y-6 text-sm sm:text-base leading-relaxed text-foreground">
             <p>
-              <strong>T2MS (Text2MySite)</strong>, a service provided by Morning
+              <strong>Text2MySite (Text2MySite)</strong>, a service provided by Morning
               Noon Night, LLC, is committed to protecting your privacy and
               complying with industry best practices for SMS-based communication.
             </p>
@@ -93,13 +93,13 @@ export const PrivacyPolicyDialog: React.FC<PrivacyPolicyDialogProps> = ({
 
             <h3 className="font-semibold">7. Opt-Out</h3>
             <p>
-              If you no longer wish to use T2MS, email us to deactivate your account and delete stored information.
+              If you no longer wish to use Text2MySite, email us to deactivate your account and delete stored information.
               You may also stop SMS messages by replying STOP.
             </p>
 
             <h3 className="font-semibold">8. Children’s Privacy</h3>
             <p>
-              T2MS is not intended for children under 13 and does not knowingly
+              Text2MySite is not intended for children under 13 and does not knowingly
               collect data from minors.
             </p>
 
@@ -114,10 +114,10 @@ export const PrivacyPolicyDialog: React.FC<PrivacyPolicyDialogProps> = ({
             <p>
               Questions? Contact:{" "}
               <a
-                href="mailto:support@t2ms.com"
+                href="mailto:support@text2mysite.com"
                 className="text-primary underline hover:text-primary/80 transition-colors"
               >
-                support@t2ms.com
+                support@text2mysite.com
               </a>
               <br />
               Morning Noon Night, LLC - 8704 South Sepulveda Blvd, #1052 - Westchester, CA 90045

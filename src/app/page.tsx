@@ -12,7 +12,6 @@ import { About } from "@/components/landing/about";
 import { Clients } from "@/components/landing/clients";
 import { FAQSection } from "@/components/landing/FAQ";
 import { CompatibilityCard } from "@/components/landing/co-card";
-import { PricingSection } from "@/components/landing/pricing";
 
 const containerVariants: Variants = {
   initial: { opacity: 0 },
@@ -82,7 +81,6 @@ export default function Home() {
 
        <Clients textVariants={textVariants}/>
 
-       <PricingSection />
 
 
              <About footerRef={footerRef} textVariants={textVariants} buttonVariants={buttonVariants} />

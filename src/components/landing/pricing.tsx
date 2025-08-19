@@ -33,7 +33,7 @@ const plans = [
     highlight: true,
   },
   {
-    name: "Business",
+    name: "Enterprise",
     price: "$99",
     description: "For large teams & multi-location enterprises.",
     icon: Check,

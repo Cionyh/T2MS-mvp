@@ -24,9 +24,7 @@ type NavLink = {
 const navLinks: NavLink[] = [
   { label: 'Home', href: '/' },
   { label: 'How it works', href: '#how' },
-  { label: 'Pricing', href: '#pricing' },
-  { label: 'Contact', href: '#footer' },
-  { label: 'Blog', href: '#blog' },
+  { label: 'FAQs', href: '#faqs' },
   { label: 'About Us', href: '#about' },
 
 ];
@@ -51,7 +49,7 @@ export function Navbar() {
               <span
                 className="text-primary [text-shadow:0_0_20px_theme(colors.primary/20%)]"
               >
-                T2MS
+                Text2MySite
               </span>
             </motion.p>
         </Link>

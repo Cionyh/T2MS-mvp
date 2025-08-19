@@ -29,7 +29,7 @@ const steps = [
     color: "from-pink-500 to-red-500",
   },
   {
-    title: "We Match It",
+    title: "Text2MySite Delivers It",
     description: "We link your text to your connected site automatically.",
     icon: MessageSquare,
     color: "from-blue-500 to-cyan-500",
@@ -61,10 +61,10 @@ export function How({ textVariants }: HowProps) {
         <Card className="rounded-[3em] bg-gradient-to-b from-background via-background to-muted border-none backdrop-blur-md py-20">
           <CardHeader className="text-center space-y-2">
             <CardTitle className="font-extrabold tracking-tight bg-gradient-to-b from-foreground via-foreground to-background bg-clip-text text-transparent text-3xl sm:text-4xl md:text-5xl font-serif">
-                                 How It Works
+                                 Info To Come
             </CardTitle>
             <CardDescription className="text-lg text-muted-foreground">
-              You register your website with T2MS. We assign you a unique keyword and set up specific sections of your site — like banners, tickers, or pop-ups — to receive text-based updates.
+              You register your website with Text2MySite. We assign you a unique keyword and set up specific sections of your site — like banners, tickers, or pop-ups — to receive text-based updates.
             </CardDescription>
           </CardHeader>
           <CardContent>

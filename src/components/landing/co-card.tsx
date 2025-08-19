@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Globe, Webhook, Layout, Server, Plus } from "lucide-react";
+import { Globe, Webhook, Layout, Server, Plus, Facebook } from "lucide-react";
 
 export function CompatibilityCard() {
   return (
@@ -27,25 +27,30 @@ export function CompatibilityCard() {
         </h3>
 
         <p className="text-base sm:text-lg text-muted-foreground mb-8 sm:mb-10">
-          Easy JavaScript widget-based integration — add your updates to any site in seconds without touching backend code.
+          Add your updates to any site in seconds without touching backend code.
         </p>
 
         <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8">
-          <div className="flex items-center gap-2 sm:gap-3 bg-muted border-2 border-primary rounded-full px-4 sm:px-6 py-2 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3 bg-red-400 rounded-full px-4 sm:px-6 py-2 sm:py-3">
             <Webhook className="h-5 sm:h-6 w-5 sm:w-6" />
             <span className="font-semibold text-base sm:text-lg">WordPress</span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 bg-primary rounded-full px-4 sm:px-6 py-2 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3 bg-purple-500 rounded-full px-4 sm:px-6 py-2 sm:py-3">
             <Layout className="h-5 sm:h-6 w-5 sm:w-6" />
             <span className="font-semibold text-base sm:text-lg">Wix</span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 bg-muted border-2 border-primary rounded-full px-4 sm:px-6 py-2 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3 bg-green-500 rounded-full px-4 sm:px-6 py-2 sm:py-3">
             <Server className="h-5 sm:h-6 w-5 sm:w-6" />
             <span className="font-semibold text-base sm:text-lg">GoDaddy</span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 bg-primary rounded-full px-4 sm:px-6 py-2 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3 bg-yellow-500 rounded-full px-4 sm:px-6 py-2 sm:py-3">
             <Globe className="h-5 sm:h-6 w-5 sm:w-6" />
             <span className="font-semibold text-base sm:text-lg">Joomla</span>
+          </div>
+          {/* New Facebook compatibility item */}
+          <div className="flex items-center gap-2 sm:gap-3 bg-blue-500 rounded-full px-4 sm:px-6 py-2 sm:py-3">
+            <Facebook className="h-5 sm:h-6 w-5 sm:w-6" />
+            <span className="font-semibold text-base sm:text-lg">Facebook</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 bg-muted border-2 border-primary rounded-full px-4 sm:px-6 py-2 sm:py-3">
             <Plus className="h-5 sm:h-6 w-5 sm:w-6" />

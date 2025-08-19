@@ -19,7 +19,7 @@ export function Footer({ footerRef }: { footerRef?: any }) {
           <div className="flex-1">
             <h3 className="font-bold text-foreground text-2xl ">Text<span className="text-primary">2</span>MySite</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              A project by Morning Noon Night, LLC
+              A project of Morning Noon Night, Ent.
             </p>
           </div>
 
@@ -37,6 +37,12 @@ export function Footer({ footerRef }: { footerRef?: any }) {
   >
     Privacy Policy
   </button>
+  <button
+    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+    onClick={() => setPrivacyOpen(true)}
+  >
+    Learn More
+  </button>
 </div>
 
 
@@ -46,10 +52,10 @@ export function Footer({ footerRef }: { footerRef?: any }) {
               CONTACT US
             </p>
             <a
-              href="mailto:info@t2ms.biz"
+              href="mailto:info@text2mysite.com"
               className="text-sm text-primary hover:underline mt-1"
             >
-              info@t2ms.biz
+              info@text2mysite.com
             </a>
           </div>
         </CardContent>

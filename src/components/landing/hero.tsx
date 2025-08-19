@@ -60,10 +60,10 @@ export function Hero({
       ref={logoRef}
       className="text-3xl sm:text-4xl md:text-5xl font-serif font-extrabold text-foreground tracking-tight bg-gradient-to-b from-foreground via-foreground to-background bg-clip-text text-transparent"
     >
-      Text It, See It Live<br/> <span className="text-primary">Website Updates Made Easy</span>
+      Your Website.<br/> <span className="text-primary">Updated Instantly.</span><span className="text-foreground"> Just Text.</span>
     </h1>
     <CardDescription className="text-base sm:text-lg max-w-2xl text-muted-foreground">
-      T2MS lets small business owners easily update key sections of their websites by simply sending a text message. It's fast, smart, and doesn't require any tech skills.
+      Text2MySite lets small business owners easily update key sections of their websites by simply sending a text message. It's fast, smart, and doesn't require any tech skills.
     </CardDescription>
   </CardHeader>
 
