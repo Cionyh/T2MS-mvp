@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
     console.log("📝 Saving message:", { content, type, clientId: client.id });
 
     await prisma.message.create({
-      data: { content, type, clientId: client.id },
+      data: { content, clientId: client.id },
     });
 
     try {

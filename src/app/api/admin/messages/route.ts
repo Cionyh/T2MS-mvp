@@ -24,7 +24,6 @@ export async function GET(req: NextRequest) {
       ? {
           OR: [
             { content: { contains: q, mode: "insensitive" } },
-            { type: { contains: q, mode: "insensitive" } },
             { client: { name: { contains: q, mode: "insensitive" } } },
             { client: { domain: { contains: q, mode: "insensitive" } } },
             { client: { user: { email: { contains: q, mode: "insensitive" } } } },

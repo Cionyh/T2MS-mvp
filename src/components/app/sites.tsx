@@ -1,7 +1,7 @@
+// app/dashboard/DashboardClient.tsx
 "use client";
-/* eslint-disable */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,17 +40,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Separator } from "../ui/separator";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-  DialogClose,
-} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -58,19 +48,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { DotPattern } from "../magicui/dot-pattern";
+import { DotPattern } from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
+import { EmbedDialog } from "./embed-dialog"; 
+import { Switch } from "@/components/ui/switch";
 
+// Match the Prisma Client model exactly
 interface Website {
+  pinned: boolean;
   id: string;
   name: string;
   domain: string;
   phone: string;
   userId: string;
+  defaultType?: string;
+  defaultBgColor?: string;
+  defaultTextColor?: string;
+  defaultFont?: string;
+  defaultDismissAfter?: number;
 }
 
-// Framer Motion Variants
 const cardVariants: Variants = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
@@ -78,33 +75,42 @@ const cardVariants: Variants = {
 };
 
 interface DashboardClientProps {
-  initialWebsites: Website[];
+  userId?: string;
 }
 
-export default function DashboardClient({
-  initialWebsites,
-}: Readonly<DashboardClientProps>) {
+export default function DashboardClient({ userId }: DashboardClientProps) {
   const router = useRouter();
-  const [websites, setWebsites] = useState<Website[]>(initialWebsites);
+  const [websites, setWebsites] = useState<Website[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editingWebsiteId, setEditingWebsiteId] = useState<string | null>(null);
+
+  // Editable fields
   const [editedName, setEditedName] = useState("");
   const [editedDomain, setEditedDomain] = useState("");
   const [editedPhone, setEditedPhone] = useState("");
-  const [showClientId, setShowClientId] = useState<Record<string, boolean>>(
-    {}
-  ); // State to manage visibility of client IDs
+  const [editedDefaultType, setEditedDefaultType] = useState("banner");
+  const [editedDefaultBgColor, setEditedDefaultBgColor] = useState("#222");
+  const [editedDefaultTextColor, setEditedDefaultTextColor] = useState("#fff");
+  const [editedDefaultFont, setEditedDefaultFont] = useState("sans-serif");
+  const [editedDefaultDismissAfter, setEditedDefaultDismissAfter] = useState<number>(5000);
+
+  const [showClientId, setShowClientId] = useState<Record<string, boolean>>({});
   const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
-  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null); // Track which website's embed dialog is open
-  const [widgetType, setWidgetType] = useState("banner");
-  const [bgColor, setBgColor] = useState("#222");
-  const [textColor, setTextColor] = useState("#fff");
-  const [font, setFont] = useState("sans-serif");
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (initialWebsites) {
-      setWebsites(initialWebsites);
-    }
-  }, [initialWebsites]);
+  if (!userId) return;
+
+  const fetchWebsites = async () => {
+    setLoading(true);
+    const res = await fetch(`/api/client?userId=${userId}`);
+    const data = await res.json();
+    setWebsites(data); 
+    setLoading(false);
+  };
+
+  fetchWebsites();
+}, [userId]);
 
   const handleNewSiteClick = () => {
     router.push("/app/build");
@@ -115,6 +121,11 @@ export default function DashboardClient({
     setEditedName(website.name);
     setEditedDomain(website.domain);
     setEditedPhone(website.phone);
+    setEditedDefaultType(website.defaultType || "banner");
+    setEditedDefaultBgColor(website.defaultBgColor || "#222");
+    setEditedDefaultTextColor(website.defaultTextColor || "#fff");
+    setEditedDefaultFont(website.defaultFont || "sans-serif");
+    setEditedDefaultDismissAfter(website.defaultDismissAfter ?? 5000);
   };
 
   const handleSaveClick = async (websiteId: string) => {
@@ -126,6 +137,11 @@ export default function DashboardClient({
           name: editedName,
           domain: editedDomain,
           phone: editedPhone,
+          defaultType: editedDefaultType,
+          defaultBgColor: editedDefaultBgColor,
+          defaultTextColor: editedDefaultTextColor,
+          defaultFont: editedDefaultFont,
+          defaultDismissAfter: editedDefaultDismissAfter,
         }),
       });
 
@@ -142,10 +158,16 @@ export default function DashboardClient({
                 name: editedName,
                 domain: editedDomain,
                 phone: editedPhone,
+                defaultType: editedDefaultType,
+                defaultBgColor: editedDefaultBgColor,
+                defaultTextColor: editedDefaultTextColor,
+                defaultFont: editedDefaultFont,
+                defaultDismissAfter: editedDefaultDismissAfter,
               }
             : site
         )
       );
+
       setEditingWebsiteId(null);
       toast.success("Website updated successfully!");
       router.refresh();
@@ -182,7 +204,7 @@ export default function DashboardClient({
   const toggleClientIdVisibility = (websiteId: string) => {
     setShowClientId((prev) => ({
       ...prev,
-      [websiteId]: ! (prev[websiteId] || false),
+      [websiteId]: !prev[websiteId],
     }));
   };
 
@@ -196,38 +218,15 @@ export default function DashboardClient({
     setEmbedDialogOpen(true);
   };
 
-  const handleCloseEmbedDialog = () => {
-    setEmbedDialogOpen(false);
-  };
-
-  const embedCode = useMemo(() => {
-    if (!selectedWebsiteId) return "";
-    return `<script 
-  src="https://www.t2ms.biz/widget"
-  data-client-id="${selectedWebsiteId}"
-  data-type="${widgetType}"
-  data-bg="${bgColor}"
-  data-color="${textColor}"
-  data-font="${font}"
-  data-api="https://www.t2ms.biz"
-  defer
-></script>`;
-  }, [selectedWebsiteId, widgetType, bgColor, textColor, font]);
-
-  const handleCopyEmbedCode = () => {
-    navigator.clipboard.writeText(embedCode);
-    toast.success("Embed code copied to clipboard!");
-  };
-
   return (
     <div className="container mx-auto py-2">
-       <DotPattern
+      <DotPattern
         className={cn(
-          "-z-50", 
+          "-z-50",
           "[mask-image:radial-gradient(10000px_circle_at_center,white,transparent)]"
         )}
       />
-      {/* Header */}
+      
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Registered Sites</h2>
         <Button onClick={handleNewSiteClick} className="text-foreground">
@@ -235,7 +234,6 @@ export default function DashboardClient({
         </Button>
       </div>
 
-      {/* Website List or Empty State */}
       {websites.length === 0 ? (
         <div className="text-muted-foreground">No websites registered yet.</div>
       ) : (
@@ -250,22 +248,53 @@ export default function DashboardClient({
               layout
             >
               <Card className="bg-muted rounded-2xl overflow-hidden hover:bg-background">
-                <CardHeader className="flex items-center justify-between px-4 py-3">
-                  <CardTitle className="text-lg font-medium">
-                    {website.name}
-                  </CardTitle>
-                  {editingWebsiteId !== website.id && (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                          <span className="sr-only">Open menu</span>
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="end"
-                        className="w-[160px] p-2"
-                      >
+                <CardHeader className="flex items-center justify-between px-4 py-0">
+  <div className="flex items-center space-x-2">
+    <CardTitle className="text-lg font-medium">{website.name}</CardTitle>
+    {/* Pinned switch */}
+    <Switch
+      checked={website.pinned ?? false}
+      onCheckedChange={async (checked) => {
+        try {
+          const res = await fetch(`/api/client/${website.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pinned: checked }),
+          });
+
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || "Failed to update pinned state");
+          }
+
+          // Update state locally
+          setWebsites((prev) =>
+            prev.map((w) =>
+              w.id === website.id ? { ...w, pinned: checked } : w
+            )
+          );
+
+          toast.success(`Pinned state updated: ${checked ? "ON" : "OFF"}`);
+        } catch (error: any) {
+          console.error("Error updating pinned state:", error);
+          toast.error(error.message || "Failed to update pinned state");
+        }
+      }}
+    />
+  </div>
+
+  {editingWebsiteId !== website.id && (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          className="h-8 w-8 p-0 rounded-full"
+        >
+          <span className="sr-only">Open menu</span>
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-[160px] p-2">
                         <Button
                           variant="ghost"
                           className="justify-start w-full rounded-md hover:bg-secondary/50"
@@ -279,8 +308,7 @@ export default function DashboardClient({
                               variant="ghost"
                               className="justify-start w-full rounded-md hover:bg-secondary/50"
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -290,7 +318,7 @@ export default function DashboardClient({
                               </AlertDialogTitle>
                               <AlertDialogDescription>
                                 This action cannot be undone. This will
-                                permanently delete the website from our servers.
+                                permanently delete the website.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -315,40 +343,111 @@ export default function DashboardClient({
                   )}
                 </CardHeader>
 
-                <Separator className="my-1 mx-30" />
-                <CardContent className="p-4">
+                <Separator />
+                <CardContent className="px-4 py-1">
                   {editingWebsiteId === website.id ? (
                     <div className="space-y-3">
                       <div>
-                        <Label htmlFor={`name-${website.id}`} className="mb-2">
-                          Business Name
-                        </Label>
+                        <Label className="mb-2">Business Name</Label>
                         <Input
-                          id={`name-${website.id}`}
                           value={editedName}
                           onChange={(e) => setEditedName(e.target.value)}
                           className="w-full"
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`domain-${website.id}`} className="mb-2">Domain</Label>
+                        <Label className="mb-2" >Domain</Label>
                         <Input
-                          id={`domain-${website.id}`}
                           value={editedDomain}
                           onChange={(e) => setEditedDomain(e.target.value)}
                           className="w-full"
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`phone-${website.id}`} className="mb-2">Phone</Label>
+                        <Label className="mb-2">Phone</Label>
                         <Input
-                          id={`phone-${website.id}`}
                           value={editedPhone}
                           onChange={(e) => setEditedPhone(e.target.value)}
                           className="w-full"
                         />
                       </div>
-                      <div className="flex justify-end space-x-2">
+                      <div>
+                        <Label className="mb-2">Default Widget Type</Label>
+                        <Select
+                          onValueChange={setEditedDefaultType}
+                          defaultValue={editedDefaultType}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="banner">Banner</SelectItem>
+                            <SelectItem value="popup">Popup</SelectItem>
+                            <SelectItem value="fullscreen">Fullscreen</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="mb-2">Default Font Family</Label>
+                        <Input
+                          value={editedDefaultFont}
+                          onChange={(e) => setEditedDefaultFont(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="mb-2">Default Background Color</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="color"
+                            value={editedDefaultBgColor}
+                            onChange={(e) =>
+                              setEditedDefaultBgColor(e.target.value)
+                            }
+                            className="h-10 w-12 p-1"
+                          />
+                          <Input
+                            value={editedDefaultBgColor}
+                            onChange={(e) =>
+                              setEditedDefaultBgColor(e.target.value)
+                            }
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="mb-2">Default Text Color</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="color"
+                            value={editedDefaultTextColor}
+                            onChange={(e) =>
+                              setEditedDefaultTextColor(e.target.value)
+                            }
+                            className="h-10 w-12 p-1"
+                          />
+                          <Input
+                            value={editedDefaultTextColor}
+                            onChange={(e) =>
+                              setEditedDefaultTextColor(e.target.value)
+                            }
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="mb-2"> Default Dismiss After (ms)</Label>
+                        <Input
+                          type="number"
+                          value={editedDefaultDismissAfter}
+                          onChange={(e) =>
+                            setEditedDefaultDismissAfter(
+                              Number(e.target.value)
+                            )
+                          }
+                          placeholder="5000"
+                        />
+                      </div>
+                      <div className="flex justify-end space-x-2 pt-2">
                         <Button onClick={() => handleSaveClick(website.id)}>
                           Save
                         </Button>
@@ -372,7 +471,7 @@ export default function DashboardClient({
                         <span className="font-mono text-sm">
                           {showClientId[website.id]
                             ? website.id
-                            : website.id.slice(0, 6) + "..."}
+                            : `${website.id.slice(0, 6)}...`}
                         </span>
                         <Button
                           variant="ghost"
@@ -384,9 +483,6 @@ export default function DashboardClient({
                           ) : (
                             <Eye className="h-4 w-4" />
                           )}
-                          <span className="sr-only">
-                            {showClientId[website.id] ? "Hide" : "Show"} Client ID
-                          </span>
                         </Button>
                         <Button
                           variant="ghost"
@@ -394,7 +490,6 @@ export default function DashboardClient({
                           onClick={() => handleCopyClientId(website.id)}
                         >
                           <Copy className="h-4 w-4" />
-                          <span className="sr-only">Copy Client ID</span>
                         </Button>
                       </p>
                     </div>
@@ -406,101 +501,12 @@ export default function DashboardClient({
         </div>
       )}
 
-      {/* Embed Script Dialog */}
-<Dialog open={embedDialogOpen} onOpenChange={setEmbedDialogOpen}>
-  <DialogContent className="sm:max-w-[550px] w-full max-h-[90vh] overflow-y-auto">
-    <DialogHeader>
-      <DialogTitle>Embed Script Configuration</DialogTitle>
-      <DialogDescription>
-        Configure the widget and copy the embed code.
-      </DialogDescription>
-    </DialogHeader>
-    <div className="grid gap-4 py-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Widget Type */}
-        <div>
-          <Label htmlFor="widget-type" className="mb-2">Widget Type</Label>
-          <Select onValueChange={setWidgetType} defaultValue={widgetType}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="banner">Banner</SelectItem>
-              <SelectItem value="popup">Popup</SelectItem>
-              <SelectItem value="fullscreen">Fullscreen</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Font */}
-        <div>
-          <Label htmlFor="font" className="mb-2">Font</Label>
-          <Input
-            id="font"
-            value={font}
-            onChange={(e) => setFont(e.target.value)}
-            placeholder="sans-serif"
-            className="w-full"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Background Color */}
-        <div>
-          <Label htmlFor="bg-color" className="mb-2">Background Color</Label>
-          <Input
-            type="color"
-            id="bg-color"
-            value={bgColor}
-            onChange={(e) => setBgColor(e.target.value)}
-            className="w-full"
-          />
-        </div>
-
-        {/* Text Color */}
-        <div>
-          <Label htmlFor="text-color" className="mb-2">Text Color</Label>
-          <Input
-            type="color"
-            id="text-color"
-            value={textColor}
-            onChange={(e) => setTextColor(e.target.value)}
-            className="w-full"
-          />
-        </div>
-      </div>
-
-      {/* Embed Code */}
-      <div>
-        <Label className="mb-2">Embed Code</Label>
-        <Textarea
-          value={embedCode}
-          rows={4}
-          readOnly
-          className="font-mono w-full" // Added w-full
-        />
-      </div>
-
-      {/* Copy Button */}
-      <Button onClick={handleCopyEmbedCode} className="w-full">
-        <Copy className="w-4 h-4 mr-2" /> Copy Embed Code
-      </Button>
-    </div>
-
-    <DialogFooter>
-      <DialogClose asChild>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={handleCloseEmbedDialog}
-        >
-          Close
-        </Button>
-      </DialogClose>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+      {/* Reusable Embed Dialog */}
+      <EmbedDialog
+        open={embedDialogOpen}
+        onOpenChange={setEmbedDialogOpen}
+        clientId={selectedWebsiteId}
+      />
     </div>
   );
 }

@@ -27,7 +27,6 @@ export async function GET(req: NextRequest) {
         ? {
             OR: [
               { content: { contains: q, mode: "insensitive" } },
-              { type: { contains: q, mode: "insensitive" } },
             ],
           }
         : {}),

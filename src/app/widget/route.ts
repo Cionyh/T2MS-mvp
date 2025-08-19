@@ -1,42 +1,56 @@
-// /app/widget/route.ts
 import { NextResponse } from "next/server";
 
 export async function GET() {
   const js = `
-(function () {
+(async function () {
   if (window.__T2MS_WIDGET_INITIALIZED__) return;
   window.__T2MS_WIDGET_INITIALIZED__ = true;
 
   const script = document.currentScript;
   const clientId = script.dataset.clientId;
-  const type = script.dataset.type || "banner";
-  const bgColor = script.dataset.bg || "#222";
-  const textColor = script.dataset.color || "#fff";
-  const font = script.dataset.font || "sans-serif";
-  const interval = 15000;
   const WIDGET_ID = "t2ms-widget";
   const API_BASE = script.dataset.api || window.location.origin;
+  const interval = 15000;
 
   if (!clientId) {
     console.error("T2MS widget: Missing data-client-id");
     return;
   }
 
+  function removeWidget() {
+    const existing = document.getElementById(WIDGET_ID);
+    if (existing) existing.remove();
+  }
+
   async function fetchMessage() {
     try {
-      const res = await fetch(\`\${API_BASE}/api/message/\${clientId}\`);
+      const res = await fetch(\`\${API_BASE}/api/messages/\${clientId}\`);
       if (!res.ok) return;
-      const { content } = await res.json();
+      const data = await res.json();
+      const {
+        content,
+        type,
+        bgColor,
+        textColor,
+        font,
+        dismissAfter,
+        pinned
+      } = data;
+
+      if (!pinned) {
+        removeWidget(); // Hide if pinned is false
+        return;
+      }
+
       if (!content) return;
-      renderMessage(content);
+      renderMessage({ content, type, bgColor, textColor, font, dismissAfter });
     } catch (err) {
       console.error("T2MS widget fetch error:", err);
     }
   }
 
-  function renderMessage(content) {
-    const existing = document.getElementById(WIDGET_ID);
-    if (existing) existing.remove();
+  function renderMessage({ content, type, bgColor, textColor, font, dismissAfter }) {
+    removeWidget(); // Remove any existing widget
 
     const wrapper = document.createElement("div");
     wrapper.id = WIDGET_ID;
@@ -69,7 +83,12 @@ export async function GET() {
     });
 
     wrapper.querySelector("button").onclick = () => wrapper.remove();
+
     document.body.appendChild(wrapper);
+
+    if (dismissAfter && type !== "fullscreen") {
+      setTimeout(() => wrapper.remove(), dismissAfter);
+    }
   }
 
   function escapeHtml(text) {

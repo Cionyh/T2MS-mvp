@@ -1,5 +1,4 @@
 /* eslint-disable */
-
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -16,27 +15,37 @@ export async function PUT(
 
     const body = await req.json();
 
-    try {
-      await prisma.client.update({
-        where: {
-          id: id,
-        },
-        data: body,
-      });
-    } catch (updateError: any) {
-      console.error("Prisma UPDATE error:", updateError);
-      return NextResponse.json(
-        { error: "Failed to update client" },
-        { status: 500 }
-      );
-    }
+    // Include pinned in destructure
+    const {
+      name,
+      domain,
+      phone,
+      defaultType,
+      defaultBgColor,
+      defaultTextColor,
+      defaultFont,
+      defaultDismissAfter,
+      pinned, // added pinned
+    } = body;
 
-    console.log("Received PUT for ID:", id);
-    console.log("Body:", body);
+    const updatedClient = await prisma.client.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(domain && { domain }),
+        ...(phone && { phone }),
+        ...(defaultType && { defaultType }),
+        ...(defaultBgColor && { defaultBgColor }),
+        ...(defaultTextColor && { defaultTextColor }),
+        ...(defaultFont && { defaultFont }),
+        ...(defaultDismissAfter && { defaultDismissAfter }),
+        ...(pinned !== undefined && { pinned }), // safely update pinned
+      },
+    });
 
     return NextResponse.json({
       message: `Successfully updated client ${id}`,
-      data: body,
+      data: updatedClient,
     });
   } catch (error) {
     console.error("PUT error:", error);
@@ -55,22 +64,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Missing client ID" }, { status: 400 });
     }
 
-    // Delete the client from the database using Prisma
-    try {
-      await prisma.client.delete({
-        where: {
-          id: id,
-        },
-      });
-    } catch (deleteError: any) {
-      console.error("Prisma DELETE error:", deleteError);
-      return NextResponse.json(
-        { error: "Failed to delete client" },
-        { status: 500 }
-      );
-    }
-
-    console.log("Successfully deleted client with ID:", id);
+    await prisma.client.delete({
+      where: { id },
+    });
 
     return NextResponse.json({
       message: `Successfully deleted client ${id}`,

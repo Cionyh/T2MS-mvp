@@ -32,6 +32,81 @@ export default function AdminMessagesPage() {
     setPage(1); // reset to first page when searching
   };
 
+  let content: React.ReactNode;
+
+  if (isLoading) {
+    content = (
+      <div className="flex justify-center py-8">
+        <Loader2 className="w-6 h-6 animate-spin" />
+      </div>
+    );
+  } else if (error) {
+    content = (
+      <p className="text-red-500">Failed to load messages: {error.message}</p>
+    );
+  } else if (!data || data.data.length === 0) {
+    content = (
+      <p className="text-muted-foreground text-sm">No messages found.</p>
+    );
+  } else {
+    content = (
+      <>
+        <Table>
+          <TableCaption>
+            A list of all messages sent by clients
+          </TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Content</TableHead>
+              <TableHead>Client</TableHead>
+              <TableHead>Domain</TableHead>
+              <TableHead>User</TableHead>
+              <TableHead>Created At</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.data.map((msg) => (
+              <TableRow key={msg.id}>
+                <TableCell className="max-w-[250px] truncate">
+                  {msg.content}
+                </TableCell>
+                <TableCell>{msg.client.name}</TableCell>
+                <TableCell>{msg.client.domain}</TableCell>
+                <TableCell>{msg.client.user.email}</TableCell>
+                <TableCell>
+                  {new Date(msg.createdAt).toLocaleString()}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        {/* Pagination Controls */}
+        <div className="flex justify-between items-center mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!data.pagination.hasPrevPage}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Previous
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            Page {data.pagination.page} of {data.pagination.totalPages}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!data.pagination.hasNextPage}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      </>
+    );
+  }
+
   return (
     <Card className="mt-6 shadow-md rounded-2xl">
       <CardHeader>
@@ -49,72 +124,7 @@ export default function AdminMessagesPage() {
         </form>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin" />
-          </div>
-        ) : error ? (
-          <p className="text-red-500">Failed to load messages: {error.message}</p>
-        ) : !data || data.data.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No messages found.</p>
-        ) : (
-          <>
-            <Table>
-              <TableCaption>
-                A list of all messages sent by clients
-              </TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Content</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Domain</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Created At</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.data.map((msg) => (
-                  <TableRow key={msg.id}>
-                    <TableCell className="max-w-[250px] truncate">
-                      {msg.content}
-                    </TableCell>
-                    <TableCell>{msg.type}</TableCell>
-                    <TableCell>{msg.client.name}</TableCell>
-                    <TableCell>{msg.client.domain}</TableCell>
-                    <TableCell>{msg.client.user.email}</TableCell>
-                    <TableCell>
-                      {new Date(msg.createdAt).toLocaleString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-
-            {/* Pagination Controls */}
-            <div className="flex justify-between items-center mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!data.pagination.hasPrevPage}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <p className="text-sm text-muted-foreground">
-                Page {data.pagination.page} of {data.pagination.totalPages}
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!data.pagination.hasNextPage}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </>
-        )}
+        {content}
       </CardContent>
     </Card>
   );
