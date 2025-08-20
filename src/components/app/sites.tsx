@@ -372,21 +372,23 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                         />
                       </div>
                       <div>
-                        <Label className="mb-2">Default Widget Type</Label>
-                        <Select
-                          onValueChange={setEditedDefaultType}
-                          defaultValue={editedDefaultType}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="banner">Banner</SelectItem>
-                            <SelectItem value="popup">Popup</SelectItem>
-                            <SelectItem value="fullscreen">Fullscreen</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+  <Label className="mb-2">Default Widget Type</Label>
+  <Select
+    onValueChange={setEditedDefaultType}
+    defaultValue={editedDefaultType}
+  >
+    <SelectTrigger className="w-full">
+      <SelectValue />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="banner">Banner</SelectItem>
+      <SelectItem value="popup">Popup</SelectItem>
+      <SelectItem value="fullscreen">Fullscreen</SelectItem>
+      <SelectItem value="modal">Modal</SelectItem> {/* Added modal option */}
+    </SelectContent>
+  </Select>
+</div>
+
                       <div>
                         <Label className="mb-2">Default Font Family</Label>
                         <Input

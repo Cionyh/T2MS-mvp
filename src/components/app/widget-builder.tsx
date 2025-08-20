@@ -43,7 +43,7 @@ const clientSchema = z.object({
 
 // Widget validation schema
 const widgetSchema = z.object({
-  type: z.enum(["banner", "popup", "fullscreen"]),
+  type: z.enum(["banner", "popup", "fullscreen", "modal"]),
   bgColor: z.string().regex(/^#([0-9A-Fa-f]{3}){1,2}$/, { message: "Invalid hex color code." }),
   textColor: z.string().regex(/^#([0-9A-Fa-f]{3}){1,2}$/, { message: "Invalid hex color code." }),
   font: z.string().min(1, { message: "Font is required." }),
@@ -267,11 +267,13 @@ export default function ClientWidgetBuilder() {
                                     <SelectValue placeholder="Select type" />
                                   </SelectTrigger>
                                 </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="banner">Banner</SelectItem>
-                                  <SelectItem value="popup">Popup</SelectItem>
-                                  <SelectItem value="fullscreen">Fullscreen</SelectItem>
-                                </SelectContent>
+                               <SelectContent>
+  <SelectItem value="banner">Banner</SelectItem>
+  <SelectItem value="popup">Popup</SelectItem>
+  <SelectItem value="fullscreen">Fullscreen</SelectItem>
+  <SelectItem value="modal">Modal</SelectItem> {/* Added modal */}
+</SelectContent>
+
                               </Select>
                               <FormMessage />
                             </FormItem>
@@ -376,19 +378,38 @@ export default function ClientWidgetBuilder() {
                   </CardHeader>
                   <CardContent>
                     <div
-                      className="p-4 rounded text-center border"
-                      style={{ backgroundColor: bgColor, color: textColor, fontFamily: font }}
-                    >
-                      {type === "banner" && (
-                        <p className="text-sm">This is how your banner widget will appear.</p>
-                      )}
-                      {type === "popup" && (
-                        <p className="text-sm">Popup widget: appears after a delay.</p>
-                      )}
-                      {type === "fullscreen" && (
-                        <p className="text-sm">Fullscreen overlay with announcement.</p>
-                      )}
-                    </div>
+  className="p-4 rounded text-center border"
+  style={{ backgroundColor: bgColor, color: textColor, fontFamily: font }}
+>
+  {type === "banner" && (
+    <p className="text-sm">This is how your banner widget will appear.</p>
+  )}
+  {type === "popup" && (
+    <p className="text-sm">Popup widget: appears after a delay.</p>
+  )}
+  {type === "fullscreen" && (
+    <p className="text-sm">Fullscreen overlay with announcement.</p>
+  )}
+  {type === "modal" && (
+    <div className="relative">
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center rounded">
+        <div
+          className="bg-white p-4 rounded shadow-md text-black"
+          style={{ fontFamily: font }}
+        >
+          <p className="text-sm">Modal widget preview</p>
+          <button
+            className="mt-2 px-3 py-1 border rounded hover:bg-gray-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+</div>
+
                   </CardContent>
                 </Card>
               </motion.div>
