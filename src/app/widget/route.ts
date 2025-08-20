@@ -5,7 +5,7 @@ export async function GET() {
 (async function () {
   if (window.__T2MS_WIDGET_INITIALIZED__) return;
   window.__T2MS_WIDGET_INITIALIZED__ = true;
-  window.__T2MS_WIDGET_SHOWN__ = false; // Flag to show widget only once per page load
+  window.__T2MS_WIDGET_SHOWN__ = false; // show once per page load
 
   const script = document.currentScript;
   const clientId = script.dataset.clientId;
@@ -23,6 +23,18 @@ export async function GET() {
     if (existing) existing.remove();
     const overlay = document.getElementById(WIDGET_ID + "-overlay");
     if (overlay) overlay.remove();
+
+    // restore scroll if we locked it
+    if (document.body.dataset.t2msLock === "1") {
+      document.body.style.overflow = "";
+      delete document.body.dataset.t2msLock;
+    }
+
+    // cleanup key handler
+    if (window.__t2msEscHandler__) {
+      window.removeEventListener("keydown", window.__t2msEscHandler__);
+      window.__t2msEscHandler__ = null;
+    }
   }
 
   async function fetchMessage() {
@@ -37,7 +49,7 @@ export async function GET() {
         return;
       }
 
-      if (!content || window.__T2MS_WIDGET_SHOWN__) return; // Already shown
+      if (!content || window.__T2MS_WIDGET_SHOWN__) return;
       renderMessage({ content, type, bgColor, textColor, font, dismissAfter });
     } catch (err) {
       console.error("T2MS widget fetch error:", err);
@@ -45,31 +57,23 @@ export async function GET() {
   }
 
   function renderMessage({ content, type, bgColor, textColor, font, dismissAfter }) {
-    if (window.__T2MS_WIDGET_SHOWN__) return; // prevent multiple renders per page
+    if (window.__T2MS_WIDGET_SHOWN__) return;
     window.__T2MS_WIDGET_SHOWN__ = true;
 
     removeWidget();
 
     const wrapper = document.createElement("div");
     wrapper.id = WIDGET_ID;
+    wrapper.setAttribute("aria-live", "polite");
+
+    // Content + close button
     wrapper.innerHTML = \`
       <div class="t2ms-content">\${escapeHtml(content)}</div>
-      <button class="t2ms-close" aria-label="Close">&times;</button>
+      <button class="t2ms-close" aria-label="Close notification" title="Close">&times;</button>
     \`;
 
-    const btn = wrapper.querySelector("button");
-    Object.assign(btn.style, {
-      marginLeft: "1em",
-      background: "none",
-      border: "none",
-      color: textColor || "#000",
-      fontSize: "1.5em",
-      cursor: "pointer",
-      transition: "color 0.2s",
-    });
-    btn.onmouseover = () => (btn.style.color = "#ff5555");
-    btn.onmouseout = () => (btn.style.color = textColor || "#000");
-    btn.onclick = () => wrapper.remove();
+    const btn = wrapper.querySelector(".t2ms-close");
+    const contentDiv = wrapper.querySelector(".t2ms-content");
 
     // Base styles
     Object.assign(wrapper.style, {
@@ -82,49 +86,82 @@ export async function GET() {
       alignItems: "center",
       justifyContent: "center",
       padding: "1em 1.5em",
+      paddingRight: "3rem", // leave space for the close button
       boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
       borderRadius: "12px",
       textAlign: "center",
       cursor: "default",
       opacity: "0",
       transition: "all 0.4s ease",
+      boxSizing: "border-box",
+      overflow: "hidden",
     });
 
-    const contentDiv = wrapper.querySelector(".t2ms-content");
+    // Close button pinned top-right
+    Object.assign(btn.style, {
+      position: "absolute",
+      top: "8px",
+      right: "12px",
+      background: "none",
+      border: "none",
+      color: textColor || "#000",
+      fontSize: "1.5em",
+      lineHeight: "1",
+      cursor: "pointer",
+      transition: "opacity 0.2s, transform 0.2s, color 0.2s",
+      opacity: "0.85",
+    });
+    btn.onmouseover = () => {
+      btn.style.opacity = "1";
+      btn.style.transform = "scale(1.05)";
+      btn.style.color = "#ff5555";
+    };
+    btn.onmouseout = () => {
+      btn.style.opacity = "0.85";
+      btn.style.transform = "none";
+      btn.style.color = textColor || "#000";
+    };
+    btn.onclick = () => removeWidget();
 
-    // Type-specific styles and animation
+    // Type-specific styles + animation
     switch (type) {
-      case "banner":
+      case "banner": {
+        wrapper.setAttribute("role", "status");
         Object.assign(wrapper.style, {
           top: "-100px",
           left: "0",
           width: "100%",
-          flexDirection: "row",
           borderRadius: "0",
           boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-          padding: "1em",
+          padding: "1em 3rem 1em 1.25em",
         });
+        document.body.appendChild(wrapper);
         requestAnimationFrame(() => {
           wrapper.style.top = "0";
           wrapper.style.opacity = "1";
         });
         break;
+      }
 
-      case "popup":
+      case "popup": {
+        wrapper.setAttribute("role", "status");
         Object.assign(wrapper.style, {
           bottom: "-120px",
           right: "20px",
           width: "320px",
           maxWidth: "90%",
-          flexDirection: "row",
         });
+        document.body.appendChild(wrapper);
         requestAnimationFrame(() => {
           wrapper.style.bottom = "20px";
           wrapper.style.opacity = "1";
         });
         break;
+      }
 
-      case "fullscreen":
+      case "fullscreen": {
+        wrapper.setAttribute("role", "dialog");
+        wrapper.setAttribute("aria-modal", "true");
         Object.assign(wrapper.style, {
           top: "0",
           left: "0",
@@ -134,14 +171,33 @@ export async function GET() {
           justifyContent: "center",
           alignItems: "center",
           fontSize: "1.5em",
-          padding: "2em",
+          padding: "2.5em 3.5em 2.5em 2.5em", // extra right padding for ×
+          borderRadius: "0",
         });
-        contentDiv.style.fontSize = "2em";
-        contentDiv.style.lineHeight = "1.4";
-        requestAnimationFrame(() => (wrapper.style.opacity = "1"));
-        break;
+        Object.assign(contentDiv.style, {
+          fontSize: "2em",
+          lineHeight: "1.4",
+          maxWidth: "min(800px, 90vw)",
+        });
 
-      case "modal":
+        // Lock scroll while open
+        document.body.style.overflow = "hidden";
+        document.body.dataset.t2msLock = "1";
+
+        document.body.appendChild(wrapper);
+        requestAnimationFrame(() => (wrapper.style.opacity = "1"));
+
+        // ESC to close
+        window.__t2msEscHandler__ = (e) => { if (e.key === "Escape") removeWidget(); };
+        window.addEventListener("keydown", window.__t2msEscHandler__);
+        break;
+      }
+
+      case "modal": {
+        wrapper.setAttribute("role", "dialog");
+        wrapper.setAttribute("aria-modal", "true");
+
+        // overlay
         const overlay = document.createElement("div");
         overlay.id = WIDGET_ID + "-overlay";
         Object.assign(overlay.style, {
@@ -155,36 +211,54 @@ export async function GET() {
           opacity: "0",
           transition: "opacity 0.3s ease",
         });
-        overlay.onclick = () => wrapper.remove();
+        overlay.onclick = () => removeWidget();
         document.body.appendChild(overlay);
         requestAnimationFrame(() => (overlay.style.opacity = "1"));
 
         Object.assign(wrapper.style, {
           top: "50%",
           left: "50%",
-          transform: "translate(-50%, -50%) scale(0.8)",
+          transform: "translate(-50%, -50%) scale(0.85)",
           width: "90%",
-          maxWidth: "500px",
+          maxWidth: "560px",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          padding: "2em",
+          padding: "2.25em 3.25em 2em 2em", // extra right padding for ×
           fontSize: "1.2em",
         });
-        contentDiv.style.fontSize = "1.5em";
-        contentDiv.style.lineHeight = "1.5";
-        requestAnimationFrame(() => (wrapper.style.transform = "translate(-50%, -50%) scale(1)"));
+        Object.assign(contentDiv.style, {
+          fontSize: "1.5em",
+          lineHeight: "1.5",
+          maxWidth: "min(680px, 90vw)",
+        });
+
+        // Lock scroll while open
+        document.body.style.overflow = "hidden";
+        document.body.dataset.t2msLock = "1";
+
+        document.body.appendChild(wrapper);
+        requestAnimationFrame(() => {
+          wrapper.style.transform = "translate(-50%, -50%) scale(1)";
+          wrapper.style.opacity = "1";
+        });
+
+        // ESC to close
+        window.__t2msEscHandler__ = (e) => { if (e.key === "Escape") removeWidget(); };
+        window.addEventListener("keydown", window.__t2msEscHandler__);
+        break;
+      }
+
+      default: {
+        document.body.appendChild(wrapper);
         requestAnimationFrame(() => (wrapper.style.opacity = "1"));
         break;
-
-      default:
-        break;
+      }
     }
 
-    document.body.appendChild(wrapper);
-
+    // Auto-dismiss (not for fullscreen or modal)
     if (dismissAfter && type !== "fullscreen" && type !== "modal") {
-      setTimeout(() => wrapper.remove(), dismissAfter);
+      setTimeout(() => removeWidget(), dismissAfter);
     }
   }
 

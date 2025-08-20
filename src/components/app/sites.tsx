@@ -249,99 +249,116 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             >
               <Card className="bg-muted rounded-2xl overflow-hidden hover:bg-background">
                 <CardHeader className="flex items-center justify-between px-4 py-0">
-  <div className="flex items-center space-x-2">
+  <div className="flex items-center space-x-3">
     <CardTitle className="text-lg font-medium">{website.name}</CardTitle>
-    {/* Pinned switch */}
-    <Switch
-      checked={website.pinned ?? false}
-      onCheckedChange={async (checked) => {
-        try {
-          const res = await fetch(`/api/client/${website.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pinned: checked }),
-          });
+    
+    {/* Pinned switch with badge */}
+    <div className="flex items-center space-x-2">
+      <Switch
+        checked={website.pinned ?? false}
+        onCheckedChange={async (checked) => {
+          try {
+            const res = await fetch(`/api/client/${website.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ pinned: checked }),
+            });
 
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error || "Failed to update pinned state");
+            if (!res.ok) {
+              const errorData = await res.json();
+              throw new Error(errorData.error || "Failed to update pinned state");
+            }
+
+            // Update state locally
+            setWebsites((prev) =>
+              prev.map((w) =>
+                w.id === website.id ? { ...w, pinned: checked } : w
+              )
+            );
+
+            toast.success(`Pinned state updated: ${checked ? "ON" : "OFF"}`);
+          } catch (error: any) {
+            console.error("Error updating pinned state:", error);
+            toast.error(error.message || "Failed to update pinned state");
           }
-
-          // Update state locally
-          setWebsites((prev) =>
-            prev.map((w) =>
-              w.id === website.id ? { ...w, pinned: checked } : w
-            )
-          );
-
-          toast.success(`Pinned state updated: ${checked ? "ON" : "OFF"}`);
-        } catch (error: any) {
-          console.error("Error updating pinned state:", error);
-          toast.error(error.message || "Failed to update pinned state");
-        }
-      }}
-    />
+        }}
+      />
+      <span
+        className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+          website.pinned
+            ? "bg-green-500 text-foreground"
+            : "bg-muted text-foreground"
+        }`}
+      >
+        {website.pinned ? "Pinned" : "Unpinned"}
+      </span>
+    </div>
   </div>
 
   {editingWebsiteId !== website.id && (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          className="h-8 w-8 p-0 rounded-full"
-        >
-          <span className="sr-only">Open menu</span>
-          <MoreVertical className="h-4 w-4" />
-        </Button>
-      </PopoverTrigger>
-                      <PopoverContent align="end" className="w-[160px] p-2">
-                        <Button
-                          variant="ghost"
-                          className="justify-start w-full rounded-md hover:bg-secondary/50"
-                          onClick={() => handleEditClick(website)}
-                        >
-                          <Edit className="mr-2 h-4 w-4" /> Edit
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              className="justify-start w-full rounded-md hover:bg-secondary/50"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Are you absolutely sure?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will
-                                permanently delete the website.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteClick(website.id)}
-                              >
-                                Continue
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                        <Button
-                          variant="ghost"
-                          className="justify-start w-full rounded-md hover:bg-secondary/50"
-                          onClick={() => handleOpenEmbedDialog(website.id)}
-                        >
-                          <Target className="mr-2 h-4 w-4" /> Embed Script
-                        </Button>
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                </CardHeader>
+    <div className="flex items-center space-x-2">
+      {/* Configure button */}
+      <Button
+        variant="ghost"
+        className="h-8 px-3 rounded-md"
+        onClick={() => handleEditClick(website)}
+      >
+        <Edit className="mr-2 h-4 w-4" /> Configure
+      </Button>
+
+      {/* More menu */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            className="h-8 w-8 p-0 rounded-full"
+          >
+            <span className="sr-only">Open menu</span>
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-[160px] p-2">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                className="justify-start w-full rounded-md hover:bg-secondary/50"
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Are you absolutely sure?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the website.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => handleDeleteClick(website.id)}
+                >
+                  Continue
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Button
+            variant="ghost"
+            className="justify-start w-full rounded-md hover:bg-secondary/50"
+            onClick={() => handleOpenEmbedDialog(website.id)}
+          >
+            <Target className="mr-2 h-4 w-4" /> Embed Script
+          </Button>
+        </PopoverContent>
+      </Popover>
+    </div>
+  )}
+</CardHeader>
+
 
                 <Separator />
                 <CardContent className="px-4 py-1">
