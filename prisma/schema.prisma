@@ -19,7 +19,7 @@ model User {
   accounts      Account[]
   role          String?
 
-  clients Client[] @relation("UserClients") // 👈 Add this line
+  clients Client[] @relation("UserClients") 
 
   banned     Boolean?
   banReason  String?

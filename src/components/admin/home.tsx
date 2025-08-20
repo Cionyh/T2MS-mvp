@@ -180,7 +180,7 @@ export default function DashboardPage() {
       {/* Chart Section */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <Card>
+          <Card className="bg-muted">
             <CardHeader>
               <CardTitle>Total Websites</CardTitle>
               <CardDescription>Current total number of registered websites</CardDescription>
