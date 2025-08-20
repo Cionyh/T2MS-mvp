@@ -40,6 +40,8 @@ import {
 import { useAdminClients } from "@/lib/hooks/useAdminClients";
 import { useTotalUsers } from "@/lib/hooks/useTotalUsers";
 import { useAdminMessages } from "@/lib/hooks/useAdminMessage";
+import { Skeleton } from "../ui/skeleton";
+import { useSession } from "@/lib/auth-client";
 
 // ** Custom Tooltip for Charts
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -63,6 +65,10 @@ export default function DashboardPage() {
   });
   const totalClients = clientsData?.pagination.total ?? 0;
 
+   const { data: session, isPending } = useSession();
+   const fullName = session?.user?.name?.trim() || "Guest";
+   const firstName = fullName.split(" ")[0];
+
   // ** Fetch total users
   const { total: totalUsers, isLoading: usersLoading } = useTotalUsers();
 
@@ -85,7 +91,16 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">Welcome back,</h2>
+          <h2 className="text-xl font-bold tracking-tight">
+            Welcome back,{" "}
+            <span className="font-bold">
+              {isPending ? (
+                <Skeleton className="inline-block h-6 w-24 rounded" />
+              ) : (
+                firstName
+              )}
+            </span>
+          </h2>
           <p className="text-muted-foreground">
             Here's a snapshot of T2MS performance.
           </p>
@@ -102,8 +117,8 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {clientsLoading ? "Loading..." : totalClients}
-              </div>
+  {clientsLoading ? <Skeleton className="h-8 w-24" /> : totalClients}
+</div>
               <p className="text-xs text-muted-foreground flex items-center">
                 <ArrowUpRight className="h-4 w-4 text-green-500" />
                 Manage all the registered sites
@@ -120,8 +135,8 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {usersLoading ? "Loading..." : totalUsers}
-              </div>
+  {usersLoading ? <Skeleton className="h-8 w-24" /> : totalUsers}
+</div>
               <p className="text-xs text-muted-foreground flex items-center">
                 <ArrowUpRight className="h-4 w-4 text-green-500" />
                 Manage all the registered users
@@ -131,15 +146,15 @@ export default function DashboardPage() {
         </Link>
 
         <Link href={"/admin/dashboard/messages"}>
-          <Card>
+          <Card className="bg-primary/40">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Messages Served</CardTitle>
               <MessageSquare className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {messagesLoading ? "Loading..." : totalMessages}
-              </div>
+             <div className="text-2xl font-bold">
+  {messagesLoading ? <Skeleton className="h-8 w-24" /> : totalMessages}
+</div>
               <p className="text-xs text-muted-foreground flex items-center">
                 <ArrowUpRight className="h-4 w-4 text-green-500" />
                 Track all messages sent by clients
@@ -199,7 +214,7 @@ export default function DashboardPage() {
 
         {/* Quick Links */}
         <div className="lg:col-span-1 space-y-6">
-          <Card>
+          <Card className="bg-muted/40">
             <CardHeader>
               <CardTitle>Quick Links</CardTitle>
             </CardHeader>

@@ -270,9 +270,9 @@ export async function GET() {
       }
     }
 
-    if (dismissAfter && type !== "fullscreen" && type !== "modal") {
-      setTimeout(() => removeWidget(), dismissAfter);
-    }
+    if (type !== "ticker" && dismissAfter && type !== "fullscreen" && type !== "modal") {
+  setTimeout(() => removeWidget(), dismissAfter);
+}
   }
 
   function escapeHtml(text) {

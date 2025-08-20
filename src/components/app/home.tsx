@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "@/lib/auth-client";
+import { Skeleton } from "../ui/skeleton";
 
 // The `useMessages` hook is no longer needed here, so we can remove it.
 
@@ -38,6 +40,10 @@ export default function ClientDashboardPage({
   //    We can calculate it directly from the props.
   const siteCount = websites ? websites.length : 0;
 
+  const { data: session, isPending } = useSession();
+  const fullName = session?.user?.name?.trim() || "Guest";
+  const firstName = fullName.split(" ")[0];
+
   // 3. The `useMessages` hook and all its related logic are GONE.
   //    This makes the component lighter and faster.
 
@@ -45,7 +51,16 @@ export default function ClientDashboardPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
+          <h2 className="text-xl font-bold tracking-tight">
+                      Welcome back,{" "}
+                      <span className="font-bold">
+                        {isPending ? (
+                          <Skeleton className="inline-block h-6 w-24 rounded" />
+                        ) : (
+                          firstName
+                        )}
+                      </span>
+                    </h2>
           <p className="text-muted-foreground">
             Here’s a quick overview of your activity.
           </p>
