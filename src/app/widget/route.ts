@@ -1,13 +1,5 @@
 import { NextResponse } from "next/server";
 
-export function hexToRgba(hex: string, alpha: number): string {
-  const sanitizedHex = hex.startsWith("#") ? hex.slice(1) : hex;
-  const r = parseInt(sanitizedHex.slice(0, 2), 16);
-  const g = parseInt(sanitizedHex.slice(2, 4), 16);
-  const b = parseInt(sanitizedHex.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
 
 export async function GET() {
   const js = `
@@ -86,29 +78,25 @@ export async function GET() {
     const contentDiv = wrapper.querySelector(".t2ms-content");
 
     Object.assign(wrapper.style, {
-  position: "fixed",
-  zIndex: "999999",
-  fontFamily: font || "Arial, sans-serif",
-  backgroundColor: bgColor ? hexToRgba(bgColor, 0.35) : "rgba(255,255,255,0.35)", // semi-transparent
-  backdropFilter: "blur(12px)",           // blur behind content
-  WebkitBackdropFilter: "blur(12px)",     // Safari support
-  border: "1px solid rgba(255, 255, 255, 0.25)", // subtle frosted border
-  color: textColor || "#000",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "1em 1.5em",
-  paddingRight: "3rem",
-  boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
-  borderRadius: "12px",
-  textAlign: "center",
-  cursor: "default",
-  opacity: "0",
-  transition: "all 0.4s ease",
-  boxSizing: "border-box",
-  overflow: "hidden",
-});
-
+      position: "fixed",
+      zIndex: "999999",
+      fontFamily: font || "Arial, sans-serif",
+      backgroundColor: bgColor || "#fff",
+      color: textColor || "#000",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "1em 1.5em",
+      paddingRight: "3rem",
+      boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
+      borderRadius: "12px",
+      textAlign: "center",
+      cursor: "default",
+      opacity: "0",
+      transition: "all 0.4s ease",
+      boxSizing: "border-box",
+      overflow: "hidden",
+    });
 
     Object.assign(btn.style, {
       position: "absolute",
@@ -259,6 +247,8 @@ export async function GET() {
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
+          padding: "2em 2.5em",  
+          borderRadius: "12px",   
         });
         Object.assign(contentDiv.style, {
           fontSize: "1.5em",
