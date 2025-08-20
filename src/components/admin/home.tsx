@@ -146,16 +146,16 @@ export default function DashboardPage() {
         </Link>
 
         <Link href={"/admin/dashboard/messages"}>
-          <Card className="bg-primary">
+          <Card className="bg-muted">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Messages Served</CardTitle>
-              <MessageSquare className="h-5 w-5 text-muted-foreground" />
+              <MessageSquare className="h-5 w-5 text-foreground" />
             </CardHeader>
             <CardContent>
              <div className="text-2xl font-bold">
-  {messagesLoading ? <Skeleton className="h-8 w-24 bg-primary/60" /> : totalMessages}
+  {messagesLoading ? <Skeleton className="h-8 w-24" /> : totalMessages}
 </div>
-              <p className="text-xs text-muted-foreground flex items-center">
+              <p className="text-xs text-foreground flex items-center">
                 <ArrowUpRight className="h-4 w-4 text-green-500" />
                 Track all messages sent by clients
               </p>
