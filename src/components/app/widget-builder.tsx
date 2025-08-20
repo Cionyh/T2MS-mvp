@@ -43,7 +43,7 @@ const clientSchema = z.object({
 
 // Widget validation schema
 const widgetSchema = z.object({
-  type: z.enum(["banner", "popup", "fullscreen", "modal"]),
+  type: z.enum(["banner", "popup", "fullscreen", "modal", "ticker"]),
   bgColor: z.string().regex(/^#([0-9A-Fa-f]{3}){1,2}$/, { message: "Invalid hex color code." }),
   textColor: z.string().regex(/^#([0-9A-Fa-f]{3}){1,2}$/, { message: "Invalid hex color code." }),
   font: z.string().min(1, { message: "Font is required." }),
@@ -261,20 +261,21 @@ export default function ClientWidgetBuilder() {
                           render={({ field }) => (
                             <FormItem>
                               <Label>Widget Type</Label>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select type" />
-                                  </SelectTrigger>
-                                </FormControl>
-                               <SelectContent>
-  <SelectItem value="banner">Banner</SelectItem>
-  <SelectItem value="popup">Popup</SelectItem>
-  <SelectItem value="fullscreen">Fullscreen</SelectItem>
-  <SelectItem value="modal">Modal</SelectItem> {/* Added modal */}
-</SelectContent>
+                             <Select onValueChange={field.onChange} value={field.value}>
+  <FormControl>
+    <SelectTrigger>
+      <SelectValue placeholder="Select type" />
+    </SelectTrigger>
+  </FormControl>
+  <SelectContent>
+    <SelectItem value="banner">Banner</SelectItem>
+    <SelectItem value="popup">Popup</SelectItem>
+    <SelectItem value="fullscreen">Fullscreen</SelectItem>
+    <SelectItem value="modal">Modal</SelectItem>
+    <SelectItem value="ticker">Ticker</SelectItem> {/* ✅ Added ticker */}
+  </SelectContent>
+</Select>
 
-                              </Select>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -390,6 +391,30 @@ export default function ClientWidgetBuilder() {
   {type === "fullscreen" && (
     <p className="text-sm">Fullscreen overlay with announcement.</p>
   )}
+  {type === "ticker" && (
+  <div
+    className="overflow-hidden whitespace-nowrap w-full relative"
+    style={{ fontFamily: font, fontSize: "1.25em" }} // slightly larger
+  >
+    <div
+      className="inline-block animate-tickerScroll"
+      style={{ paddingLeft: "100%" }}
+    >
+      This is your ticker widget scrolling text…
+    </div>
+    <style jsx>{`
+      @keyframes tickerScroll {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-100%); }
+      }
+      .animate-tickerScroll {
+        display: inline-block;
+        animation: tickerScroll 10s linear infinite;
+      }
+    `}</style>
+  </div>
+)}
+
   {type === "modal" && (
     <div className="relative">
       <div className="fixed inset-0 bg-black/40 flex items-center justify-center rounded">

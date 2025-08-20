@@ -24,13 +24,11 @@ export async function GET() {
     const overlay = document.getElementById(WIDGET_ID + "-overlay");
     if (overlay) overlay.remove();
 
-    // restore scroll if we locked it
     if (document.body.dataset.t2msLock === "1") {
       document.body.style.overflow = "";
       delete document.body.dataset.t2msLock;
     }
 
-    // cleanup key handler
     if (window.__t2msEscHandler__) {
       window.removeEventListener("keydown", window.__t2msEscHandler__);
       window.__t2msEscHandler__ = null;
@@ -66,7 +64,6 @@ export async function GET() {
     wrapper.id = WIDGET_ID;
     wrapper.setAttribute("aria-live", "polite");
 
-    // Content + close button
     wrapper.innerHTML = \`
       <div class="t2ms-content">\${escapeHtml(content)}</div>
       <button class="t2ms-close" aria-label="Close notification" title="Close">&times;</button>
@@ -75,7 +72,6 @@ export async function GET() {
     const btn = wrapper.querySelector(".t2ms-close");
     const contentDiv = wrapper.querySelector(".t2ms-content");
 
-    // Base styles
     Object.assign(wrapper.style, {
       position: "fixed",
       zIndex: "999999",
@@ -86,7 +82,7 @@ export async function GET() {
       alignItems: "center",
       justifyContent: "center",
       padding: "1em 1.5em",
-      paddingRight: "3rem", // leave space for the close button
+      paddingRight: "3rem",
       boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
       borderRadius: "12px",
       textAlign: "center",
@@ -97,7 +93,6 @@ export async function GET() {
       overflow: "hidden",
     });
 
-    // Close button pinned top-right
     Object.assign(btn.style, {
       position: "absolute",
       top: "8px",
@@ -123,7 +118,6 @@ export async function GET() {
     };
     btn.onclick = () => removeWidget();
 
-    // Type-specific styles + animation
     switch (type) {
       case "banner": {
         wrapper.setAttribute("role", "status");
@@ -132,7 +126,6 @@ export async function GET() {
           left: "0",
           width: "100%",
           borderRadius: "0",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
           padding: "1em 3rem 1em 1.25em",
         });
         document.body.appendChild(wrapper);
@@ -140,6 +133,38 @@ export async function GET() {
           wrapper.style.top = "0";
           wrapper.style.opacity = "1";
         });
+        break;
+      }
+
+      case "ticker": {
+        wrapper.setAttribute("role", "status");
+        Object.assign(wrapper.style, {
+          top: "0",
+          left: "0",
+          width: "100%",
+          borderRadius: "0",
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+        });
+
+        Object.assign(contentDiv.style, {
+          display: "inline-block",
+          paddingLeft: "100%",
+          animation: "t2ms-ticker-scroll 12s linear infinite",
+          fontSize: "1.5em",
+        });
+
+        const styleTag = document.createElement("style");
+        styleTag.textContent = \`
+          @keyframes t2ms-ticker-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+          }
+        \`;
+        document.head.appendChild(styleTag);
+
+        document.body.appendChild(wrapper);
+        requestAnimationFrame(() => (wrapper.style.opacity = "1"));
         break;
       }
 
@@ -171,7 +196,6 @@ export async function GET() {
           justifyContent: "center",
           alignItems: "center",
           fontSize: "1.5em",
-          padding: "2.5em 3.5em 2.5em 2.5em", // extra right padding for ×
           borderRadius: "0",
         });
         Object.assign(contentDiv.style, {
@@ -179,15 +203,10 @@ export async function GET() {
           lineHeight: "1.4",
           maxWidth: "min(800px, 90vw)",
         });
-
-        // Lock scroll while open
         document.body.style.overflow = "hidden";
         document.body.dataset.t2msLock = "1";
-
         document.body.appendChild(wrapper);
         requestAnimationFrame(() => (wrapper.style.opacity = "1"));
-
-        // ESC to close
         window.__t2msEscHandler__ = (e) => { if (e.key === "Escape") removeWidget(); };
         window.addEventListener("keydown", window.__t2msEscHandler__);
         break;
@@ -197,7 +216,6 @@ export async function GET() {
         wrapper.setAttribute("role", "dialog");
         wrapper.setAttribute("aria-modal", "true");
 
-        // overlay
         const overlay = document.createElement("div");
         overlay.id = WIDGET_ID + "-overlay";
         Object.assign(overlay.style, {
@@ -224,8 +242,6 @@ export async function GET() {
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          padding: "2.25em 3.25em 2em 2em", // extra right padding for ×
-          fontSize: "1.2em",
         });
         Object.assign(contentDiv.style, {
           fontSize: "1.5em",
@@ -233,7 +249,6 @@ export async function GET() {
           maxWidth: "min(680px, 90vw)",
         });
 
-        // Lock scroll while open
         document.body.style.overflow = "hidden";
         document.body.dataset.t2msLock = "1";
 
@@ -243,7 +258,6 @@ export async function GET() {
           wrapper.style.opacity = "1";
         });
 
-        // ESC to close
         window.__t2msEscHandler__ = (e) => { if (e.key === "Escape") removeWidget(); };
         window.addEventListener("keydown", window.__t2msEscHandler__);
         break;
@@ -256,7 +270,6 @@ export async function GET() {
       }
     }
 
-    // Auto-dismiss (not for fullscreen or modal)
     if (dismissAfter && type !== "fullscreen" && type !== "modal") {
       setTimeout(() => removeWidget(), dismissAfter);
     }

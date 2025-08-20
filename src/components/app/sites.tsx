@@ -388,7 +388,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                           className="w-full"
                         />
                       </div>
-                      <div>
+                     <div>
   <Label className="mb-2">Default Widget Type</Label>
   <Select
     onValueChange={setEditedDefaultType}
@@ -401,7 +401,8 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       <SelectItem value="banner">Banner</SelectItem>
       <SelectItem value="popup">Popup</SelectItem>
       <SelectItem value="fullscreen">Fullscreen</SelectItem>
-      <SelectItem value="modal">Modal</SelectItem> {/* Added modal option */}
+      <SelectItem value="modal">Modal</SelectItem>
+      <SelectItem value="ticker">Ticker</SelectItem> 
     </SelectContent>
   </Select>
 </div>
