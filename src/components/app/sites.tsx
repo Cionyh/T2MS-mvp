@@ -300,10 +300,10 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       {/* Configure button */}
       <Button
         variant="ghost"
-        className="h-8 px-3 rounded-md"
+        className="h-8 px-3 rounded-full border border-primary"
         onClick={() => handleEditClick(website)}
       >
-        <Edit className="mr-2 h-4 w-4" /> Configure
+         Configure
       </Button>
 
       {/* More menu */}
@@ -362,159 +362,152 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
 
                 <Separator />
                 <CardContent className="px-4 py-1">
-                  {editingWebsiteId === website.id ? (
-                    <div className="space-y-3">
-                      <div>
-                        <Label className="mb-2">Business Name</Label>
-                        <Input
-                          value={editedName}
-                          onChange={(e) => setEditedName(e.target.value)}
-                          className="w-full"
-                        />
-                      </div>
-                      <div>
-                        <Label className="mb-2" >Domain</Label>
-                        <Input
-                          value={editedDomain}
-                          onChange={(e) => setEditedDomain(e.target.value)}
-                          className="w-full"
-                        />
-                      </div>
-                      <div>
-                        <Label className="mb-2">Phone</Label>
-                        <Input
-                          value={editedPhone}
-                          onChange={(e) => setEditedPhone(e.target.value)}
-                          className="w-full"
-                        />
-                      </div>
-                     <div>
-  <Label className="mb-2">Default Widget Type</Label>
-  <Select
-    onValueChange={setEditedDefaultType}
-    defaultValue={editedDefaultType}
-  >
-    <SelectTrigger className="w-full">
-      <SelectValue />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="banner">Banner</SelectItem>
-      <SelectItem value="popup">Popup</SelectItem>
-      <SelectItem value="fullscreen">Fullscreen</SelectItem>
-      <SelectItem value="modal">Modal</SelectItem>
-      <SelectItem value="ticker">Ticker</SelectItem> 
-    </SelectContent>
-  </Select>
-</div>
+  {editingWebsiteId === website.id ? (
+    <div className="space-y-3">
+      {/* [Keep all your edit fields exactly as they are] */}
+      <div>
+        <Label className="mb-2">Business Name</Label>
+        <Input
+          value={editedName}
+          onChange={(e) => setEditedName(e.target.value)}
+          className="w-full"
+        />
+      </div>
+      <div>
+        <Label className="mb-2">Domain</Label>
+        <Input
+          value={editedDomain}
+          onChange={(e) => setEditedDomain(e.target.value)}
+          className="w-full"
+        />
+      </div>
+      <div>
+        <Label className="mb-2">Phone</Label>
+        <Input
+          value={editedPhone}
+          onChange={(e) => setEditedPhone(e.target.value)}
+          className="w-full"
+        />
+      </div>
+      <div>
+        <Label className="mb-2">Default Widget Type</Label>
+        <Select
+          onValueChange={setEditedDefaultType}
+          defaultValue={editedDefaultType}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="banner">Banner</SelectItem>
+            <SelectItem value="popup">Popup</SelectItem>
+            <SelectItem value="fullscreen">Fullscreen</SelectItem>
+            <SelectItem value="modal">Modal</SelectItem>
+            <SelectItem value="ticker">Ticker</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="mb-2">Default Font Family</Label>
+        <Input
+          value={editedDefaultFont}
+          onChange={(e) => setEditedDefaultFont(e.target.value)}
+        />
+      </div>
+      <div>
+        <Label className="mb-2">Default Background Color</Label>
+        <div className="flex items-center gap-2">
+          <Input
+            type="color"
+            value={editedDefaultBgColor}
+            onChange={(e) => setEditedDefaultBgColor(e.target.value)}
+            className="h-10 w-12 p-1"
+          />
+          <Input
+            value={editedDefaultBgColor}
+            onChange={(e) => setEditedDefaultBgColor(e.target.value)}
+            className="flex-1"
+          />
+        </div>
+      </div>
+      <div>
+        <Label className="mb-2">Default Text Color</Label>
+        <div className="flex items-center gap-2">
+          <Input
+            type="color"
+            value={editedDefaultTextColor}
+            onChange={(e) => setEditedDefaultTextColor(e.target.value)}
+            className="h-10 w-12 p-1"
+          />
+          <Input
+            value={editedDefaultTextColor}
+            onChange={(e) => setEditedDefaultTextColor(e.target.value)}
+            className="flex-1"
+          />
+        </div>
+      </div>
+      <div>
+        <Label className="mb-2">Default Dismiss After (ms)</Label>
+        <Input
+          type="number"
+          value={editedDefaultDismissAfter}
+          onChange={(e) => setEditedDefaultDismissAfter(Number(e.target.value))}
+          placeholder="5000"
+        />
+      </div>
+      <div className="flex justify-end space-x-2 pt-2">
+        <Button onClick={() => handleSaveClick(website.id)}>Save</Button>
+        <Button onClick={handleCancelClick} variant="outline">
+          Cancel
+        </Button>
+      </div>
+    </div>
+  ) : (
+    <div className="space-y-3">
+      <p>
+        <span className="font-semibold">Domain:</span> {website.domain}
+      </p>
+      <p>
+        <span className="font-semibold">Phone:</span> {website.phone}
+      </p>
+      <p className="flex items-center space-x-2">
+        <span className="font-semibold">Client ID:</span>
+        <span className="font-mono text-sm">
+          {showClientId[website.id] ? website.id : `${website.id.slice(0, 6)}...`}
+        </span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => toggleClientIdVisibility(website.id)}
+        >
+          {showClientId[website.id] ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
+          )}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => handleCopyClientId(website.id)}
+        >
+          <Copy className="h-4 w-4" />
+        </Button>
+      </p>
 
-                      <div>
-                        <Label className="mb-2">Default Font Family</Label>
-                        <Input
-                          value={editedDefaultFont}
-                          onChange={(e) => setEditedDefaultFont(e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label className="mb-2">Default Background Color</Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="color"
-                            value={editedDefaultBgColor}
-                            onChange={(e) =>
-                              setEditedDefaultBgColor(e.target.value)
-                            }
-                            className="h-10 w-12 p-1"
-                          />
-                          <Input
-                            value={editedDefaultBgColor}
-                            onChange={(e) =>
-                              setEditedDefaultBgColor(e.target.value)
-                            }
-                            className="flex-1"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="mb-2">Default Text Color</Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="color"
-                            value={editedDefaultTextColor}
-                            onChange={(e) =>
-                              setEditedDefaultTextColor(e.target.value)
-                            }
-                            className="h-10 w-12 p-1"
-                          />
-                          <Input
-                            value={editedDefaultTextColor}
-                            onChange={(e) =>
-                              setEditedDefaultTextColor(e.target.value)
-                            }
-                            className="flex-1"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="mb-2"> Default Dismiss After (ms)</Label>
-                        <Input
-                          type="number"
-                          value={editedDefaultDismissAfter}
-                          onChange={(e) =>
-                            setEditedDefaultDismissAfter(
-                              Number(e.target.value)
-                            )
-                          }
-                          placeholder="5000"
-                        />
-                      </div>
-                      <div className="flex justify-end space-x-2 pt-2">
-                        <Button onClick={() => handleSaveClick(website.id)}>
-                          Save
-                        </Button>
-                        <Button onClick={handleCancelClick} variant="outline">
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p>
-                        <span className="font-semibold">Domain:</span>{" "}
-                        {website.domain}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Phone:</span>{" "}
-                        {website.phone}
-                      </p>
-                      <p className="flex items-center space-x-2">
-                        <span className="font-semibold">Client ID:</span>
-                        <span className="font-mono text-sm">
-                          {showClientId[website.id]
-                            ? website.id
-                            : `${website.id.slice(0, 6)}...`}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => toggleClientIdVisibility(website.id)}
-                        >
-                          {showClientId[website.id] ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleCopyClientId(website.id)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
+      {/* ✅ Embed Script Button Moved Here */}
+      <div className="pt-2">
+        <Button
+          variant="outline"
+          className="w-full bg-primary/10 rounded-full hover:bg-primary/20 text-foreground"
+          onClick={() => handleOpenEmbedDialog(website.id)}
+        >
+          <Target className="mr-2 h-4 w-4" /> Copy Embed Script 
+        </Button>
+      </div>
+    </div>
+  )}
+</CardContent>
               </Card>
             </motion.div>
           ))}
