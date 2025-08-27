@@ -12,6 +12,8 @@ import { About } from "@/components/landing/about";
 import { Clients } from "@/components/landing/clients";
 import { FAQSection } from "@/components/landing/FAQ";
 import { CompatibilityCard } from "@/components/landing/co-card";
+import { DemoPlaceholder } from "@/components/landing/demo";
+import { LiveSandbox } from "@/components/landing/sandbox";
 
 const containerVariants: Variants = {
   initial: { opacity: 0 },
@@ -73,6 +75,8 @@ export default function Home() {
     >
       {/* Hero Section */}
       <Hero logoRef={logoRef} textVariants={textVariants} buttonVariants={buttonVariants}/>
+      <DemoPlaceholder />
+
 
       {/* How It Works Section */}
       <How  textVariants={textVariants}/> 
@@ -87,6 +91,9 @@ export default function Home() {
 
 
         <FAQSection />
+
+              <LiveSandbox />
+
 
 
       {/* Footer */}

@@ -14,6 +14,7 @@ import Image from "next/image";
 import { DotPattern } from "../magicui/dot-pattern";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
+import posthog from "@/lib/posthog"; // <-- import PostHog
 
 export function Hero({
   logoRef,
@@ -37,7 +38,6 @@ export function Hero({
     },
   };
 
-  // Choose logo based on theme
   const logoSrc = theme === "dark" ? "/images/logo_dark.png" : "/images/logo_light.png";
 
   return (
@@ -71,9 +71,7 @@ export function Hero({
           </CardDescription>
         </CardHeader>
 
-        {/* Image and buttons container */}
         <div className="flex flex-col lg:flex-row items-center justify-center gap-2 px-4 sm:px-8">
-          {/* Logo Image */}
           <div className="w-full flex justify-center px-4 mb-2">
             <Image
               src={logoSrc}
@@ -86,16 +84,27 @@ export function Hero({
             />
           </div>
 
-          {/* Buttons */}
           <motion.div
             className="flex flex-col gap-4 w-full items-center"
             variants={buttonVariants}
           >
-            <Button asChild size="lg" className="text-foreground w-full max-w-xs py-4">
+            <Button
+              asChild
+              size="lg"
+              className="text-foreground w-full max-w-xs py-4"
+              onClick={() => posthog.capture("register_site_click")}
+            >
               <Link href="/sign-in">Register Your Site</Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="w-full max-w-xs border-2 border-primary py-4">
-              <Link href="/">Learn More</Link>
+
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="w-full max-w-xs border-2 border-primary py-4"
+              onClick={() => posthog.capture("learn_more_click")}
+            >
+              <Link href="/learn-more">Learn More</Link>
             </Button>
           </motion.div>
         </div>

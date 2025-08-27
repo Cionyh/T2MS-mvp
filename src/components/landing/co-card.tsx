@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Globe, Webhook, Layout, Server, Plus, Facebook } from "lucide-react";
+import Image from "next/image";
+import { Plus } from "lucide-react";
 
 export function CompatibilityCard() {
   return (
@@ -31,30 +32,75 @@ export function CompatibilityCard() {
         </p>
 
         <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8">
-          <div className="flex items-center gap-2 sm:gap-3 bg-red-400 rounded-full px-4 sm:px-6 py-2 sm:py-3">
-            <Webhook className="h-5 sm:h-6 w-5 sm:w-6" />
-            <span className="font-semibold text-base sm:text-lg">WordPress</span>
+          {/* WordPress */}
+          <div className="flex items-center bg-white rounded-full px-4 sm:px-6 py-2 sm:py-3 shadow-none">
+            <Image
+              src="/images/wp.svg"
+              alt="WordPress"
+              width={32}
+              height={32}
+              className="h-9 w-9 sm:h-12 sm:w-12"
+            />
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 bg-purple-500 rounded-full px-4 sm:px-6 py-2 sm:py-3">
-            <Layout className="h-5 sm:h-6 w-5 sm:w-6" />
-            <span className="font-semibold text-base sm:text-lg">Wix</span>
+
+          {/* Wix */}
+          <div className="flex items-center bg-white rounded-full px-4 sm:px-6 py-2 sm:py-3 shadow-none">
+            <Image
+              src="/images/wix.svg"
+              alt="Wix"
+              width={32}
+              height={32}
+              className="h-9 w-9 sm:h-12 sm:w-12"
+            />
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 bg-green-500 rounded-full px-4 sm:px-6 py-2 sm:py-3">
-            <Server className="h-5 sm:h-6 w-5 sm:w-6" />
-            <span className="font-semibold text-base sm:text-lg">GoDaddy</span>
+
+          {/* Shopify */}
+          <div className="flex items-center bg-white rounded-full px-4 sm:px-6 py-2 sm:py-3 shadow-none">
+            <Image
+              src="/images/shopify.svg"
+              alt="Shopify"
+              width={32}
+              height={32}
+              className="h-9 w-9 sm:h-12 sm:w-12"
+            />
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 bg-yellow-500 rounded-full px-4 sm:px-6 py-2 sm:py-3">
-            <Globe className="h-5 sm:h-6 w-5 sm:w-6" />
-            <span className="font-semibold text-base sm:text-lg">Joomla</span>
+
+          {/* Squarespace */}
+          <div className="flex items-center bg-white rounded-full px-4 sm:px-6 py-2 sm:py-3 shadow-none">
+            <Image
+              src="/images/ss.svg"
+              alt="Squarespace"
+              width={32}
+              height={32}
+              className="h-9 w-9 sm:h-12 sm:w-12"
+            />
           </div>
-          {/* New Facebook compatibility item */}
-          <div className="flex items-center gap-2 sm:gap-3 bg-blue-500 rounded-full px-4 sm:px-6 py-2 sm:py-3">
-            <Facebook className="h-5 sm:h-6 w-5 sm:w-6" />
-            <span className="font-semibold text-base sm:text-lg">Facebook</span>
+
+          <div className="flex items-center bg-white rounded-full px-4 sm:px-6 py-2 sm:py-3 shadow-none">
+            <Image
+              src="/images/gd.svg"
+              alt="Squarespace"
+              width={32}
+              height={32}
+              className="h-9 w-9 sm:h-12 sm:w-12"
+            />
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 bg-muted border-2 border-primary rounded-full px-4 sm:px-6 py-2 sm:py-3">
-            <Plus className="h-5 sm:h-6 w-5 sm:w-6" />
-            <span className="font-semibold text-base sm:text-lg">and More</span>
+          <div className="flex items-center bg-white rounded-full px-4 sm:px-6 py-2 sm:py-3 shadow-none">
+            <Image
+              src="/images/joomla.svg"
+              alt="Squarespace"
+              width={32}
+              height={32}
+              className="h-9 w-9 sm:h-12 sm:w-12"
+            />
+          </div>
+
+          {/* "And More" */}
+          <div className="flex items-center bg-muted border border-primary rounded-full px-4 sm:px-6 py-2 sm:py-3">
+            <Plus className="h-3 sm:h-4 w-4 sm:w-5" />
+            <span className="font-semibold text-base sm:text-lg ml-2">
+              and More
+            </span>
           </div>
         </div>
       </div>

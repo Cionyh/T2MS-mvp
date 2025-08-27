@@ -15,6 +15,7 @@ import { motion } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
+import posthog from '@/lib/posthog'; // <-- import PostHog
 
 type NavLink = {
   label: string;
@@ -26,7 +27,6 @@ const navLinks: NavLink[] = [
   { label: 'How it works', href: '#how' },
   { label: 'FAQs', href: '#faqs' },
   { label: 'About Us', href: '#about' },
-
 ];
 
 export function Navbar() {
@@ -42,16 +42,14 @@ export function Navbar() {
       <div className="container flex items-center justify-between py-3 px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="text-lg font-semibold text-foreground">
-             <motion.p
-              variants={FADE_UP_ANIMATION_VARIANTS}
-              className="text-xl font-extrabold tracking-tighter sm:text-xl md:text-2xl lg:text-3xl font-serif"
-            >
-              <span
-                className="text-primary [text-shadow:0_0_20px_theme(colors.primary/20%)]"
-              >
-                Text2MySite
-              </span>
-            </motion.p>
+          <motion.p
+            variants={FADE_UP_ANIMATION_VARIANTS}
+            className="text-xl font-extrabold tracking-tighter sm:text-xl md:text-2xl lg:text-3xl font-serif"
+          >
+            <span className="text-primary [text-shadow:0_0_20px_theme(colors.primary/20%)]">
+              Text2MySite
+            </span>
+          </motion.p>
         </Link>
 
         {/* Desktop Nav */}
@@ -67,7 +65,10 @@ export function Navbar() {
           ))}
           <ThemeToggle />
           <Link href="/sign-in">
-            <Button className="bg-primary text-foreground hover:bg-primary/90 px-4 py-2 rounded-md shadow-sm transition-colors">
+            <Button
+              className="bg-primary text-foreground hover:bg-primary/90 px-4 py-2 rounded-md shadow-sm transition-colors"
+              onClick={() => posthog.capture("sign_in_click")}
+            >
               Sign In
             </Button>
           </Link>
@@ -102,7 +103,10 @@ export function Navbar() {
 
               <div className="mt-auto pt-4 border-t border-border">
                 <Link href="/sign-in">
-                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors">
+                  <Button
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors"
+                    onClick={() => posthog.capture("sign_in_click")}
+                  >
                     Sign In
                   </Button>
                 </Link>
