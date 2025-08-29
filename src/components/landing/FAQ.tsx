@@ -21,7 +21,11 @@ const faqs: FAQItem[] = [
   {
     question: "How quickly will my update appear on my site?",
     answer:
-      "Updates appear instantly — usually within 2-3 seconds — after you send a text from your registered phone number. Text It, Proof It, Send It. You Got This!",
+      "Within seconds — updates are instant once you send your text",
+  },
+  {
+     question: "Do I need to log in?",
+     answer: "No — updates are made by text only, no dashboard required."
   },
   {
     question: "Do I need to log in to make changes?",
@@ -29,19 +33,9 @@ const faqs: FAQItem[] = [
       "No. Once your number is verified, you can simply send a text message to update your site without logging in.",
   },
   {
-    question: "What kind of updates can I send?",
-    answer:
-      "You can send announcements, special offers, daily menus, new arrivals, event notifications, and more.",
-  },
-  {
-    question: "Does it work for multiple locations?",
-    answer:
-      "Yes, you can set up multiple sites or location pages and choose where each message is displayed.",
-  },
-  {
     question: "Is it secure?",
     answer:
-      "Absolutely. Only pre-approved phone numbers can send updates, and all data is transmitted over secure connections.",
+      "Absolutely. Only pre-approved phone numbers can send updates.",
   },
   {
     question: "How to contact us?",
@@ -51,18 +45,18 @@ const faqs: FAQItem[] = [
   {
     question: "What platforms does it work with?",
     answer:
-      "It works with any website that allows you to embed HTML/JavaScript code snippets, including popular platforms like WordPress, Wix, Squarespace, and custom-built sites.",  
+      "It works with any website that allows you to embed HTML/JavaScript code snippets.",  
   },
 
   {
     question: "Can I customize the appearance of the updates?",
     answer:
-      "Yes, you can customize the look and feel of the updates to match your brand's style and design.",
+      "Yes, you can customize the look and feel of the widget.",
   },
   {
     question: "How do I remove the widget?",
     answer:
-      "You can easily pin or unpin the widget from your site dashboard. If you need assistance, our support team is here to help.",
+      "You can easily pin or unpin the widget from your site dashboard.",
   },
 ];
 

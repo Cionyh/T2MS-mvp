@@ -114,10 +114,10 @@ export const PrivacyPolicyDialog: React.FC<PrivacyPolicyDialogProps> = ({
             <p>
               Questions? Contact:{" "}
               <a
-                href="mailto:support@text2mysite.com"
+                href="mailto:support@t2ms.biz"
                 className="text-primary underline hover:text-primary/80 transition-colors"
               >
-                support@text2mysite.com
+                support@t2ms.biz
               </a>
               <br />
               Morning Noon Night, LLC - 8704 South Sepulveda Blvd, #1052 - Westchester, CA 90045

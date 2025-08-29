@@ -2,15 +2,9 @@
 /* eslint-disable */
 
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
-import { TermsOfUseDialog } from "./terms";
-import { PrivacyPolicyDialog } from "./privacy";
 import Link from "next/link";
 
 export function Footer({ footerRef }: { footerRef?: any }) {
-  const [termsOpen, setTermsOpen] = useState(false);
-  const [privacyOpen, setPrivacyOpen] = useState(false);
-
   return (
     <footer
       ref={footerRef}
@@ -31,24 +25,24 @@ export function Footer({ footerRef }: { footerRef?: any }) {
 
           {/* Legal Links */}
           <div className="flex-1 flex flex-col justify-center gap-4">
-            <button
+            <Link
+              href="/legal/terms"
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              onClick={() => setTermsOpen(true)}
             >
               Terms of Use
-            </button>
-            <button
+            </Link>
+            <Link
+              href="/legal/privacy"
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              onClick={() => setPrivacyOpen(true)}
             >
               Privacy Policy
-            </button>
-            <button
+            </Link>
+            <Link
+              href="/legal/sms-terms"
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              onClick={() => setPrivacyOpen(true)}
             >
               SMS Terms & Conditions
-            </button>
+            </Link>
           </div>
 
           {/* Contact Info */}
@@ -127,10 +121,6 @@ export function Footer({ footerRef }: { footerRef?: any }) {
           </details>
         </div>
       </Card>
-
-      {/* Dialogs */}
-      <TermsOfUseDialog open={termsOpen} onOpenChange={setTermsOpen} />
-      <PrivacyPolicyDialog open={privacyOpen} onOpenChange={setPrivacyOpen} />
     </footer>
   );
 }
