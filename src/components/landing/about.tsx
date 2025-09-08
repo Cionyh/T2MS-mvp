@@ -27,8 +27,7 @@ export function About({
              About Us
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
-             Text2MySite is a platform that allows small business owners to update their live websites just by sending a simple text message.
-            </p>
+            Text2MySite is a breaktrhough platform that allows small business owners to update their live websites just by sending a simple text message. Whether it's posting holiday hours, announcing special offers, or adjusting your status for the day, Text2MySite makes it effortless - no dashboard, no login, no stress.  Your message is sent, and your website is instantly updated.            </p>
           </div>
 
 

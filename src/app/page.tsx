@@ -75,25 +75,16 @@ export default function Home() {
     >
       {/* Hero Section */}
       <Hero logoRef={logoRef} textVariants={textVariants} buttonVariants={buttonVariants}/>
-      <DemoPlaceholder />
+        <About footerRef={footerRef} textVariants={textVariants} buttonVariants={buttonVariants} />
+               <How  textVariants={textVariants}/> 
+               <DemoPlaceholder />
 
+                             <LiveSandbox />
+                             <CompatibilityCard />  
+                             <Clients textVariants={textVariants}/>
 
-      {/* How It Works Section */}
-      <How  textVariants={textVariants}/> 
-
-      <CompatibilityCard />     
-
-       <Clients textVariants={textVariants}/>
-
-
-
-             <About footerRef={footerRef} textVariants={textVariants} buttonVariants={buttonVariants} />
-
-
-        <FAQSection />
-
-              <LiveSandbox />
-
+                                <FAQSection />
+      
 
 
       {/* Footer */}

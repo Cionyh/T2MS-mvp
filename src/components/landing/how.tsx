@@ -64,8 +64,7 @@ export function How({ textVariants }: HowProps) {
                                  How it works
             </CardTitle>
             <CardDescription className="text-lg text-muted-foreground">
-              You register your website with Text2MySite. We assign you a unique keyword and set up specific sections of your site — like banners, tickers, or pop-ups — to receive text-based updates.
-            </CardDescription>
+            You register your website with Text2MySite.  We verify your cell phone number and assign you a unique account number.  You select specific sections of your website for banners, tickers, pop-ups or full page -- to receive text-based updates.  Simply send a text message to our number, and Text2MySite takes care of the rest.  Your message appears in real-time where customers can see it.            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-8 md:grid-cols-3">

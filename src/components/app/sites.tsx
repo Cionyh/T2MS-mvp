@@ -52,6 +52,16 @@ import { DotPattern } from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
 import { EmbedDialog } from "./embed-dialog"; 
 import { Switch } from "@/components/ui/switch";
+import { Info } from "lucide-react";
+
+// Widget type instructions
+const widgetTypeInstructions = {
+  banner: "Displays a horizontal banner at the top or bottom of the page. Great for announcements and promotions.",
+  popup: "Shows a small popup notification in the corner of the screen. Perfect for alerts and quick messages.",
+  fullscreen: "Covers the entire screen with your message. Ideal for important announcements or maintenance notices.",
+  modal: "Displays a centered dialog box that requires user interaction. Best for confirmations and detailed information.",
+  ticker: "Creates a scrolling text banner that moves across the screen. Great for news updates and live information."
+};
 
 // Match the Prisma Client model exactly
 interface Website {
@@ -399,13 +409,53 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="banner">Banner</SelectItem>
-            <SelectItem value="popup">Popup</SelectItem>
-            <SelectItem value="fullscreen">Fullscreen</SelectItem>
-            <SelectItem value="modal">Modal</SelectItem>
-            <SelectItem value="ticker">Ticker</SelectItem>
+            <SelectItem value="banner">
+              <div className="flex flex-col">
+                <span className="font-medium">Banner</span>
+                <span className="text-xs text-muted-foreground">Horizontal banner for announcements</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="popup">
+              <div className="flex flex-col">
+                <span className="font-medium">Popup</span>
+                <span className="text-xs text-muted-foreground">Small corner notification</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="fullscreen">
+              <div className="flex flex-col">
+                <span className="font-medium">Fullscreen</span>
+                <span className="text-xs text-muted-foreground">Covers entire screen</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="modal">
+              <div className="flex flex-col">
+                <span className="font-medium">Modal</span>
+                <span className="text-xs text-muted-foreground">Centered dialog box</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="ticker">
+              <div className="flex flex-col">
+                <span className="font-medium">Ticker</span>
+                <span className="text-xs text-muted-foreground">Scrolling text banner</span>
+              </div>
+            </SelectItem>
           </SelectContent>
         </Select>
+        
+        {/* Widget Type Instructions */}
+        <div className="mt-2 p-3 bg-muted/50 rounded-lg border">
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-foreground mb-1">
+                {editedDefaultType.charAt(0).toUpperCase() + editedDefaultType.slice(1)} Widget
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {widgetTypeInstructions[editedDefaultType as keyof typeof widgetTypeInstructions]}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
       <div>
         <Label className="mb-2">Default Font Family</Label>

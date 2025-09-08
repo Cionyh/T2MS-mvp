@@ -74,52 +74,6 @@ export function Footer({ footerRef }: { footerRef?: any }) {
           </p>
         </div>
 
-        {/* Additional Legal Disclosures */}
-        <div className="mt-6 px-4 space-y-6 text-xs text-muted-foreground">
-          {/* Opt-In Consent for SMS */}
-          <details className="group">
-            <summary className="cursor-pointer list-none select-none hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded">
-              <strong>Opt-In (End-User Consent for SMS)</strong>
-            </summary>
-            <div className="mt-2 leading-relaxed pl-2 border-l-2 border-primary/30">
-              By providing your mobile number and using Text2MySite (T2MS),
-              you consent to receive text messages related to website updates,
-              account activity, and service notifications. Message frequency
-              varies based on use. Standard message and data rates may apply.
-              Consent is not a condition of purchase. You may opt out of
-              receiving messages at any time by replying STOP. For help, reply
-              HELP.
-            </div>
-          </details>
-
-          {/* Client Cancellation Policy */}
-          <details className="group">
-            <summary className="cursor-pointer list-none select-none hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded">
-              <strong>Opt-Out / Client Cancellation (Business Customers of T2MS)</strong>
-            </summary>
-            <div className="mt-2 leading-relaxed pl-2 border-l-2 border-primary/30">
-              Clients may cancel their T2MS account at any time by providing written
-              notice to{" "}
-              <a
-                href="mailto:support@t2ms.biz"
-                className="text-primary hover:underline"
-              >
-                support@t2ms.biz
-              </a>
-              . Account cancellation requests must be received at least 10 business
-              days prior to the next billing cycle to avoid additional charges.
-              <br />
-              <br />
-              In the event of non-payment, T2MS reserves the right to suspend or
-              terminate services immediately. Clients remain responsible for any
-              unpaid balances accrued prior to cancellation or suspension.
-              <br />
-              <br />
-              Once an account is cancelled, associated numbers, keywords, and content
-              may be permanently deleted and cannot be recovered.
-            </div>
-          </details>
-        </div>
       </Card>
     </footer>
   );
