@@ -68,6 +68,8 @@ export function LiveSandbox() {
               isSmallScreen ? 'text-sm' : 'text-base'
             }`}
           >
+            
+
             {text}
           </motion.div>
         );
@@ -187,6 +189,9 @@ export function LiveSandbox() {
 
   return (
     <section className="w-full px-2 sm:px-4 py-8 sm:py-12">
+         <h2 className="font-extrabold tracking-tight bg-gradient-to-b from-foreground via-foreground to-background bg-clip-text text-transparent text-3xl sm:text-4xl md:text-5xl font-serif mb-10 text-center">
+      See Text2MySite in action
+    </h2>
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-8 max-w-6xl mx-auto">
         {/* Controls */}
         <div className="flex-1 bg-background border border-muted rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg">

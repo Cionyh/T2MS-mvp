@@ -12,7 +12,7 @@ export function DemoPlaceholder() {
         transition={{ duration: 0.7 }}
         className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-serif text-center mb-4 bg-gradient-to-b from-foreground via-foreground to-background bg-clip-text text-transparent"
       >
-        See Text2MySite in Action
+        
       </motion.h2>
       <p className="text-base sm:text-xl text-muted-foreground text-center max-w-2xl mb-10">
         Watch a live demo of how sending a simple text updates your website instantly. 
@@ -24,14 +24,6 @@ export function DemoPlaceholder() {
         transition={{ duration: 0.7 }}
         className="relative w-full max-w-4xl rounded-2xl overflow-hidden shadow-lg border border-muted"
       >
-        <Image
-          src="/images/demo_placeholder.gif" 
-          alt="demo Placeholder"
-          width={800}
-          height={450}
-          className="w-full h-auto object-cover"
-          priority
-        />
       </motion.div>
 
     </section>

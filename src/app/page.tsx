@@ -77,7 +77,6 @@ export default function Home() {
       <Hero logoRef={logoRef} textVariants={textVariants} buttonVariants={buttonVariants}/>
         <About footerRef={footerRef} textVariants={textVariants} buttonVariants={buttonVariants} />
                <How  textVariants={textVariants}/> 
-               <DemoPlaceholder />
 
                              <LiveSandbox />
                              <CompatibilityCard />  

@@ -34,7 +34,7 @@ export default function StatusPage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.7 }}
       >
-        All systems are currently operational. This is a placeholder status page.
+        All systems are currently operational.
       </motion.p>
 
       <div className="w-full max-w-md space-y-4">
