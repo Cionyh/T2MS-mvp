@@ -297,14 +297,13 @@ export async function GET() {
         \`;
         document.head.appendChild(styleTag);
 
-        // Add company link for ticker if provided - static position, show actual URL
+        // Add company link for ticker if provided - upper right position like close button
         if (config.companyWebsiteLink) {
           const linkContainer = document.createElement("div");
           linkContainer.style.cssText = \`
             position: absolute;
-            top: 50%;
+            top: 8px;
             right: 12px;
-            transform: translateY(-50%);
             z-index: 10;
             padding: 0;
             margin: 0;
@@ -344,14 +343,13 @@ export async function GET() {
       }
 
       case "banner": {
-        // Add company link for banner if provided - static position, show actual URL
+        // Add company link for banner if provided - upper right position like close button
         if (config.companyWebsiteLink) {
           const linkContainer = document.createElement("div");
           linkContainer.style.cssText = \`
             position: absolute;
-            top: 50%;
+            top: 8px;
             right: 12px;
-            transform: translateY(-50%);
             z-index: 10;
             padding: 0;
             margin: 0;
@@ -609,30 +607,24 @@ export async function GET() {
       
       logoContainer.appendChild(logoImg);
       
-      // For ticker and banner, add logo to wrapper (static position)
-      // For other widgets, add to contentDiv
-      if (type === "ticker" || type === "banner") {
-        logoContainer.style.cssText = \`
-          position: absolute;
-          top: 50%;
-          left: 12px;
-          transform: translateY(-50%);
-          z-index: 10;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(1px);
-          margin: 0;
-          padding: 0;
-        \`;
-        wrapper.appendChild(logoContainer);
-      } else {
-        contentDiv.insertBefore(logoContainer, contentDiv.firstChild);
-      }
+      // For all widgets, add logo to wrapper (upper left position like close button)
+      logoContainer.style.cssText = \`
+        position: absolute;
+        top: 8px;
+        left: 12px;
+        z-index: 10;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(1px);
+        margin: 0;
+        padding: 0;
+      \`;
+      wrapper.appendChild(logoContainer);
     }
 
     // Add company link if provided - display as visible clickable link (exclude ticker and banner - handled separately)
