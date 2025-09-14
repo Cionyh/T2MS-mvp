@@ -211,18 +211,8 @@ export async function GET() {
         
         if (position.includes("top")) {
           wrapper.style.top = "-100px";
-          document.body.appendChild(wrapper);
-          requestAnimationFrame(() => {
-            wrapper.style.top = "0";
-            wrapper.style.opacity = "1";
-          });
         } else if (position.includes("bottom")) {
           wrapper.style.bottom = "-100px";
-          document.body.appendChild(wrapper);
-          requestAnimationFrame(() => {
-            wrapper.style.bottom = "0";
-            wrapper.style.opacity = "1";
-          });
         }
       } else {
         // For other widget types, apply position
@@ -252,6 +242,23 @@ export async function GET() {
       case "banner": {
         wrapper.setAttribute("role", "status");
         applyPosition(wrapper, type);
+        
+        const position = config.widgetPosition;
+        document.body.appendChild(wrapper);
+        
+        if (position.includes("top")) {
+          requestAnimationFrame(() => {
+            wrapper.style.top = "0";
+            wrapper.style.opacity = "1";
+          });
+        } else if (position.includes("bottom")) {
+          requestAnimationFrame(() => {
+            wrapper.style.bottom = "0";
+            wrapper.style.opacity = "1";
+          });
+        } else {
+          requestAnimationFrame(() => (wrapper.style.opacity = "1"));
+        }
         break;
       }
 
