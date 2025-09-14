@@ -294,9 +294,10 @@ export async function GET() {
 
      case "ticker": {
   wrapper.setAttribute("role", "status");
+
   Object.assign(wrapper.style, {
     width: "100%",
-    height: "60px",
+    height: "auto", // allow for content + link
     top: "0",
     left: "0",
     right: "0",
@@ -311,6 +312,9 @@ export async function GET() {
     justifyContent: "flex-start",
     textAlign: "left",
     boxShadow: "none",
+    position: "fixed",
+    zIndex: "999999",
+    backgroundColor: bgColor || "#fff",
   });
 
   Object.assign(contentDiv.style, {
@@ -334,13 +338,12 @@ export async function GET() {
   document.head.appendChild(styleTag);
 
   wrapper.appendChild(contentDiv);
-  document.body.appendChild(wrapper);
 
-  // Add company link BELOW ticker, like banner
+  // Add company link INSIDE ticker wrapper below content
   if (config.companyWebsiteLink) {
     const linkContainer = document.createElement("div");
     linkContainer.style.cssText = \`
-      display: block;
+      width: 100%;
       text-align: center;
       padding: 8px 0;
       background-color: #f9f9f9;
@@ -368,13 +371,13 @@ export async function GET() {
     link.onmouseout = () => { link.style.opacity = "0.8"; };
 
     linkContainer.appendChild(link);
-    wrapper.insertAdjacentElement("afterend", linkContainer);
+    wrapper.appendChild(linkContainer);
   }
 
+  document.body.appendChild(wrapper);
   requestAnimationFrame(() => (wrapper.style.opacity = "1"));
   break;
 }
-
 
 
       case "popup": {
