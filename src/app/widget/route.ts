@@ -217,108 +217,104 @@ export async function GET() {
 
     switch (type) {
       case "banner": {
-        wrapper.setAttribute("role", "status");
-        Object.assign(wrapper.style, {
-         width: "100%",
-    height: "60px",
+  wrapper.setAttribute("role", "status");
+  Object.assign(wrapper.style, {
+    width: "100%",
+    height: "auto",          // adjust height to fit content + link
     top: "0",
     left: "0",
     right: "0",
     bottom: "auto",
-    borderRadius: "0",     // override default 8px
-    overflow: "hidden",
-    whiteSpace: "nowrap",
-    margin: "0",           // override any margin
-    padding: "0",          // override base padding 16px
-    display: "block",
-    alignItems: "stretch",
-    justifyContent: "flex-start",
-    textAlign: "left",
-    boxShadow: "none",   
-        });
-
-        Object.assign(contentDiv.style, {
-
-          display: "inline-block",
-    fontSize: \`\${config.fontSize}px\`,
-    lineHeight: "60px",
-    height: "60px",
-    margin: "0",
-    padding: "0 80px 0 80px",
-        });
-        
-        document.body.appendChild(wrapper);
-        
-        // Add company link for banner if provided - upper right position like close button
-        if (config.companyWebsiteLink) {
-          const linkContainer = document.createElement("div");
-          linkContainer.style.cssText = \`
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            z-index: 10;
-            padding: 0;
-            margin: 0;
-          \`;
-          
-          const link = document.createElement("a");
-          link.href = config.companyWebsiteLink;
-          link.target = "_blank";
-          link.rel = "noopener noreferrer";
-          link.textContent = config.companyWebsiteLink;
-          link.style.cssText = \`
-            color: #3b82f6;
-            text-decoration: underline;
-            font-size: 14px;
-            display: inline-block;
-            opacity: 0.8;
-            transition: opacity 0.2s ease;
-            white-space: nowrap;
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding: 0;
-            margin: 0;
-          \`;
-          
-          link.onmouseover = () => { link.style.opacity = "1"; };
-          link.onmouseout = () => { link.style.opacity = "0.8"; };
-          
-          linkContainer.appendChild(link);
-          wrapper.appendChild(linkContainer);
-        }
-
-        // Banner should always be at top by default
-        requestAnimationFrame(() => {
-          wrapper.style.top = "0";
-          wrapper.style.opacity = "1";
-        });
-        break;
-      }
-
-      case "ticker": {
-        wrapper.setAttribute("role", "status");
-        Object.assign(wrapper.style, {
-          width: "100%",
-    height: "60px",
-    top: "0",
-    left: "0",
-    right: "0",
-    bottom: "auto",
-    borderRadius: "0",   // force square edges
+    borderRadius: "0",
     overflow: "hidden",
     whiteSpace: "nowrap",
     margin: "0",
-    padding: "0",        // reset padding
+    padding: "0",
     display: "block",
     alignItems: "stretch",
     justifyContent: "flex-start",
     textAlign: "left",
     boxShadow: "none",
-        });
+  });
 
-        Object.assign(contentDiv.style, {
-          display: "inline-block",
+  Object.assign(contentDiv.style, {
+    display: "block",
+    fontSize: \`\${config.fontSize}px\`,
+    lineHeight: "60px",
+    height: "60px",
+    margin: "0",
+    padding: "0 80px 0 80px",
+  });
+
+  document.body.appendChild(wrapper);
+
+  // Add company link below banner content
+  if (config.companyWebsiteLink) {
+    const linkContainer = document.createElement("div");
+    linkContainer.style.cssText = \`
+      display: block;
+      text-align: center;
+      padding: 8px 0;
+      background-color: #f9f9f9;  /* optional: separate row background */
+    \`;
+
+    const link = document.createElement("a");
+    link.href = config.companyWebsiteLink;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = config.companyWebsiteLink;
+    link.style.cssText = \`
+      color: #3b82f6;
+      text-decoration: underline;
+      font-size: 14px;
+      display: inline-block;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+      white-space: nowrap;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    \`;
+
+    link.onmouseover = () => { link.style.opacity = "1"; };
+    link.onmouseout = () => { link.style.opacity = "0.8"; };
+
+    linkContainer.appendChild(link);
+    wrapper.appendChild(linkContainer);
+  }
+
+  // Banner always shows at top
+  requestAnimationFrame(() => {
+    wrapper.style.top = "0";
+    wrapper.style.opacity = "1";
+  });
+  break;
+}
+
+
+      case "ticker": {
+  wrapper.setAttribute("role", "status");
+  Object.assign(wrapper.style, {
+    width: "100%",
+    height: "60px",
+    top: "0",
+    left: "0",
+    right: "0",
+    bottom: "auto",
+    borderRadius: "0",
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    margin: "0",
+    padding: "0",
+    display: "block",
+    alignItems: "stretch",
+    justifyContent: "flex-start",
+    textAlign: "left",
+    boxShadow: "none",
+  });
+
+  Object.assign(contentDiv.style, {
+    display: "inline-block",
     paddingLeft: "100%",
     paddingRight: "80px",
     animation: \`t2ms-ticker-scroll \${config.animationDuration * 20}ms linear infinite\`,
@@ -326,101 +322,129 @@ export async function GET() {
     height: "60px",
     lineHeight: "60px",
     margin: "0",
-          animation: \`t2ms-ticker-scroll \${config.animationDuration * 20}ms linear infinite\`,
-          fontSize: \`\${config.fontSize + 4}px\`,
-          
-        });
+  });
 
-        const styleTag = document.createElement("style");
-        styleTag.textContent = \`
-          @keyframes t2ms-ticker-scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
-          }
-        \`;
-        document.head.appendChild(styleTag);
+  const styleTag = document.createElement("style");
+  styleTag.textContent = \`
+    @keyframes t2ms-ticker-scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+  \`;
+  document.head.appendChild(styleTag);
 
-        // Add company link for ticker if provided - upper right position like close button
-        if (config.companyWebsiteLink) {
-          const linkContainer = document.createElement("div");
-          linkContainer.style.cssText = \`
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            z-index: 10;
-            padding: 0;
-            margin: 0;
-          \`;
-          
-          const link = document.createElement("a");
-          link.href = config.companyWebsiteLink;
-          link.target = "_blank";
-          link.rel = "noopener noreferrer";
-          link.textContent = config.companyWebsiteLink;
-          link.style.cssText = \`
-            color: #3b82f6;
-            text-decoration: underline;
-            font-size: 14px;
-            display: inline-block;
-            opacity: 0.8;
-            transition: opacity 0.2s ease;
-            white-space: nowrap;
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding: 0;
-            margin: 0;
-          \`;
-          
-          link.onmouseover = () => { link.style.opacity = "1"; };
-          link.onmouseout = () => { link.style.opacity = "0.8"; };
-          
-          linkContainer.appendChild(link);
-          wrapper.appendChild(linkContainer);
-        }
+  document.body.appendChild(wrapper);
 
-        
-        document.body.appendChild(wrapper);
-        requestAnimationFrame(() => (wrapper.style.opacity = "1"));
-        break;
-      }
+  // Add company link below ticker content
+  if (config.companyWebsiteLink) {
+    const linkDiv = document.createElement("div");
+    linkDiv.style.cssText = \`
+      width: 100%;
+      text-align: center;
+      margin-top: 4px;
+      font-size: 14px;
+    \`;
+
+    const link = document.createElement("a");
+    link.href = config.companyWebsiteLink;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = config.companyWebsiteLink;
+    link.style.cssText = \`
+      color: #3b82f6;
+      text-decoration: underline;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+      word-break: break-all;
+    \`;
+
+    link.onmouseover = () => { link.style.opacity = "1"; };
+    link.onmouseout = () => { link.style.opacity = "0.8"; };
+
+    linkDiv.appendChild(link);
+    wrapper.appendChild(linkDiv);
+  }
+
+  requestAnimationFrame(() => (wrapper.style.opacity = "1"));
+  break;
+}
+
 
       case "popup": {
-        wrapper.setAttribute("role", "status");
-        Object.assign(wrapper.style, {
-          width: "320px",
-          maxWidth: "90%",
-          paddingRight: "36px",
-        });
-        
-        // Apply specific content styling for popup
-        Object.assign(contentDiv.style, {
-          fontSize: \`\${config.fontSize}px\`,
-          lineHeight: "1.4",
-        });
-        
-        applyPosition(wrapper, type);
-        document.body.appendChild(wrapper);
-        
-        // Apply animation based on position
-        const position = config.widgetPosition;
-        if (position.includes("bottom")) {
-          wrapper.style.bottom = \`-\${config.widgetHeight + 20}px\`;
-          requestAnimationFrame(() => {
-            wrapper.style.bottom = \`\${config.margin}px\`;
-            wrapper.style.opacity = "1";
-          });
-        } else if (position.includes("top")) {
-          wrapper.style.top = \`-\${config.widgetHeight + 20}px\`;
-        requestAnimationFrame(() => {
-            wrapper.style.top = \`\${config.margin}px\`;
-          wrapper.style.opacity = "1";
-        });
-        } else {
-          requestAnimationFrame(() => (wrapper.style.opacity = "1"));
-        }
-        break;
-      }
+  wrapper.setAttribute("role", "status");
+  Object.assign(wrapper.style, {
+    width: "auto",
+    maxWidth: "90%",
+    minWidth: "280px",
+    padding: "16px",
+    boxSizing: "border-box",
+  });
+
+  // Create a container for content + link
+  const popupContainer = document.createElement("div");
+  popupContainer.style.cssText = \`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  \`;
+
+  // Style content div
+  Object.assign(contentDiv.style, {
+    fontSize: \`\${config.fontSize}px\`,
+    lineHeight: "1.4",
+    width: "100%",
+  });
+  popupContainer.appendChild(contentDiv);
+
+  // Add company link neatly below content if provided
+  if (config.companyWebsiteLink) {
+    const link = document.createElement("a");
+    link.href = config.companyWebsiteLink;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = config.companyWebsiteLink;
+    link.style.cssText = \`
+      color: #3b82f6;
+      text-decoration: underline;
+      font-size: 14px;
+      display: inline-block;
+      word-break: break-word;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    \`;
+    link.onmouseover = () => { link.style.opacity = "1"; };
+    link.onmouseout = () => { link.style.opacity = "0.8"; };
+    popupContainer.appendChild(link);
+  }
+
+  // Append container to wrapper
+  wrapper.appendChild(popupContainer);
+
+  applyPosition(wrapper, type);
+  document.body.appendChild(wrapper);
+
+  // Apply animation based on position
+  const position = config.widgetPosition;
+  if (position.includes("bottom")) {
+    wrapper.style.bottom = \`-\${config.widgetHeight + 20}px\`;
+    requestAnimationFrame(() => {
+      wrapper.style.bottom = \`\${config.margin}px\`;
+      wrapper.style.opacity = "1";
+    });
+  } else if (position.includes("top")) {
+    wrapper.style.top = \`-\${config.widgetHeight + 20}px\`;
+    requestAnimationFrame(() => {
+      wrapper.style.top = \`\${config.margin}px\`;
+      wrapper.style.opacity = "1";
+    });
+  } else {
+    requestAnimationFrame(() => (wrapper.style.opacity = "1"));
+  }
+
+  break;
+}
+
 
       case "fullscreen": {
         wrapper.setAttribute("role", "dialog");
@@ -444,7 +468,7 @@ export async function GET() {
         Object.assign(contentDiv.style, {
           fontSize: \`\${config.fontSize + 10}px\`,
           lineHeight: "1.5",
-          maxWidth: "min(480px, 85vw)",
+          maxWidth: "85vw",
           textAlign: "center",
           padding: "20px",
           marginBottom: "20px",
@@ -544,8 +568,8 @@ export async function GET() {
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%) scale(0.85)",
-          width: "90%",
-          maxWidth: "400px",
+          width: "auto",
+          maxWidth: "90vw",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
