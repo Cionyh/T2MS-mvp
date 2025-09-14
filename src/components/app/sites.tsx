@@ -118,9 +118,11 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [logoUrl, setLogoUrl] = useState("");
   const [companyWebsiteLink, setCompanyWebsiteLink] = useState("");
   const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
+  const [borderStyle, setBorderStyle] = useState("solid");
   const [widgetPosition, setWidgetPosition] = useState("top-right");
   const [animationType, setAnimationType] = useState("fade");
   const [animationDuration, setAnimationDuration] = useState(300);
+  const [fontSize, setFontSize] = useState(14);
   const [attachImage, setAttachImage] = useState("");
   const [presetText, setPresetText] = useState("");
 
@@ -165,9 +167,11 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     setLogoUrl(widgetConfig.logoUrl || "");
     setCompanyWebsiteLink(widgetConfig.companyWebsiteLink || "");
     setBackgroundImageUrl(widgetConfig.backgroundImageUrl || "");
+    setBorderStyle(widgetConfig.borderStyle || "solid");
     setWidgetPosition(widgetConfig.widgetPosition || "top-right");
     setAnimationType(widgetConfig.animationType || "fade");
     setAnimationDuration(widgetConfig.animationDuration || 300);
+    setFontSize(widgetConfig.fontSize || 14);
     setAttachImage(widgetConfig.attachImage || "");
     setPresetText(widgetConfig.presetText || "");
     
@@ -188,9 +192,11 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         logoUrl,
         companyWebsiteLink,
         backgroundImageUrl,
+        borderStyle,
         widgetPosition,
         animationType,
         animationDuration,
+        fontSize,
         attachImage,
         presetText,
       };
@@ -795,6 +801,22 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             </div>
             
             <div>
+              <Label className="mb-2 text-sm font-medium">Font Size (px)</Label>
+              <Input
+                type="number"
+                value={fontSize}
+                onChange={(e) => setFontSize(Number(e.target.value))}
+                placeholder="14"
+                min="8"
+                max="48"
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Set the font size for your widget text (8-48px)
+              </p>
+            </div>
+            
+            <div>
               <Label className="mb-2 text-sm font-medium">Dismiss After (ms)</Label>
               <Input
                 type="number"
@@ -875,6 +897,22 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               />
             </div>
 
+            {/* Border Style */}
+            <div>
+              <Label className="mb-2 text-sm font-medium">Border Style</Label>
+              <Select value={borderStyle} onValueChange={setBorderStyle}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="solid">Solid</SelectItem>
+                  <SelectItem value="dashed">Dashed</SelectItem>
+                  <SelectItem value="dotted">Dotted</SelectItem>
+                  <SelectItem value="double">Double</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Widget Position - Only for Popup */}
             {editedDefaultType === "popup" && (

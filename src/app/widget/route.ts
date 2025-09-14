@@ -93,34 +93,14 @@ export async function GET() {
       
       // Border styling
       borderStyle: widgetConfig.borderStyle || "solid",
-      borderWidth: widgetConfig.borderWidth || 1,
-      borderColor: widgetConfig.borderColor || "#cccccc",
-      borderRadius: widgetConfig.borderRadius || 12,
       
       // Position and animation
       widgetPosition: widgetConfig.widgetPosition || "top-right",
       animationType: widgetConfig.animationType || "fade",
       animationDuration: widgetConfig.animationDuration || 300,
       
-      // Size and spacing
-      widgetWidth: widgetConfig.widgetWidth || 320,
-      widgetHeight: widgetConfig.widgetHeight || 200,
-      padding: widgetConfig.padding || 16,
-      margin: widgetConfig.margin || 10,
-      
-      // Text styling
+      // Typography
       fontSize: widgetConfig.fontSize || 14,
-      fontWeight: widgetConfig.fontWeight || "400",
-      textAlignment: widgetConfig.textAlignment || "center",
-      lineHeight: widgetConfig.lineHeight || 1.5,
-      
-      // Effects
-      boxShadow: widgetConfig.boxShadow || "0 6px 20px rgba(0,0,0,0.2)",
-      opacity: widgetConfig.opacity || 1,
-      zIndex: widgetConfig.zIndex || 999999,
-      
-      // Custom CSS
-      customCssStyles: widgetConfig.customCssStyles || "",
     };
 
     // Apply base styles with sensible defaults
@@ -128,13 +108,13 @@ export async function GET() {
       position: "fixed",
       zIndex: "999999",
       fontFamily: font || "Arial, sans-serif",
+      fontSize: \`\${config.fontSize}px\`,
       backgroundColor: bgColor || "#fff",
       color: textColor || "#000",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       padding: "16px",
-      paddingRight: "36px",
       boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
       borderRadius: "8px",
       textAlign: "center",
@@ -148,7 +128,7 @@ export async function GET() {
       fontSize: "14px",
       fontWeight: "400",
       lineHeight: "1.5",
-      border: "1px solid #e5e7eb",
+      border: config.borderStyle !== "none" ? \`1px \${config.borderStyle} #e5e7eb\` : "none",
     });
 
     // Apply background image if provided
@@ -240,6 +220,12 @@ export async function GET() {
         wrapper.setAttribute("role", "status");
         applyPosition(wrapper, type);
         
+        // Apply specific content styling for banner
+        Object.assign(contentDiv.style, {
+          fontSize: \`\${config.fontSize}px\`,
+          lineHeight: "1.4",
+        });
+        
         const position = config.widgetPosition;
         document.body.appendChild(wrapper);
         
@@ -272,7 +258,7 @@ export async function GET() {
           display: "inline-block",
           paddingLeft: "100%",
           animation: \`t2ms-ticker-scroll \${config.animationDuration * 20}ms linear infinite\`,
-          fontSize: "18px",
+          fontSize: \`\${config.fontSize + 4}px\`,
         });
 
         const styleTag = document.createElement("style");
@@ -283,6 +269,40 @@ export async function GET() {
           }
         \`;
         document.head.appendChild(styleTag);
+
+        // Add company link for ticker if provided - display below scrolling content
+        if (config.companyWebsiteLink) {
+          const linkContainer = document.createElement("div");
+          linkContainer.style.cssText = \`
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            z-index: 10;
+          \`;
+          
+          const link = document.createElement("a");
+          link.href = config.companyWebsiteLink;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "Visit Site";
+          link.style.cssText = \`
+            color: #3b82f6;
+            text-decoration: underline;
+            font-size: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+          \`;
+          
+          link.onmouseover = () => { link.style.opacity = "1"; };
+          link.onmouseout = () => { link.style.opacity = "0.8"; };
+          
+          linkContainer.appendChild(link);
+          wrapper.appendChild(linkContainer);
+        }
 
         applyPosition(wrapper, type);
         document.body.appendChild(wrapper);
@@ -295,6 +315,13 @@ export async function GET() {
         Object.assign(wrapper.style, {
           width: "320px",
           maxWidth: "90%",
+          paddingRight: "36px",
+        });
+        
+        // Apply specific content styling for popup
+        Object.assign(contentDiv.style, {
+          fontSize: \`\${config.fontSize}px\`,
+          lineHeight: "1.4",
         });
         
         applyPosition(wrapper, type);
@@ -342,7 +369,7 @@ export async function GET() {
         if (config.presetText) {
           const presetTextDiv = document.createElement("div");
           presetTextDiv.style.cssText = \`
-            font-size: 18px;
+            font-size: \${config.fontSize + 4}px;
             font-weight: 500;
             color: \${config.textColor};
             text-align: center;
@@ -385,7 +412,7 @@ export async function GET() {
         
         // Style the main content div
         Object.assign(contentDiv.style, {
-          fontSize: "24px",
+          fontSize: \`\${config.fontSize + 10}px\`,
           lineHeight: "1.5",
           maxWidth: "min(480px, 85vw)",
           textAlign: "center",
@@ -454,10 +481,11 @@ export async function GET() {
           justifyContent: "center",
           alignItems: "center",
           padding: "32px 40px",
+          paddingRight: "56px",
           borderRadius: "12px",
         });
         Object.assign(contentDiv.style, {
-          fontSize: "18px",
+          fontSize: \`\${config.fontSize + 4}px\`,
           lineHeight: "1.5",
           maxWidth: "min(480px, 90vw)",
         });
@@ -484,27 +512,68 @@ export async function GET() {
       }
     }
 
-    // Add logo if provided
+    // Add logo if provided - display in circular box
     if (config.logoUrl) {
+      const logoContainer = document.createElement("div");
+      logoContainer.style.cssText = \`
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        margin-right: 12px;
+        margin-bottom: 8px;
+        flex-shrink: 0;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+      \`;
+      
       const logoImg = document.createElement("img");
       logoImg.src = config.logoUrl;
-      logoImg.style.maxHeight = "40px";
-      logoImg.style.maxWidth = "100px";
-      logoImg.style.marginRight = "10px";
-      logoImg.style.objectFit = "contain";
-      contentDiv.insertBefore(logoImg, contentDiv.firstChild);
+      logoImg.style.cssText = \`
+        max-width: 32px;
+        max-height: 32px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        border-radius: 50%;
+      \`;
+      
+      logoContainer.appendChild(logoImg);
+      contentDiv.insertBefore(logoContainer, contentDiv.firstChild);
     }
 
-    // Add company link if provided
+    // Add company link if provided - display as visible clickable link
     if (config.companyWebsiteLink) {
+      const linkContainer = document.createElement("div");
+      linkContainer.style.cssText = \`
+        margin-top: 8px;
+        text-align: center;
+      \`;
+      
       const link = document.createElement("a");
       link.href = config.companyWebsiteLink;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
-      link.style.color = "inherit";
-      link.style.textDecoration = "none";
-      link.appendChild(contentDiv.cloneNode(true));
-      contentDiv.parentNode.replaceChild(link, contentDiv);
+      link.textContent = config.companyWebsiteLink;
+      link.style.cssText = \`
+        color: #3b82f6;
+        text-decoration: underline;
+        font-size: 12px;
+        word-break: break-all;
+        display: inline-block;
+        max-width: 100%;
+        opacity: 0.8;
+        transition: opacity 0.2s ease;
+      \`;
+      
+      link.onmouseover = () => { link.style.opacity = "1"; };
+      link.onmouseout = () => { link.style.opacity = "0.8"; };
+      
+      linkContainer.appendChild(link);
+      contentDiv.appendChild(linkContainer);
     }
 
     if (type !== "ticker" && dismissAfter && type !== "fullscreen" && type !== "modal") {
