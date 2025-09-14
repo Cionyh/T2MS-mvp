@@ -243,6 +243,8 @@ export async function GET() {
           borderRadius: "0",
           overflow: "hidden",
           whiteSpace: "nowrap",
+          margin: "0",
+          padding: "0",
         });
 
         Object.assign(contentDiv.style, {
@@ -270,9 +272,8 @@ export async function GET() {
             right: 12px;
             transform: translateY(-50%);
             z-index: 10;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 4px 8px;
-            border-radius: 4px;
+            padding: 0;
+            margin: 0;
           \`;
           
           const link = document.createElement("a");
@@ -291,6 +292,8 @@ export async function GET() {
             max-width: 200px;
             overflow: hidden;
             text-overflow: ellipsis;
+            padding: 0;
+            margin: 0;
           \`;
           
           link.onmouseover = () => { link.style.opacity = "1"; };
@@ -547,6 +550,7 @@ export async function GET() {
           background: rgba(255, 255, 255, 0.1);
           backdrop-filter: blur(1px);
           margin: 0;
+          padding: 0;
         \`;
         wrapper.appendChild(logoContainer);
       } else {
@@ -554,8 +558,8 @@ export async function GET() {
       }
     }
 
-    // Add company link if provided - display as visible clickable link
-    if (config.companyWebsiteLink) {
+    // Add company link if provided - display as visible clickable link (exclude ticker - handled separately)
+    if (config.companyWebsiteLink && type !== "ticker") {
       const linkContainer = document.createElement("div");
       linkContainer.style.cssText = \`
         margin-top: 8px;
