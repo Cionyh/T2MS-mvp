@@ -354,7 +354,7 @@ export async function GET() {
             line-height: \${config.lineHeight};
             padding: 15px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: \`\${config.borderRadius}px\`;
+            border-radius: \${config.borderRadius}px;
             backdrop-filter: blur(10px);
           \`;
           presetTextDiv.textContent = config.presetText;
@@ -376,8 +376,8 @@ export async function GET() {
             max-width: 100%;
             max-height: 40vh;
             object-fit: contain;
-            border-radius: \`\${config.borderRadius}px\`;
-            box-shadow: \`\${config.boxShadow}\`;
+            border-radius: \${config.borderRadius}px;
+            box-shadow: \${config.boxShadow};
             display: block;
             margin: 0 auto;
           \`;
