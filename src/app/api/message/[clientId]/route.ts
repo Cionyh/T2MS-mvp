@@ -8,7 +8,7 @@ export async function GET(
   try {
     const { clientId } = params;
 
-    // Fetch client defaults including pinned
+    // Fetch client defaults including pinned and widget config
     const client = await prisma.client.findUnique({
       where: { id: clientId },
       select: {
@@ -17,7 +17,8 @@ export async function GET(
         defaultTextColor: true,
         defaultFont: true,
         defaultDismissAfter: true,
-        pinned: true, 
+        pinned: true,
+        widgetConfig: true,
       },
     });
 
@@ -45,7 +46,8 @@ export async function GET(
       textColor: client.defaultTextColor || "#fff",
       font: client.defaultFont || "sans-serif",
       dismissAfter: client.defaultDismissAfter || 5000,
-      pinned: client.pinned || false, 
+      pinned: client.pinned || false,
+      widgetConfig: client.widgetConfig || {},
     };
 
     const response = NextResponse.json(messageData, { status: 200 });

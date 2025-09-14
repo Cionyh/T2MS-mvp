@@ -91,6 +91,9 @@ model Client {
   defaultDismissAfter Int?      @default(5000)           // milliseconds
   pinned              Boolean   @default(false)
 
+  // Widget configuration settings
+  widgetConfig        Json?     @default("{}")           // JSON object containing all widget customization settings
+
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   messages            Message[]

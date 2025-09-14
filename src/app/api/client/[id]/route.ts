@@ -15,7 +15,7 @@ export async function PUT(
 
     const body = await req.json();
 
-    // Include pinned in destructure
+    // Include pinned and widgetConfig in destructure
     const {
       name,
       domain,
@@ -26,6 +26,7 @@ export async function PUT(
       defaultFont,
       defaultDismissAfter,
       pinned, // added pinned
+      widgetConfig, // added widgetConfig
     } = body;
 
     const updatedClient = await prisma.client.update({
@@ -40,6 +41,7 @@ export async function PUT(
         ...(defaultFont && { defaultFont }),
         ...(defaultDismissAfter && { defaultDismissAfter }),
         ...(pinned !== undefined && { pinned }), // safely update pinned
+        ...(widgetConfig !== undefined && { widgetConfig }), // safely update widgetConfig
       },
     });
 

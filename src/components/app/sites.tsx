@@ -21,6 +21,7 @@ import {
   EyeOff,
   Copy,
   Target,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, Variants } from "framer-motion";
@@ -35,6 +36,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Popover,
   PopoverContent,
@@ -76,6 +85,7 @@ interface Website {
   defaultTextColor?: string;
   defaultFont?: string;
   defaultDismissAfter?: number;
+  widgetConfig?: any; // JSON object containing widget configuration
 }
 
 const cardVariants: Variants = {
@@ -104,9 +114,39 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [editedDefaultFont, setEditedDefaultFont] = useState("sans-serif");
   const [editedDefaultDismissAfter, setEditedDefaultDismissAfter] = useState<number>(5000);
 
+  // Widget configuration state
+  const [logoUrl, setLogoUrl] = useState("");
+  const [companyWebsiteLink, setCompanyWebsiteLink] = useState("");
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
+  const [borderStyle, setBorderStyle] = useState("solid");
+  const [borderWidth, setBorderWidth] = useState(1);
+  const [borderColor, setBorderColor] = useState("#cccccc");
+  const [borderRadius, setBorderRadius] = useState(4);
+  const [widgetPosition, setWidgetPosition] = useState("top-right");
+  const [animationType, setAnimationType] = useState("fade");
+  const [animationDuration, setAnimationDuration] = useState(300);
+  const [widgetWidth, setWidgetWidth] = useState(300);
+  const [widgetHeight, setWidgetHeight] = useState(200);
+  const [padding, setPadding] = useState(16);
+  const [margin, setMargin] = useState(10);
+  const [fontSize, setFontSize] = useState(14);
+  const [fontWeight, setFontWeight] = useState("400");
+  const [textAlignment, setTextAlignment] = useState("left");
+  const [lineHeight, setLineHeight] = useState(1.5);
+  const [boxShadow, setBoxShadow] = useState("0 2px 8px rgba(0,0,0,0.1)");
+  const [opacity, setOpacity] = useState(1);
+  const [zIndex, setZIndex] = useState(9999);
+  const [customCssClasses, setCustomCssClasses] = useState("");
+  const [customCssStyles, setCustomCssStyles] = useState("");
+  const [attachImage, setAttachImage] = useState("");
+  const [presetText, setPresetText] = useState("");
+
   const [showClientId, setShowClientId] = useState<Record<string, boolean>>({});
   const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null);
+  const [configureDialogOpen, setConfigureDialogOpen] = useState(false);
+  const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
   if (!userId) return;
@@ -127,7 +167,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   };
 
   const handleEditClick = (website: Website) => {
-    setEditingWebsiteId(website.id);
+    setSelectedWebsite(website);
     setEditedName(website.name);
     setEditedDomain(website.domain);
     setEditedPhone(website.phone);
@@ -136,10 +176,76 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     setEditedDefaultTextColor(website.defaultTextColor || "#fff");
     setEditedDefaultFont(website.defaultFont || "sans-serif");
     setEditedDefaultDismissAfter(website.defaultDismissAfter ?? 5000);
+    
+    // Load widget configuration from JSON
+    const widgetConfig = (website as any).widgetConfig || {};
+    setLogoUrl(widgetConfig.logoUrl || "");
+    setCompanyWebsiteLink(widgetConfig.companyWebsiteLink || "");
+    setBackgroundImageUrl(widgetConfig.backgroundImageUrl || "");
+    setBorderStyle(widgetConfig.borderStyle || "solid");
+    setBorderWidth(widgetConfig.borderWidth || 1);
+    setBorderColor(widgetConfig.borderColor || "#cccccc");
+    setBorderRadius(widgetConfig.borderRadius || 4);
+    setWidgetPosition(widgetConfig.widgetPosition || "top-right");
+    setAnimationType(widgetConfig.animationType || "fade");
+    setAnimationDuration(widgetConfig.animationDuration || 300);
+    setWidgetWidth(widgetConfig.widgetWidth || 300);
+    setWidgetHeight(widgetConfig.widgetHeight || 200);
+    setPadding(widgetConfig.padding || 16);
+    setMargin(widgetConfig.margin || 10);
+    setFontSize(widgetConfig.fontSize || 14);
+    setFontWeight(widgetConfig.fontWeight || "400");
+    setTextAlignment(widgetConfig.textAlignment || "left");
+    setLineHeight(widgetConfig.lineHeight || 1.5);
+    setBoxShadow(widgetConfig.boxShadow || "0 2px 8px rgba(0,0,0,0.1)");
+    setOpacity(widgetConfig.opacity || 1);
+    setZIndex(widgetConfig.zIndex || 9999);
+    setCustomCssClasses(widgetConfig.customCssClasses || "");
+    setCustomCssStyles(widgetConfig.customCssStyles || "");
+    setAttachImage(widgetConfig.attachImage || "");
+    setPresetText(widgetConfig.presetText || "");
+    
+    setConfigureDialogOpen(true);
   };
 
   const handleSaveClick = async (websiteId: string) => {
+    if (isSaving) return; // Prevent multiple saves
+    
+    setIsSaving(true);
+    
     try {
+      // Show loading toast
+      const loadingToast = toast.loading("Saving website configuration...");
+
+      // Create widget configuration JSON
+      const widgetConfig = {
+        logoUrl,
+        companyWebsiteLink,
+        backgroundImageUrl,
+        borderStyle,
+        borderWidth,
+        borderColor,
+        borderRadius,
+        widgetPosition,
+        animationType,
+        animationDuration,
+        widgetWidth,
+        widgetHeight,
+        padding,
+        margin,
+        fontSize,
+        fontWeight,
+        textAlignment,
+        lineHeight,
+        boxShadow,
+        opacity,
+        zIndex,
+        customCssClasses,
+        customCssStyles,
+        attachImage,
+        presetText,
+      };
+
       const res = await fetch(`/api/client/${websiteId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -152,14 +258,19 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           defaultTextColor: editedDefaultTextColor,
           defaultFont: editedDefaultFont,
           defaultDismissAfter: editedDefaultDismissAfter,
+          widgetConfig,
         }),
       });
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
 
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || "Failed to update website");
       }
 
+      // Update local state
       setWebsites((prev) =>
         prev.map((site) =>
           site.id === websiteId
@@ -173,22 +284,42 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 defaultTextColor: editedDefaultTextColor,
                 defaultFont: editedDefaultFont,
                 defaultDismissAfter: editedDefaultDismissAfter,
+                widgetConfig: widgetConfig,
               }
             : site
         )
       );
 
-      setEditingWebsiteId(null);
-      toast.success("Website updated successfully!");
+      // Close dialog and show success
+      setConfigureDialogOpen(false);
+      setSelectedWebsite(null);
+      toast.success("Website configuration saved successfully!", {
+        description: "Your widget settings have been updated.",
+        duration: 4000,
+      });
+      
+      // Refresh router to ensure data consistency
       router.refresh();
     } catch (error: any) {
       console.error("Error updating website:", error);
-      toast.error(error.message || "Failed to update website.");
+      
+      // Show error toast with more details
+      toast.error("Failed to save configuration", {
+        description: error.message || "An unexpected error occurred. Please try again.",
+        duration: 5000,
+        action: {
+          label: "Retry",
+          onClick: () => handleSaveClick(websiteId),
+        },
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleCancelClick = () => {
-    setEditingWebsiteId(null);
+    setConfigureDialogOpen(false);
+    setSelectedWebsite(null);
   };
 
   const handleDeleteClick = async (websiteId: string) => {
@@ -372,7 +503,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
 
                 <Separator />
                 <CardContent className="px-4 py-1">
-  {editingWebsiteId === website.id ? (
+  {false ? (
     <div className="space-y-3">
       {/* [Keep all your edit fields exactly as they are] */}
       <div>
@@ -400,7 +531,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         />
       </div>
       <div>
-        <Label className="mb-2">Default Widget Type</Label>
+        <Label className="mb-2">Widget Type</Label>
         <Select
           onValueChange={setEditedDefaultType}
           defaultValue={editedDefaultType}
@@ -458,14 +589,14 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         </div>
       </div>
       <div>
-        <Label className="mb-2">Default Font Family</Label>
+        <Label className="mb-2">Font Family</Label>
         <Input
           value={editedDefaultFont}
           onChange={(e) => setEditedDefaultFont(e.target.value)}
         />
       </div>
       <div>
-        <Label className="mb-2">Default Background Color</Label>
+        <Label className="mb-2">Background Color</Label>
         <div className="flex items-center gap-2">
           <Input
             type="color"
@@ -481,7 +612,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         </div>
       </div>
       <div>
-        <Label className="mb-2">Default Text Color</Label>
+        <Label className="mb-2">Text Color</Label>
         <div className="flex items-center gap-2">
           <Input
             type="color"
@@ -497,7 +628,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         </div>
       </div>
       <div>
-        <Label className="mb-2">Default Dismiss After (ms)</Label>
+        <Label className="mb-2">Dismiss After (ms)</Label>
         <Input
           type="number"
           value={editedDefaultDismissAfter}
@@ -570,6 +701,549 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         onOpenChange={setEmbedDialogOpen}
         clientId={selectedWebsiteId}
       />
+
+      {/* Configure Sheet */}
+      <Sheet  open={configureDialogOpen} onOpenChange={setConfigureDialogOpen}>
+        <SheetContent className="w-[90vw] sm:w-[80vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw] 2xl:w-[45vw] overflow-y-auto pl-5 pr-5">
+          <SheetHeader className="pb-6">
+            <SheetTitle className="text-xl sm:text-2xl">Configure Website</SheetTitle>
+            <SheetDescription className="text-sm sm:text-base">
+              Update your website settings and widget preferences.
+            </SheetDescription>
+          </SheetHeader>
+          
+          <div className="space-y-6">
+            <div>
+              <Label className="mb-2 text-sm font-medium">Business Name</Label>
+              <Input
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            
+            <div>
+              <Label className="mb-2 text-sm font-medium">Domain</Label>
+              <Input
+                value={editedDomain}
+                onChange={(e) => setEditedDomain(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            
+            <div>
+              <Label className="mb-2 text-sm font-medium">Phone</Label>
+              <Input
+                value={editedPhone}
+                onChange={(e) => setEditedPhone(e.target.value)}
+                className="w-full"
+                disabled
+              />
+            </div>
+            
+            {/* Widget Configuration Section */}
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-2 text-sm font-medium">Widget Type</Label>
+                <Select
+                  onValueChange={setEditedDefaultType}
+                  defaultValue={editedDefaultType}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="banner">
+                      <div className="flex flex-col">
+                        <span className="font-medium">Banner</span>
+                        <span className="text-xs text-muted-foreground">Horizontal banner for announcements</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="popup">
+                      <div className="flex flex-col">
+                        <span className="font-medium">Popup</span>
+                        <span className="text-xs text-muted-foreground">Small corner notification</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="fullscreen">
+                      <div className="flex flex-col">
+                        <span className="font-medium">Fullscreen</span>
+                        <span className="text-xs text-muted-foreground">Covers entire screen</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="modal">
+                      <div className="flex flex-col">
+                        <span className="font-medium">Modal</span>
+                        <span className="text-xs text-muted-foreground">Centered dialog box</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="ticker">
+                      <div className="flex flex-col">
+                        <span className="font-medium">Ticker</span>
+                        <span className="text-xs text-muted-foreground">Scrolling text banner</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Widget Type Instructions */}
+                <div className="mt-3 p-4 bg-muted/50 rounded-lg border">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground mb-2">
+                        {editedDefaultType.charAt(0).toUpperCase() + editedDefaultType.slice(1)} Widget
+                      </p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {widgetTypeInstructions[editedDefaultType as keyof typeof widgetTypeInstructions]}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Attach Image - Only for Fullscreen Widget */}
+            {editedDefaultType === "fullscreen" && (
+              <div>
+                <Label className="mb-2 text-sm font-medium">Attach Image</Label>
+                <Input
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  value={attachImage}
+                  onChange={(e) => setAttachImage(e.target.value)}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Add an image to display in the fullscreen widget. This will be shown alongside your message.
+                </p>
+              </div>
+            )}
+
+            {/* Preset Text - Only for Fullscreen Widget */}
+            {editedDefaultType === "fullscreen" && (
+              <div>
+                <Label className="mb-2 text-sm font-medium">Preset Text</Label>
+                <Input
+                  placeholder="Enter preset text to display above the message"
+                  value={presetText}
+                  onChange={(e) => setPresetText(e.target.value)}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Add preset text that will appear above your message in the fullscreen widget.
+                </p>
+              </div>
+            )}
+            
+            <div>
+              <Label className="mb-2 text-sm font-medium"> Font Family</Label>
+              <Input
+                value={editedDefaultFont}
+                onChange={(e) => setEditedDefaultFont(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            
+            <div>
+              <Label className="mb-2 text-sm font-medium">Dismiss After (ms)</Label>
+              <Input
+                type="number"
+                value={editedDefaultDismissAfter}
+                onChange={(e) => setEditedDefaultDismissAfter(Number(e.target.value))}
+                placeholder="5000"
+                className="w-full"
+              />
+            </div>
+            
+            <div>
+              <Label className="mb-2 text-sm font-medium">Background Color</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  type="color"
+                  value={editedDefaultBgColor}
+                  onChange={(e) => setEditedDefaultBgColor(e.target.value)}
+                  className="h-12 w-16 p-1 rounded-lg border-2 border-border hover:border-primary/50 transition-colors"
+                />
+                <Input
+                  value={editedDefaultBgColor}
+                  onChange={(e) => setEditedDefaultBgColor(e.target.value)}
+                  className="flex-1 font-mono text-sm"
+                  placeholder="#222222"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label className="mb-2 text-sm font-medium">Text Color</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  type="color"
+                  value={editedDefaultTextColor}
+                  onChange={(e) => setEditedDefaultTextColor(e.target.value)}
+                  className="h-12 w-16 p-1 rounded-lg border-2 border-border hover:border-primary/50 transition-colors"
+                />
+                <Input
+                  value={editedDefaultTextColor}
+                  onChange={(e) => setEditedDefaultTextColor(e.target.value)}
+                  className="flex-1 font-mono text-sm"
+                  placeholder="#ffffff"
+                />
+              </div>
+            </div>
+
+            {/* Logo and Branding */}
+            <div>
+              <Label className="mb-2 text-sm font-medium">Attach Logo</Label>
+              <Input
+                type="url"
+                placeholder="https://example.com/logo.png"
+                value={logoUrl}
+                onChange={(e) => setLogoUrl(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Attach Link</Label>
+              <Input
+                type="url"
+                placeholder="https://example.com"
+                value={companyWebsiteLink}
+                onChange={(e) => setCompanyWebsiteLink(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Widget Background Image</Label>
+              <Input
+                type="url"
+                placeholder="https://example.com/background.jpg"
+                value={backgroundImageUrl}
+                onChange={(e) => setBackgroundImageUrl(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            {/* Border and Styling */}
+            <div>
+              <Label className="mb-2 text-sm font-medium">Border Style</Label>
+              <Select value={borderStyle} onValueChange={setBorderStyle}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="solid">Solid</SelectItem>
+                  <SelectItem value="dashed">Dashed</SelectItem>
+                  <SelectItem value="dotted">Dotted</SelectItem>
+                  <SelectItem value="double">Double</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Border Width (px)</Label>
+              <Input
+                type="number"
+                placeholder="1"
+                min="0"
+                max="10"
+                value={borderWidth}
+                onChange={(e) => setBorderWidth(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Border Color</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  type="color"
+                  value={borderColor}
+                  onChange={(e) => setBorderColor(e.target.value)}
+                  className="h-12 w-16 p-1 rounded-lg border-2 border-border hover:border-primary/50 transition-colors"
+                />
+                <Input
+                  value={borderColor}
+                  onChange={(e) => setBorderColor(e.target.value)}
+                  className="flex-1 font-mono text-sm"
+                  placeholder="#cccccc"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Border Radius (px)</Label>
+              <Input
+                type="number"
+                placeholder="4"
+                min="0"
+                max="50"
+                value={borderRadius}
+                onChange={(e) => setBorderRadius(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            {/* Position and Animation */}
+            <div>
+              <Label className="mb-2 text-sm font-medium">Widget Position</Label>
+              <Select value={widgetPosition} onValueChange={setWidgetPosition}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="top-left">Top Left</SelectItem>
+                  <SelectItem value="top-center">Top Center</SelectItem>
+                  <SelectItem value="top-right">Top Right</SelectItem>
+                  <SelectItem value="center-left">Center Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="center-right">Center Right</SelectItem>
+                  <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                  <SelectItem value="bottom-center">Bottom Center</SelectItem>
+                  <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Animation Type</Label>
+              <Select value={animationType} onValueChange={setAnimationType}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="fade">Fade In/Out</SelectItem>
+                  <SelectItem value="slide-up">Slide Up</SelectItem>
+                  <SelectItem value="slide-down">Slide Down</SelectItem>
+                  <SelectItem value="slide-left">Slide Left</SelectItem>
+                  <SelectItem value="slide-right">Slide Right</SelectItem>
+                  <SelectItem value="bounce">Bounce</SelectItem>
+                  <SelectItem value="zoom">Zoom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Animation Duration (ms)</Label>
+              <Input
+                type="number"
+                placeholder="300"
+                min="100"
+                max="2000"
+                value={animationDuration}
+                onChange={(e) => setAnimationDuration(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            {/* Size and Spacing */}
+            <div>
+              <Label className="mb-2 text-sm font-medium">Widget Width (px)</Label>
+              <Input
+                type="number"
+                placeholder="300"
+                min="100"
+                max="800"
+                value={widgetWidth}
+                onChange={(e) => setWidgetWidth(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Widget Height (px)</Label>
+              <Input
+                type="number"
+                placeholder="200"
+                min="50"
+                max="600"
+                value={widgetHeight}
+                onChange={(e) => setWidgetHeight(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Padding (px)</Label>
+              <Input
+                type="number"
+                placeholder="16"
+                min="0"
+                max="50"
+                value={padding}
+                onChange={(e) => setPadding(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Margin (px)</Label>
+              <Input
+                type="number"
+                placeholder="10"
+                min="0"
+                max="50"
+                value={margin}
+                onChange={(e) => setMargin(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            {/* Text Styling */}
+            <div>
+              <Label className="mb-2 text-sm font-medium">Font Size (px)</Label>
+              <Input
+                type="number"
+                placeholder="14"
+                min="8"
+                max="48"
+                value={fontSize}
+                onChange={(e) => setFontSize(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Font Weight</Label>
+              <Select value={fontWeight} onValueChange={setFontWeight}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="100">Thin (100)</SelectItem>
+                  <SelectItem value="200">Extra Light (200)</SelectItem>
+                  <SelectItem value="300">Light (300)</SelectItem>
+                  <SelectItem value="400">Normal (400)</SelectItem>
+                  <SelectItem value="500">Medium (500)</SelectItem>
+                  <SelectItem value="600">Semi Bold (600)</SelectItem>
+                  <SelectItem value="700">Bold (700)</SelectItem>
+                  <SelectItem value="800">Extra Bold (800)</SelectItem>
+                  <SelectItem value="900">Black (900)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Text Alignment</Label>
+              <Select value={textAlignment} onValueChange={setTextAlignment}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                  <SelectItem value="justify">Justify</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Line Height</Label>
+              <Input
+                type="number"
+                placeholder="1.5"
+                min="0.5"
+                max="3"
+                step="0.1"
+                value={lineHeight}
+                onChange={(e) => setLineHeight(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            {/* Shadow and Effects */}
+            <div>
+              <Label className="mb-2 text-sm font-medium">Box Shadow</Label>
+              <Input
+                placeholder="0 2px 8px rgba(0,0,0,0.1)"
+                value={boxShadow}
+                onChange={(e) => setBoxShadow(e.target.value)}
+                className="w-full font-mono text-sm"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Opacity</Label>
+              <Input
+                type="number"
+                placeholder="1"
+                min="0"
+                max="1"
+                step="0.1"
+                value={opacity}
+                onChange={(e) => setOpacity(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            {/* Advanced Settings */}
+            <div>
+              <Label className="mb-2 text-sm font-medium">Z-Index</Label>
+              <Input
+                type="number"
+                placeholder="9999"
+                min="1"
+                max="99999"
+                value={zIndex}
+                onChange={(e) => setZIndex(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Custom CSS Classes</Label>
+              <Input
+                placeholder="my-custom-class another-class"
+                value={customCssClasses}
+                onChange={(e) => setCustomCssClasses(e.target.value)}
+                className="w-full font-mono text-sm"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Custom CSS Styles</Label>
+              <textarea
+                placeholder="border: 2px solid #ff0000; transform: rotate(5deg);"
+                value={customCssStyles}
+                onChange={(e) => setCustomCssStyles(e.target.value)}
+                className="w-full h-20 p-3 border border-input rounded-md font-mono text-sm resize-none"
+              />
+            </div>
+          </div>
+          
+          <SheetFooter className="pt-6 border-t">
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <Button 
+                onClick={handleCancelClick} 
+                variant="outline" 
+                className="w-full sm:w-auto"
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => selectedWebsite && handleSaveClick(selectedWebsite.id)}
+                disabled={!selectedWebsite || isSaving}
+                className="w-full sm:w-auto"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            </div>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
