@@ -377,9 +377,6 @@ export async function GET() {
             max-width: min(480px, 80vw);
             line-height: 1.5;
             padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            backdrop-filter: blur(10px);
           \`;
           presetTextDiv.textContent = config.presetText;
           contentContainer.appendChild(presetTextDiv);
@@ -400,8 +397,6 @@ export async function GET() {
             max-width: 100%;
             max-height: 40vh;
             object-fit: contain;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             display: block;
             margin: 0 auto;
           \`;
@@ -417,10 +412,6 @@ export async function GET() {
           maxWidth: "min(480px, 85vw)",
           textAlign: "center",
           padding: "20px",
-          background: "rgba(255, 255, 255, 0.1)",
-          borderRadius: "8px",
-          backdropFilter: "blur(10px)",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
         });
         
         // Style the wrapper
@@ -523,11 +514,10 @@ export async function GET() {
         height: 50px;
         border-radius: 50%;
         background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(1px);
         margin-right: 12px;
         margin-bottom: 8px;
         flex-shrink: 0;
-        border: 2px solid rgba(255, 255, 255, 0.2);
       \`;
       
       const logoImg = document.createElement("img");
