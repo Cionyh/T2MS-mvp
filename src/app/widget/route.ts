@@ -247,10 +247,10 @@ export async function GET() {
         document.body.appendChild(wrapper);
         
         if (position.includes("top")) {
-          requestAnimationFrame(() => {
-            wrapper.style.top = "0";
-            wrapper.style.opacity = "1";
-          });
+        requestAnimationFrame(() => {
+          wrapper.style.top = "0";
+          wrapper.style.opacity = "1";
+        });
         } else if (position.includes("bottom")) {
           requestAnimationFrame(() => {
             wrapper.style.bottom = "0";
@@ -313,10 +313,10 @@ export async function GET() {
           });
         } else if (position.includes("top")) {
           wrapper.style.top = \`-\${config.widgetHeight + 20}px\`;
-          requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
             wrapper.style.top = \`\${config.margin}px\`;
-            wrapper.style.opacity = "1";
-          });
+          wrapper.style.opacity = "1";
+        });
         } else {
           requestAnimationFrame(() => (wrapper.style.opacity = "1"));
         }
@@ -350,7 +350,7 @@ export async function GET() {
             color: \${config.textColor};
             text-align: center;
             margin-bottom: 20px;
-            max-width: \`min(\${config.widgetWidth * 1.5}px, 80vw)\`;
+            max-width: min(\${config.widgetWidth * 1.5}px, 80vw);
             line-height: \${config.lineHeight};
             padding: 15px;
             background: rgba(255, 255, 255, 0.1);
@@ -367,7 +367,7 @@ export async function GET() {
           imageContainer.style.cssText = \`
             margin-bottom: 20px;
             text-align: center;
-            max-width: \`min(\${config.widgetWidth * 1.2}px, 70vw)\`;
+            max-width: min(\${config.widgetWidth * 1.2}px, 70vw);
           \`;
           
           const img = document.createElement("img");
