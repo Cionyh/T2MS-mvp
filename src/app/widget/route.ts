@@ -219,32 +219,32 @@ export async function GET() {
       case "banner": {
         wrapper.setAttribute("role", "status");
         Object.assign(wrapper.style, {
-          width: "100%",
-          height: "60px",
-          top: "0",
-          left: "0",
-          right: "0",
-          bottom: "auto",
-          borderRadius: "0",
-          overflow: "hidden",
-          whiteSpace: "nowrap",
-          margin: "0",
-          padding: "0",
-          display: "block",
-          alignItems: "stretch",
-          justifyContent: "flex-start",
-          textAlign: "left",
-          boxShadow: "none",
+         width: "100%",
+    height: "60px",
+    top: "0",
+    left: "0",
+    right: "0",
+    bottom: "auto",
+    borderRadius: "0",     // override default 8px
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    margin: "0",           // override any margin
+    padding: "0",          // override base padding 16px
+    display: "block",
+    alignItems: "stretch",
+    justifyContent: "flex-start",
+    textAlign: "left",
+    boxShadow: "none",   
         });
 
         Object.assign(contentDiv.style, {
+
           display: "inline-block",
-          fontSize: \`\${config.fontSize}px\`,
-          lineHeight: "60px",
-          height: "60px",
-          margin: "0",
-          padding: "0 80px 0 80px",
-          paddingTop: "20px",
+    fontSize: \`\${config.fontSize}px\`,
+    lineHeight: "60px",
+    height: "60px",
+    margin: "0",
+    padding: "0 80px 0 80px",
         });
         
         document.body.appendChild(wrapper);
@@ -300,33 +300,35 @@ export async function GET() {
         wrapper.setAttribute("role", "status");
         Object.assign(wrapper.style, {
           width: "100%",
-          height: "60px",
-          top: "0",
-          left: "0",
-          right: "0",
-          bottom: "auto",
-          borderRadius: "0",
-          overflow: "hidden",
-          whiteSpace: "nowrap",
-          margin: "0",
-          padding: "0",
-          display: "block",
-          alignItems: "stretch",
-          justifyContent: "flex-start",
-          textAlign: "left",
-          boxShadow: "none",
+    height: "60px",
+    top: "0",
+    left: "0",
+    right: "0",
+    bottom: "auto",
+    borderRadius: "0",   // force square edges
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    margin: "0",
+    padding: "0",        // reset padding
+    display: "block",
+    alignItems: "stretch",
+    justifyContent: "flex-start",
+    textAlign: "left",
+    boxShadow: "none",
         });
 
         Object.assign(contentDiv.style, {
           display: "inline-block",
-          paddingLeft: "100%",
-          paddingRight: "80px",
-          paddingTop: "20px",
+    paddingLeft: "100%",
+    paddingRight: "80px",
+    animation: \`t2ms-ticker-scroll \${config.animationDuration * 20}ms linear infinite\`,
+    fontSize: \`\${config.fontSize + 4}px\`,
+    height: "60px",
+    lineHeight: "60px",
+    margin: "0",
           animation: \`t2ms-ticker-scroll \${config.animationDuration * 20}ms linear infinite\`,
           fontSize: \`\${config.fontSize + 4}px\`,
-          height: "60px",
-          lineHeight: "60px",
-          margin: "0",
+          
         });
 
         const styleTag = document.createElement("style");
@@ -581,51 +583,43 @@ export async function GET() {
 
     // Add logo if provided - display in circular box
     if (config.logoUrl) {
+       if (["popup", "fullscreen", "modal"].includes(type)) {
+    wrapper.style.paddingTop = "70px";   // 50px logo + 20px spacing
+    wrapper.style.paddingLeft = "70px";
+  }
+
+
       const logoContainer = document.createElement("div");
       logoContainer.style.cssText = \`
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(1px);
-        margin-right: 12px;
-        margin-bottom: 8px;
-        flex-shrink: 0;
+         position: absolute;
+    top: 8px;
+    left: 12px;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(1px);
+    margin: 0;   /* margin not needed since padding handles spacing */
+    padding: 0;
+    flex-shrink: 0;
       \`;
       
       const logoImg = document.createElement("img");
       logoImg.src = config.logoUrl;
       logoImg.style.cssText = \`
         max-width: 32px;
-        max-height: 32px;
-        width: auto;
-        height: auto;
-        object-fit: contain;
-        border-radius: 50%;
+    max-height: 32px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 50%;
       \`;
       
       logoContainer.appendChild(logoImg);
-      
-      // For all widgets, add logo to wrapper (upper left position like close button)
-      logoContainer.style.cssText = \`
-        position: absolute;
-        top: 8px;
-        left: 12px;
-        z-index: 10;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(1px);
-        margin: 0;
-        padding: 0;
-      \`;
       wrapper.appendChild(logoContainer);
     }
 
