@@ -218,12 +218,32 @@ export async function GET() {
     switch (type) {
       case "banner": {
         wrapper.setAttribute("role", "status");
-        applyPosition(wrapper, type);
-        
-        // Apply specific content styling for banner
+        Object.assign(wrapper.style, {
+          width: "100%",
+          height: "60px",
+          top: "0",
+          left: "0",
+          right: "0",
+          bottom: "auto",
+          borderRadius: "0",
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          margin: "0",
+          padding: "0",
+          display: "block",
+          alignItems: "stretch",
+          justifyContent: "flex-start",
+          textAlign: "left",
+          boxShadow: "none",
+        });
+
         Object.assign(contentDiv.style, {
+          display: "inline-block",
           fontSize: \`\${config.fontSize}px\`,
-          lineHeight: "1.4",
+          lineHeight: "60px",
+          height: "60px",
+          margin: "0",
+          padding: "0 80px 0 80px",
         });
         
         document.body.appendChild(wrapper);
@@ -240,18 +260,32 @@ export async function GET() {
         wrapper.setAttribute("role", "status");
         Object.assign(wrapper.style, {
           width: "100%",
+          height: "60px",
+          top: "0",
+          left: "0",
+          right: "0",
+          bottom: "auto",
           borderRadius: "0",
           overflow: "hidden",
           whiteSpace: "nowrap",
           margin: "0",
           padding: "0",
+          display: "block",
+          alignItems: "stretch",
+          justifyContent: "flex-start",
+          textAlign: "left",
+          boxShadow: "none",
         });
 
         Object.assign(contentDiv.style, {
           display: "inline-block",
           paddingLeft: "100%",
+          paddingRight: "80px",
           animation: \`t2ms-ticker-scroll \${config.animationDuration * 20}ms linear infinite\`,
           fontSize: \`\${config.fontSize + 4}px\`,
+          height: "60px",
+          lineHeight: "60px",
+          margin: "0",
         });
 
         const styleTag = document.createElement("style");
@@ -306,6 +340,49 @@ export async function GET() {
         applyPosition(wrapper, type);
         document.body.appendChild(wrapper);
         requestAnimationFrame(() => (wrapper.style.opacity = "1"));
+        break;
+      }
+
+      case "banner": {
+        // Add company link for banner if provided - static position, show actual URL
+        if (config.companyWebsiteLink) {
+          const linkContainer = document.createElement("div");
+          linkContainer.style.cssText = \`
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            z-index: 10;
+            padding: 0;
+            margin: 0;
+          \`;
+          
+          const link = document.createElement("a");
+          link.href = config.companyWebsiteLink;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = config.companyWebsiteLink;
+          link.style.cssText = \`
+            color: #3b82f6;
+            text-decoration: underline;
+            font-size: 14px;
+            display: inline-block;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0;
+            margin: 0;
+          \`;
+          
+          link.onmouseover = () => { link.style.opacity = "1"; };
+          link.onmouseout = () => { link.style.opacity = "0.8"; };
+          
+          linkContainer.appendChild(link);
+          wrapper.appendChild(linkContainer);
+        }
         break;
       }
 
@@ -532,9 +609,9 @@ export async function GET() {
       
       logoContainer.appendChild(logoImg);
       
-      // For ticker, add logo to wrapper (static position)
+      // For ticker and banner, add logo to wrapper (static position)
       // For other widgets, add to contentDiv
-      if (type === "ticker") {
+      if (type === "ticker" || type === "banner") {
         logoContainer.style.cssText = \`
           position: absolute;
           top: 50%;
@@ -558,8 +635,8 @@ export async function GET() {
       }
     }
 
-    // Add company link if provided - display as visible clickable link (exclude ticker - handled separately)
-    if (config.companyWebsiteLink && type !== "ticker") {
+    // Add company link if provided - display as visible clickable link (exclude ticker and banner - handled separately)
+    if (config.companyWebsiteLink && type !== "ticker" && type !== "banner") {
       const linkContainer = document.createElement("div");
       linkContainer.style.cssText = \`
         margin-top: 8px;
