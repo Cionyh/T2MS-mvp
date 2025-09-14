@@ -123,32 +123,32 @@ export async function GET() {
       customCssStyles: widgetConfig.customCssStyles || "",
     };
 
-    // Apply base styles with widget configuration
+    // Apply base styles with sensible defaults
     Object.assign(wrapper.style, {
       position: "fixed",
-      zIndex: config.zIndex.toString(),
+      zIndex: "999999",
       fontFamily: font || "Arial, sans-serif",
       backgroundColor: bgColor || "#fff",
       color: textColor || "#000",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: \`\${config.padding}px\`,
-      paddingRight: \`\${config.padding + 20}px\`,
-      boxShadow: config.boxShadow,
-      borderRadius: \`\${config.borderRadius}px\`,
-      textAlign: config.textAlignment,
+      padding: "16px",
+      paddingRight: "36px",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+      borderRadius: "8px",
+      textAlign: "center",
       cursor: "default",
       opacity: "0",
       transition: \`all \${config.animationDuration}ms ease\`,
       boxSizing: "border-box",
       overflow: "hidden",
-      width: \`\${config.widgetWidth}px\`,
-      minHeight: \`\${config.widgetHeight}px\`,
-      fontSize: \`\${config.fontSize}px\`,
-      fontWeight: config.fontWeight,
-      lineHeight: config.lineHeight.toString(),
-      border: config.borderStyle !== "none" ? \`\${config.borderWidth}px \${config.borderStyle} \${config.borderColor}\` : "none",
+      width: "320px",
+      minHeight: "60px",
+      fontSize: "14px",
+      fontWeight: "400",
+      lineHeight: "1.5",
+      border: "1px solid #e5e7eb",
     });
 
     // Apply background image if provided
@@ -159,13 +159,6 @@ export async function GET() {
       wrapper.style.backgroundRepeat = "no-repeat";
     }
 
-    // Apply custom CSS styles if provided
-    if (config.customCssStyles) {
-      const style = document.createElement("style");
-      style.textContent = \`.t2ms-widget { \${config.customCssStyles} }\`;
-      document.head.appendChild(style);
-      wrapper.classList.add("t2ms-widget");
-    }
 
     Object.assign(btn.style, {
       position: "absolute",
@@ -195,7 +188,7 @@ export async function GET() {
     // Apply position-specific styles
     function applyPosition(wrapper, type) {
       const position = config.widgetPosition;
-      const margin = config.margin;
+      const margin = 10; // Fixed margin
       
       // Reset positioning
       wrapper.style.top = "";
@@ -207,15 +200,15 @@ export async function GET() {
       if (type === "banner") {
         wrapper.style.width = "100%";
         wrapper.style.borderRadius = "0";
-        wrapper.style.padding = \`1em 3rem 1em 1.25em\`;
+        wrapper.style.padding = "1em 3rem 1em 1.25em";
         
         if (position.includes("top")) {
           wrapper.style.top = "-100px";
         } else if (position.includes("bottom")) {
           wrapper.style.bottom = "-100px";
         }
-      } else {
-        // For other widget types, apply position
+      } else if (type === "popup") {
+        // Only apply position for popup widgets
         if (position.includes("top")) {
           wrapper.style.top = \`\${margin}px\`;
         } else if (position.includes("bottom")) {
@@ -235,6 +228,10 @@ export async function GET() {
             wrapper.style.transform + " translateX(-50%)" : 
             "translateX(-50%)";
         }
+      } else {
+        // For other widget types, use default positioning
+        wrapper.style.top = "20px";
+        wrapper.style.right = "20px";
       }
     }
 
@@ -274,8 +271,8 @@ export async function GET() {
         Object.assign(contentDiv.style, {
           display: "inline-block",
           paddingLeft: "100%",
-          animation: \`t2ms-ticker-scroll \${config.animationDuration * 8}ms linear infinite\`,
-          fontSize: \`\${config.fontSize * 1.5}px\`,
+          animation: \`t2ms-ticker-scroll \${config.animationDuration * 20}ms linear infinite\`,
+          fontSize: "18px",
         });
 
         const styleTag = document.createElement("style");
@@ -296,7 +293,7 @@ export async function GET() {
       case "popup": {
         wrapper.setAttribute("role", "status");
         Object.assign(wrapper.style, {
-          width: \`\${config.widgetWidth}px\`,
+          width: "320px",
           maxWidth: "90%",
         });
         
@@ -345,16 +342,16 @@ export async function GET() {
         if (config.presetText) {
           const presetTextDiv = document.createElement("div");
           presetTextDiv.style.cssText = \`
-            font-size: \${config.fontSize * 1.2}px;
-            font-weight: \${config.fontWeight};
+            font-size: 18px;
+            font-weight: 500;
             color: \${config.textColor};
             text-align: center;
             margin-bottom: 20px;
-            max-width: min(\${config.widgetWidth * 1.5}px, 80vw);
-            line-height: \${config.lineHeight};
+            max-width: min(480px, 80vw);
+            line-height: 1.5;
             padding: 15px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: \${config.borderRadius}px;
+            border-radius: 8px;
             backdrop-filter: blur(10px);
           \`;
           presetTextDiv.textContent = config.presetText;
@@ -367,7 +364,7 @@ export async function GET() {
           imageContainer.style.cssText = \`
             margin-bottom: 20px;
             text-align: center;
-            max-width: min(\${config.widgetWidth * 1.2}px, 70vw);
+            max-width: min(384px, 70vw);
           \`;
           
           const img = document.createElement("img");
@@ -376,8 +373,8 @@ export async function GET() {
             max-width: 100%;
             max-height: 40vh;
             object-fit: contain;
-            border-radius: \${config.borderRadius}px;
-            box-shadow: \${config.boxShadow};
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             display: block;
             margin: 0 auto;
           \`;
@@ -388,15 +385,15 @@ export async function GET() {
         
         // Style the main content div
         Object.assign(contentDiv.style, {
-          fontSize: \`\${config.fontSize * 1.8}px\`,
-          lineHeight: config.lineHeight.toString(),
-          maxWidth: \`min(\${config.widgetWidth * 1.5}px, 85vw)\`,
+          fontSize: "24px",
+          lineHeight: "1.5",
+          maxWidth: "min(480px, 85vw)",
           textAlign: "center",
           padding: "20px",
           background: "rgba(255, 255, 255, 0.1)",
-          borderRadius: \`\${config.borderRadius}px\`,
+          borderRadius: "8px",
           backdropFilter: "blur(10px)",
-          boxShadow: config.boxShadow,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
         });
         
         // Style the wrapper
@@ -408,7 +405,7 @@ export async function GET() {
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          fontSize: \`\${config.fontSize * 1.5}px\`,
+          fontSize: "16px",
           borderRadius: "0",
           padding: "0",
         });
@@ -452,17 +449,17 @@ export async function GET() {
           left: "50%",
           transform: "translate(-50%, -50%) scale(0.85)",
           width: "90%",
-          maxWidth: \`\${config.widgetWidth}px\`,
+          maxWidth: "400px",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          padding: \`\${config.padding * 2}px \${config.padding * 2.5}px\`,
-          borderRadius: \`\${config.borderRadius}px\`,
+          padding: "32px 40px",
+          borderRadius: "12px",
         });
         Object.assign(contentDiv.style, {
-          fontSize: \`\${config.fontSize * 1.5}px\`,
-          lineHeight: config.lineHeight.toString(),
-          maxWidth: \`min(\${config.widgetWidth * 1.2}px, 90vw)\`,
+          fontSize: "18px",
+          lineHeight: "1.5",
+          maxWidth: "min(480px, 90vw)",
         });
 
         document.body.style.overflow = "hidden";

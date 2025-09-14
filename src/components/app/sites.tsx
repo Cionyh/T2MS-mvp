@@ -118,26 +118,9 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [logoUrl, setLogoUrl] = useState("");
   const [companyWebsiteLink, setCompanyWebsiteLink] = useState("");
   const [backgroundImageUrl, setBackgroundImageUrl] = useState("");
-  const [borderStyle, setBorderStyle] = useState("solid");
-  const [borderWidth, setBorderWidth] = useState(1);
-  const [borderColor, setBorderColor] = useState("#cccccc");
-  const [borderRadius, setBorderRadius] = useState(4);
   const [widgetPosition, setWidgetPosition] = useState("top-right");
   const [animationType, setAnimationType] = useState("fade");
   const [animationDuration, setAnimationDuration] = useState(300);
-  const [widgetWidth, setWidgetWidth] = useState(300);
-  const [widgetHeight, setWidgetHeight] = useState(200);
-  const [padding, setPadding] = useState(16);
-  const [margin, setMargin] = useState(10);
-  const [fontSize, setFontSize] = useState(14);
-  const [fontWeight, setFontWeight] = useState("400");
-  const [textAlignment, setTextAlignment] = useState("left");
-  const [lineHeight, setLineHeight] = useState(1.5);
-  const [boxShadow, setBoxShadow] = useState("0 2px 8px rgba(0,0,0,0.1)");
-  const [opacity, setOpacity] = useState(1);
-  const [zIndex, setZIndex] = useState(9999);
-  const [customCssClasses, setCustomCssClasses] = useState("");
-  const [customCssStyles, setCustomCssStyles] = useState("");
   const [attachImage, setAttachImage] = useState("");
   const [presetText, setPresetText] = useState("");
 
@@ -182,26 +165,9 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     setLogoUrl(widgetConfig.logoUrl || "");
     setCompanyWebsiteLink(widgetConfig.companyWebsiteLink || "");
     setBackgroundImageUrl(widgetConfig.backgroundImageUrl || "");
-    setBorderStyle(widgetConfig.borderStyle || "solid");
-    setBorderWidth(widgetConfig.borderWidth || 1);
-    setBorderColor(widgetConfig.borderColor || "#cccccc");
-    setBorderRadius(widgetConfig.borderRadius || 4);
     setWidgetPosition(widgetConfig.widgetPosition || "top-right");
     setAnimationType(widgetConfig.animationType || "fade");
     setAnimationDuration(widgetConfig.animationDuration || 300);
-    setWidgetWidth(widgetConfig.widgetWidth || 300);
-    setWidgetHeight(widgetConfig.widgetHeight || 200);
-    setPadding(widgetConfig.padding || 16);
-    setMargin(widgetConfig.margin || 10);
-    setFontSize(widgetConfig.fontSize || 14);
-    setFontWeight(widgetConfig.fontWeight || "400");
-    setTextAlignment(widgetConfig.textAlignment || "left");
-    setLineHeight(widgetConfig.lineHeight || 1.5);
-    setBoxShadow(widgetConfig.boxShadow || "0 2px 8px rgba(0,0,0,0.1)");
-    setOpacity(widgetConfig.opacity || 1);
-    setZIndex(widgetConfig.zIndex || 9999);
-    setCustomCssClasses(widgetConfig.customCssClasses || "");
-    setCustomCssStyles(widgetConfig.customCssStyles || "");
     setAttachImage(widgetConfig.attachImage || "");
     setPresetText(widgetConfig.presetText || "");
     
@@ -222,26 +188,9 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         logoUrl,
         companyWebsiteLink,
         backgroundImageUrl,
-        borderStyle,
-        borderWidth,
-        borderColor,
-        borderRadius,
         widgetPosition,
         animationType,
         animationDuration,
-        widgetWidth,
-        widgetHeight,
-        padding,
-        margin,
-        fontSize,
-        fontWeight,
-        textAlignment,
-        lineHeight,
-        boxShadow,
-        opacity,
-        zIndex,
-        customCssClasses,
-        customCssStyles,
         attachImage,
         presetText,
       };
@@ -926,87 +875,29 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               />
             </div>
 
-            {/* Border and Styling */}
-            <div>
-              <Label className="mb-2 text-sm font-medium">Border Style</Label>
-              <Select value={borderStyle} onValueChange={setBorderStyle}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="solid">Solid</SelectItem>
-                  <SelectItem value="dashed">Dashed</SelectItem>
-                  <SelectItem value="dotted">Dotted</SelectItem>
-                  <SelectItem value="double">Double</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div>
-              <Label className="mb-2 text-sm font-medium">Border Width (px)</Label>
-              <Input
-                type="number"
-                placeholder="1"
-                min="0"
-                max="10"
-                value={borderWidth}
-                onChange={(e) => setBorderWidth(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            <div>
-              <Label className="mb-2 text-sm font-medium">Border Color</Label>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="color"
-                  value={borderColor}
-                  onChange={(e) => setBorderColor(e.target.value)}
-                  className="h-12 w-16 p-1 rounded-lg border-2 border-border hover:border-primary/50 transition-colors"
-                />
-                <Input
-                  value={borderColor}
-                  onChange={(e) => setBorderColor(e.target.value)}
-                  className="flex-1 font-mono text-sm"
-                  placeholder="#cccccc"
-                />
+            {/* Widget Position - Only for Popup */}
+            {editedDefaultType === "popup" && (
+              <div>
+                <Label className="mb-2 text-sm font-medium">Widget Position</Label>
+                <Select value={widgetPosition} onValueChange={setWidgetPosition}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="top-left">Top Left</SelectItem>
+                    <SelectItem value="top-center">Top Center</SelectItem>
+                    <SelectItem value="top-right">Top Right</SelectItem>
+                    <SelectItem value="center-left">Center Left</SelectItem>
+                    <SelectItem value="center">Center</SelectItem>
+                    <SelectItem value="center-right">Center Right</SelectItem>
+                    <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                    <SelectItem value="bottom-center">Bottom Center</SelectItem>
+                    <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-
-            <div>
-              <Label className="mb-2 text-sm font-medium">Border Radius (px)</Label>
-              <Input
-                type="number"
-                placeholder="4"
-                min="0"
-                max="50"
-                value={borderRadius}
-                onChange={(e) => setBorderRadius(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            {/* Position and Animation */}
-            <div>
-              <Label className="mb-2 text-sm font-medium">Widget Position</Label>
-              <Select value={widgetPosition} onValueChange={setWidgetPosition}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="top-left">Top Left</SelectItem>
-                  <SelectItem value="top-center">Top Center</SelectItem>
-                  <SelectItem value="top-right">Top Right</SelectItem>
-                  <SelectItem value="center-left">Center Left</SelectItem>
-                  <SelectItem value="center">Center</SelectItem>
-                  <SelectItem value="center-right">Center Right</SelectItem>
-                  <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                  <SelectItem value="bottom-center">Bottom Center</SelectItem>
-                  <SelectItem value="bottom-right">Bottom Right</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            )}
 
             <div>
               <Label className="mb-2 text-sm font-medium">Animation Type</Label>
@@ -1028,192 +919,22 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             </div>
 
             <div>
-              <Label className="mb-2 text-sm font-medium">Animation Duration (ms)</Label>
-              <Input
-                type="number"
-                placeholder="300"
-                min="100"
-                max="2000"
-                value={animationDuration}
-                onChange={(e) => setAnimationDuration(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            {/* Size and Spacing */}
-            <div>
-              <Label className="mb-2 text-sm font-medium">Widget Width (px)</Label>
-              <Input
-                type="number"
-                placeholder="300"
-                min="100"
-                max="800"
-                value={widgetWidth}
-                onChange={(e) => setWidgetWidth(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            <div>
-              <Label className="mb-2 text-sm font-medium">Widget Height (px)</Label>
-              <Input
-                type="number"
-                placeholder="200"
-                min="50"
-                max="600"
-                value={widgetHeight}
-                onChange={(e) => setWidgetHeight(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            <div>
-              <Label className="mb-2 text-sm font-medium">Padding (px)</Label>
-              <Input
-                type="number"
-                placeholder="16"
-                min="0"
-                max="50"
-                value={padding}
-                onChange={(e) => setPadding(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            <div>
-              <Label className="mb-2 text-sm font-medium">Margin (px)</Label>
-              <Input
-                type="number"
-                placeholder="10"
-                min="0"
-                max="50"
-                value={margin}
-                onChange={(e) => setMargin(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            {/* Text Styling */}
-            <div>
-              <Label className="mb-2 text-sm font-medium">Font Size (px)</Label>
-              <Input
-                type="number"
-                placeholder="14"
-                min="8"
-                max="48"
-                value={fontSize}
-                onChange={(e) => setFontSize(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            <div>
-              <Label className="mb-2 text-sm font-medium">Font Weight</Label>
-              <Select value={fontWeight} onValueChange={setFontWeight}>
+              <Label className="mb-2 text-sm font-medium">Animation Speed</Label>
+              <Select value={animationDuration.toString()} onValueChange={(value) => setAnimationDuration(Number(value))}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="100">Thin (100)</SelectItem>
-                  <SelectItem value="200">Extra Light (200)</SelectItem>
-                  <SelectItem value="300">Light (300)</SelectItem>
-                  <SelectItem value="400">Normal (400)</SelectItem>
-                  <SelectItem value="500">Medium (500)</SelectItem>
-                  <SelectItem value="600">Semi Bold (600)</SelectItem>
-                  <SelectItem value="700">Bold (700)</SelectItem>
-                  <SelectItem value="800">Extra Bold (800)</SelectItem>
-                  <SelectItem value="900">Black (900)</SelectItem>
+                  <SelectItem value="100">Very Fast</SelectItem>
+                  <SelectItem value="300">Fast</SelectItem>
+                  <SelectItem value="500">Normal</SelectItem>
+                  <SelectItem value="800">Slow</SelectItem>
+                  <SelectItem value="1200">Very Slow</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div>
-              <Label className="mb-2 text-sm font-medium">Text Alignment</Label>
-              <Select value={textAlignment} onValueChange={setTextAlignment}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="left">Left</SelectItem>
-                  <SelectItem value="center">Center</SelectItem>
-                  <SelectItem value="right">Right</SelectItem>
-                  <SelectItem value="justify">Justify</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div>
-              <Label className="mb-2 text-sm font-medium">Line Height</Label>
-              <Input
-                type="number"
-                placeholder="1.5"
-                min="0.5"
-                max="3"
-                step="0.1"
-                value={lineHeight}
-                onChange={(e) => setLineHeight(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            {/* Shadow and Effects */}
-            <div>
-              <Label className="mb-2 text-sm font-medium">Box Shadow</Label>
-              <Input
-                placeholder="0 2px 8px rgba(0,0,0,0.1)"
-                value={boxShadow}
-                onChange={(e) => setBoxShadow(e.target.value)}
-                className="w-full font-mono text-sm"
-              />
-            </div>
-
-            <div>
-              <Label className="mb-2 text-sm font-medium">Opacity</Label>
-              <Input
-                type="number"
-                placeholder="1"
-                min="0"
-                max="1"
-                step="0.1"
-                value={opacity}
-                onChange={(e) => setOpacity(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            {/* Advanced Settings */}
-            <div>
-              <Label className="mb-2 text-sm font-medium">Z-Index</Label>
-              <Input
-                type="number"
-                placeholder="9999"
-                min="1"
-                max="99999"
-                value={zIndex}
-                onChange={(e) => setZIndex(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            <div>
-              <Label className="mb-2 text-sm font-medium">Custom CSS Classes</Label>
-              <Input
-                placeholder="my-custom-class another-class"
-                value={customCssClasses}
-                onChange={(e) => setCustomCssClasses(e.target.value)}
-                className="w-full font-mono text-sm"
-              />
-            </div>
-
-            <div>
-              <Label className="mb-2 text-sm font-medium">Custom CSS Styles</Label>
-              <textarea
-                placeholder="border: 2px solid #ff0000; transform: rotate(5deg);"
-                value={customCssStyles}
-                onChange={(e) => setCustomCssStyles(e.target.value)}
-                className="w-full h-20 p-3 border border-input rounded-md font-mono text-sm resize-none"
-              />
-            </div>
           </div>
           
           <SheetFooter className="pt-6 border-t">
