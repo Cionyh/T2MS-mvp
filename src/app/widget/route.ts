@@ -379,7 +379,7 @@ export async function GET() {
           wrapper.appendChild(linkContainer);
         }
 
-        applyPosition(wrapper, type);
+        
         document.body.appendChild(wrapper);
         requestAnimationFrame(() => (wrapper.style.opacity = "1"));
         break;
@@ -651,7 +651,7 @@ export async function GET() {
       link.onmouseout = () => { link.style.opacity = "0.8"; };
       
       linkContainer.appendChild(link);
-      contentDiv.appendChild(linkContainer);
+      wrapper.appendChild(linkContainer);
     }
 
     if (type !== "ticker" && dismissAfter && type !== "fullscreen" && type !== "modal") {
