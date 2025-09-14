@@ -226,22 +226,13 @@ export async function GET() {
           lineHeight: "1.4",
         });
         
-        const position = config.widgetPosition;
         document.body.appendChild(wrapper);
         
-        if (position.includes("top")) {
+        // Banner should always be at top by default
         requestAnimationFrame(() => {
           wrapper.style.top = "0";
           wrapper.style.opacity = "1";
         });
-        } else if (position.includes("bottom")) {
-          requestAnimationFrame(() => {
-            wrapper.style.bottom = "0";
-            wrapper.style.opacity = "1";
-          });
-        } else {
-          requestAnimationFrame(() => (wrapper.style.opacity = "1"));
-        }
         break;
       }
 
@@ -270,31 +261,36 @@ export async function GET() {
         \`;
         document.head.appendChild(styleTag);
 
-        // Add company link for ticker if provided - display below scrolling content
+        // Add company link for ticker if provided - static position, show actual URL
         if (config.companyWebsiteLink) {
           const linkContainer = document.createElement("div");
           linkContainer.style.cssText = \`
             position: absolute;
-            bottom: 8px;
-            right: 8px;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
             z-index: 10;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px 8px;
+            border-radius: 4px;
           \`;
           
           const link = document.createElement("a");
           link.href = config.companyWebsiteLink;
           link.target = "_blank";
           link.rel = "noopener noreferrer";
-          link.textContent = "Visit Site";
+          link.textContent = config.companyWebsiteLink;
           link.style.cssText = \`
             color: #3b82f6;
             text-decoration: underline;
-            font-size: 12px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 4px 8px;
-            border-radius: 4px;
+            font-size: 14px;
             display: inline-block;
             opacity: 0.8;
             transition: opacity 0.2s ease;
+            white-space: nowrap;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
           \`;
           
           link.onmouseover = () => { link.style.opacity = "1"; };
@@ -532,7 +528,30 @@ export async function GET() {
       \`;
       
       logoContainer.appendChild(logoImg);
-      contentDiv.insertBefore(logoContainer, contentDiv.firstChild);
+      
+      // For ticker, add logo to wrapper (static position)
+      // For other widgets, add to contentDiv
+      if (type === "ticker") {
+        logoContainer.style.cssText = \`
+          position: absolute;
+          top: 50%;
+          left: 12px;
+          transform: translateY(-50%);
+          z-index: 10;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(1px);
+          margin: 0;
+        \`;
+        wrapper.appendChild(logoContainer);
+      } else {
+        contentDiv.insertBefore(logoContainer, contentDiv.firstChild);
+      }
     }
 
     // Add company link if provided - display as visible clickable link
@@ -551,7 +570,7 @@ export async function GET() {
       link.style.cssText = \`
         color: #3b82f6;
         text-decoration: underline;
-        font-size: 12px;
+        font-size: 14px;
         word-break: break-all;
         display: inline-block;
         max-width: 100%;
