@@ -292,7 +292,7 @@ export async function GET() {
 }
 
 
-      case "ticker": {
+     case "ticker": {
   wrapper.setAttribute("role", "status");
   Object.assign(wrapper.style, {
     width: "100%",
@@ -333,16 +333,17 @@ export async function GET() {
   \`;
   document.head.appendChild(styleTag);
 
+  wrapper.appendChild(contentDiv);
   document.body.appendChild(wrapper);
 
-  // Add company link below ticker content
+  // Add company link BELOW ticker, like banner
   if (config.companyWebsiteLink) {
-    const linkDiv = document.createElement("div");
-    linkDiv.style.cssText = \`
-      width: 100%;
+    const linkContainer = document.createElement("div");
+    linkContainer.style.cssText = \`
+      display: block;
       text-align: center;
-      margin-top: 4px;
-      font-size: 14px;
+      padding: 8px 0;
+      background-color: #f9f9f9;
     \`;
 
     const link = document.createElement("a");
@@ -353,21 +354,27 @@ export async function GET() {
     link.style.cssText = \`
       color: #3b82f6;
       text-decoration: underline;
+      font-size: 14px;
+      display: inline-block;
       opacity: 0.8;
       transition: opacity 0.2s ease;
-      word-break: break-all;
+      white-space: nowrap;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
     \`;
 
     link.onmouseover = () => { link.style.opacity = "1"; };
     link.onmouseout = () => { link.style.opacity = "0.8"; };
 
-    linkDiv.appendChild(link);
-    wrapper.appendChild(linkDiv);
+    linkContainer.appendChild(link);
+    wrapper.insertAdjacentElement("afterend", linkContainer);
   }
 
   requestAnimationFrame(() => (wrapper.style.opacity = "1"));
   break;
 }
+
 
 
       case "popup": {
@@ -648,7 +655,7 @@ export async function GET() {
     }
 
     // Add company link if provided - display as visible clickable link (exclude ticker and banner - handled separately)
-    if (config.companyWebsiteLink && type !== "ticker" && type !== "banner") {
+    if (config.companyWebsiteLink && type !== "ticker" && type !== "banner" && type !== "popup") {
       const linkContainer = document.createElement("div");
       linkContainer.style.cssText = \`
         margin-top: 8px;
