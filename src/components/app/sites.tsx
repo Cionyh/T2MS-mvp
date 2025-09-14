@@ -706,7 +706,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       <Sheet  open={configureDialogOpen} onOpenChange={setConfigureDialogOpen}>
         <SheetContent className="w-[90vw] sm:w-[80vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw] 2xl:w-[45vw] overflow-y-auto pl-5 pr-5">
           <SheetHeader className="pb-6">
-            <SheetTitle className="text-xl sm:text-2xl">Configure Website</SheetTitle>
+            <SheetTitle className="text-xl sm:text-2xl">Configure Website Settings</SheetTitle>
             <SheetDescription className="text-sm sm:text-base">
               Update your website settings and widget preferences.
             </SheetDescription>
