@@ -378,8 +378,6 @@ export async function GET() {
   requestAnimationFrame(() => (wrapper.style.opacity = "1"));
   break;
 }
-
-
       case "popup": {
   wrapper.setAttribute("role", "status");
   Object.assign(wrapper.style, {
