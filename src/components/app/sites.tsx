@@ -992,6 +992,13 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               </Select>
             </div>
 
+            {/* SMS Disclaimer */}
+            <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-amber-200">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <strong>Important:</strong> By enabling SMS updates, you agree to our Terms and Acceptable Use. 
+                Reply HELP for help, STOP to opt out. Msg & data rates may apply.
+              </p>
+            </div>
 
           </div>
           
