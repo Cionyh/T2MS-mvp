@@ -393,15 +393,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
 
   {editingWebsiteId !== website.id && (
     <div className="flex items-center space-x-2">
-      {/* Configure button */}
-      <Button
-        variant="ghost"
-        className="h-8 px-3 rounded-full border border-primary"
-        onClick={() => handleEditClick(website)}
-      >
-         Configure
-      </Button>
-
       {/* More menu */}
       <Popover>
         <PopoverTrigger asChild>
@@ -442,13 +433,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <Button
-            variant="ghost"
-            className="justify-start w-full rounded-md hover:bg-secondary/50"
-            onClick={() => handleOpenEmbedDialog(website.id)}
-          >
-            <Target className="mr-2 h-4 w-4" /> Embed Script
-          </Button>
         </PopoverContent>
       </Popover>
     </div>
@@ -631,11 +615,22 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         </Button>
       </p>
 
+      {/* Configure button */}
+      <div className="pt-2">
+        <Button
+          variant="outline"
+          className="w-full bg-primary rounded-full hover:bg-primary/80 text-foreground"
+          onClick={() => handleEditClick(website)}
+        >
+          Configure Settings
+        </Button>
+      </div>
+
       {/* ✅ Embed Script Button Moved Here */}
       <div className="pt-2">
         <Button
           variant="outline"
-          className="w-full bg-primary/10 rounded-full hover:bg-primary/20 text-foreground"
+          className="w-full border-2 border-primary rounded-full hover:bg-primary/20 text-foreground"
           onClick={() => handleOpenEmbedDialog(website.id)}
         >
           <Target className="mr-2 h-4 w-4" /> Copy Embed Script 
@@ -661,7 +656,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       <Sheet  open={configureDialogOpen} onOpenChange={setConfigureDialogOpen}>
         <SheetContent className="w-[90vw] sm:w-[80vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw] 2xl:w-[45vw] overflow-y-auto pl-5 pr-5">
           <SheetHeader className="pb-6">
-            <SheetTitle className="text-xl sm:text-2xl">Configure Website Settings</SheetTitle>
+            <SheetTitle className="text-xl sm:text-2xl">Configure Widget Settings</SheetTitle>
             <SheetDescription className="text-sm sm:text-base">
               Update your website settings and widget preferences.
             </SheetDescription>
@@ -811,9 +806,25 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 max="48"
                 className="w-full"
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Set the font size for your widget text (8-48px)
-              </p>
+              <div className="mt-2 p-3 bg-muted/50 rounded-lg border">
+                <p className="text-xs text-muted-foreground mb-2">
+                  <strong>Font Size Guide:</strong>
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex justify-between">
+                    <span>Small: 8-12px</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Medium: 13-16px</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Large: 17-24px</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Extra Large: 25-48px</span>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div>
@@ -825,6 +836,15 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 placeholder="5000"
                 className="w-full"
               />
+              <div className="mt-2 p-3 bg-muted/50 rounded-lg border">
+                <p className="text-xs text-muted-foreground">
+                  <strong>Dismiss Timer:</strong> The time in milliseconds that takes the popup and banner widgets to disappear automatically. 
+                  <br />
+                  <span className="text-xs text-muted-foreground mt-1 block">
+                    • 1000ms = 1 second • 5000ms = 5 seconds • 10000ms = 10 seconds
+                  </span>
+                </p>
+              </div>
             </div>
             
             <div>
@@ -963,11 +983,11 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="100">Very Fast</SelectItem>
-                  <SelectItem value="300">Fast</SelectItem>
-                  <SelectItem value="500">Normal</SelectItem>
-                  <SelectItem value="800">Slow</SelectItem>
-                  <SelectItem value="1200">Very Slow</SelectItem>
+                  <SelectItem value="100">Very Fast (0.1s)</SelectItem>
+                  <SelectItem value="300">Fast (0.3s)</SelectItem>
+                  <SelectItem value="500">Medium (0.5s)</SelectItem>
+                  <SelectItem value="800">Slow (0.8s)</SelectItem>
+                  <SelectItem value="1200">Very Slow (1.2s)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
