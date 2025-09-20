@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+
+//@ts-ignore
 import * as twilio from "twilio";
 
 // Load environment variables safely

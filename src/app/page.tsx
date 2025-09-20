@@ -14,6 +14,7 @@ import { FAQSection } from "@/components/landing/FAQ";
 import { CompatibilityCard } from "@/components/landing/co-card";
 import { DemoPlaceholder } from "@/components/landing/demo";
 import { LiveSandbox } from "@/components/landing/sandbox";
+import { PricingSection } from "@/components/landing/pricing";
 
 const containerVariants: Variants = {
   initial: { opacity: 0 },
@@ -83,6 +84,7 @@ export default function Home() {
                              <Clients textVariants={textVariants}/>
 
                                 <FAQSection />
+                                <PricingSection />
       
 
 

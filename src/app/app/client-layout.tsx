@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable */
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -11,6 +11,7 @@ import {
   MessageSquare,
   LogOut,
   LucideSettings,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import {
@@ -37,14 +39,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { signOut } from "@/lib/auth-client"; 
+import { signOut, client } from "@/lib/auth-client"; 
 
 const navItems = [
   { label: "Dashboard", href: "/app", icon: LayoutDashboard },
   { label: "Sites", href: "/app/sites", icon: Globe },
   { label: "Messages", href: "/app/messages", icon: MessageSquare },
-    { label: "Settings", href: "/app/settings", icon: LucideSettings },
-
+  { label: "Billing", href: "/app/billing", icon: CreditCard },
+  { label: "Settings", href: "/app/settings", icon: LucideSettings },
 ];
 
 type ClientDashboardLayoutProps = {
@@ -59,6 +61,38 @@ export default function ClientDashboardLayout({
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSignOutDialog, setOpenSignOutDialog] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<string>("free");
+  const [planStatus, setPlanStatus] = useState<string>("");
+
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      try {
+        const { data } = await client.subscription.list({
+          query: {
+            referenceId: session?.user?.id
+          }
+        });
+        
+        if (data && data.length > 0) {
+          const activeSubscription = data.find((sub: any) => 
+            sub.status === "active" || sub.status === "trialing"
+          );
+          
+          if (activeSubscription) {
+            setCurrentPlan(activeSubscription.plan);
+            setPlanStatus(activeSubscription.status);
+          }
+        }
+      } catch (error) {
+        // Silently fail - user might not have subscriptions
+        console.log("No subscription found");
+      }
+    };
+
+    if (session?.user?.id) {
+      fetchSubscription();
+    }
+  }, [session?.user?.id]);
 
   const handleSignOut = async () => {
     try {
@@ -140,8 +174,55 @@ export default function ClientDashboardLayout({
           </div>
         </div>
 
-        {/* Right: Theme + Avatar + Sign Out */}
+        {/* Right: Plan Badge + Theme + Avatar + Sign Out */}
         <div className="flex items-center gap-3">
+          {/* Plan Badge with Popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Badge 
+                variant={currentPlan === "free" ? "secondary" : "default"}
+                className={cn(
+                  "cursor-pointer transition-colors",
+                  currentPlan === "free" && "bg-muted text-muted-foreground",
+                  currentPlan === "starter" && "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                  currentPlan === "pro" && "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+                  currentPlan === "enterprise" && "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                )}
+              >
+                {currentPlan === "free" ? "Free" : currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}
+                {planStatus === "trialing" && " (Trial)"}
+              </Badge>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-64 space-y-2">
+              <div className="space-y-1">
+                <p className="text-sm font-medium leading-none">
+                  Current Plan: {currentPlan === "free" ? "Free" : currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {currentPlan === "free" && "Limited features and usage"}
+                  {currentPlan === "starter" && "Basic features with moderate limits"}
+                  {currentPlan === "pro" && "Advanced features with higher limits"}
+                  {currentPlan === "enterprise" && "Full features with unlimited usage"}
+                </p>
+                
+                <div className="flex flex-col gap-2 pt-2">
+                  <Link href="/app/billing">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Manage Billing
+                    </Button>
+                  </Link>
+                  
+                  {currentPlan !== "enterprise" && (
+                    <Link href="/#pricing">
+                      <Button size="sm" className="w-full">
+                        {currentPlan === "free" ? "Upgrade Plan" : "Upgrade Plan"}
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
           <ThemeToggle />
           <Popover>
             <PopoverTrigger asChild>

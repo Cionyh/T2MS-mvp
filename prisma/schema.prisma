@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -19,11 +20,12 @@ model User {
   accounts      Account[]
   role          String?
 
-  clients Client[] @relation("UserClients") 
-
+  clients    Client[]  @relation("UserClients")
   banned     Boolean?
   banReason  String?
   banExpires DateTime?
+
+  stripeCustomerId String?
 
   @@unique([email])
   @@map("user")
@@ -76,33 +78,50 @@ model Verification {
 }
 
 model Client {
-  id                  String    @id @default(cuid())
-  userId              String
-  user                User      @relation("UserClients", fields: [userId], references: [id], onDelete: Cascade)
-  name                String
-  domain              String    @unique
-  phone               String    @unique
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("UserClients", fields: [userId], references: [id], onDelete: Cascade)
+  name   String
+  domain String @unique
+  phone  String @unique
 
   // Defaults for messages
-  defaultType         String?   @default("banner")      // fallback type if message.type not set
-  defaultBgColor      String?   @default("#222")
-  defaultTextColor    String?   @default("#fff")
-  defaultFont         String?   @default("sans-serif")
-  defaultDismissAfter Int?      @default(5000)           // milliseconds
-  pinned              Boolean   @default(false)
+  defaultType         String? @default("banner") // fallback type if message.type not set
+  defaultBgColor      String? @default("#222")
+  defaultTextColor    String? @default("#fff")
+  defaultFont         String? @default("sans-serif")
+  defaultDismissAfter Int?    @default(5000) // milliseconds
+  pinned              Boolean @default(false)
 
   // Widget configuration settings
-  widgetConfig        Json?     @default("{}")           // JSON object containing all widget customization settings
+  widgetConfig Json? @default("{}") // JSON object containing all widget customization settings
 
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  messages            Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
 }
 
 model Message {
-  id           String   @id @default(cuid())
-  content      String
-  createdAt    DateTime @default(now())
-  clientId     String
-  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                   String    @id
+  plan                 String
+  referenceId          String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  status               String?
+  periodStart          DateTime?
+  periodEnd            DateTime?
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  cancelAtPeriodEnd    Boolean?  @default(false)
+  seats                Int?
+
+  @@map("subscription")
 }

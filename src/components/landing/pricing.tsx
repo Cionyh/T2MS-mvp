@@ -3,52 +3,89 @@
 import { Check, Zap, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { client } from "@/lib/auth-client";
+import { toast } from "sonner";
+import { useState } from "react";
 
 const plans = [
   {
-    name: "Basic",
+    name: "Starter",
+    planId: "starter",
     price: "$9",
     description: "Perfect for small sites or personal projects.",
     icon: Zap,
     features: [
-      "1 website",
-      "Unlimited updates",
-      "Instant publishing",
+      "Up to 3 websites",
+      "100 messages per month",
       "Basic support",
+      "Widget customization",
     ],
     highlight: false,
   },
   {
     name: "Pro",
+    planId: "pro",
     price: "$29",
     description: "For growing businesses needing more power.",
     icon: Rocket,
     features: [
-      "Up to 5 websites",
-      "Unlimited updates",
-      "Instant publishing",
+      "Up to 10 websites",
+      "1,000 messages per month",
       "Priority support",
-      "Custom branding",
+      "14-day free trial",
     ],
     highlight: true,
   },
   {
     name: "Enterprise",
+    planId: "enterprise",
     price: "$99",
-    description: "For large teams & multi-location enterprises.",
+    description: "For large enterprises.",
     icon: Check,
     features: [
       "Unlimited websites",
-      "Unlimited updates",
-      "Instant publishing",
-      "Dedicated account manager",
-      "Custom integrations",
+      "Unlimited messages",
+      "Premium support",
     ],
     highlight: false,
   },
 ];
 
 export function PricingSection() {
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleUpgrade = async (planId: string) => {
+    setLoading(planId);
+    try {
+      // Get the current session to get the user ID
+      const session = await client.getSession();
+      if (!session?.data?.user?.id) {
+        toast.error("Please sign in to upgrade your plan");
+        return;
+      }
+
+      const { data, error } = await client.subscription.upgrade({
+        plan: planId,
+        referenceId: session.data.user.id,
+        successUrl: `${window.location.origin}/app/sites?upgraded=true`,
+        cancelUrl: `${window.location.origin}/#pricing`,
+      });
+
+      if (error) {
+        toast.error(error.message || "Failed to start subscription");
+        return;
+      }
+
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <section id="pricing" className="w-full max-w-6xl mx-auto px-4 md:px-8 py-20">
       <div className="text-center mb-12">
@@ -56,13 +93,14 @@ export function PricingSection() {
           Simple, Transparent Pricing
         </h2>
         <p className="text-lg text-muted-foreground mt-4">
-          Choose the plan that’s right for you — no hidden fees, no surprises.
+          Choose the plan that's right for you — no hidden fees, no surprises.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {plans.map((plan) => {
           const Icon = plan.icon;
+          const isLoading = loading === plan.planId;
           return (
             <div
               key={plan.name}
@@ -98,6 +136,8 @@ export function PricingSection() {
               </ul>
 
               <Button
+                onClick={() => handleUpgrade(plan.planId)}
+                disabled={isLoading}
                 className={cn(
                   "mt-6 w-full",
                   plan.highlight
@@ -105,7 +145,7 @@ export function PricingSection() {
                     : "bg-muted text-foreground hover:bg-muted/80"
                 )}
               >
-                Get Started
+                {isLoading ? "Processing..." : "Get Started"}
               </Button>
             </div>
           );
