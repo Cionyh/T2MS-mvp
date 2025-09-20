@@ -6,7 +6,6 @@ import { auth } from "./auth";
 import { stripeClient } from "@better-auth/stripe/client";
 
 export const client = createAuthClient({
-	baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
 	fetchOptions: {
 		onError(e) {
 			if (e.error.status === 429) {
