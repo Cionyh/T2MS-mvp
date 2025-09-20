@@ -9,6 +9,20 @@ import { useState } from "react";
 
 const plans = [
   {
+    name: "Free",
+    planId: "free",
+    price: "$0",
+    description: "Perfect for trying out the platform.",
+    icon: Check,
+    features: [
+      "1 website",
+      "4 messages per month",
+      "Basic support",
+      "Widget customization",
+    ],
+    highlight: false,
+  },
+  {
     name: "Starter",
     planId: "starter",
     price: "$9",
@@ -19,6 +33,7 @@ const plans = [
       "100 messages per month",
       "Basic support",
       "Widget customization",
+      "14-day free trial",
     ],
     highlight: false,
   },
@@ -61,6 +76,13 @@ export function PricingSection() {
       const session = await client.getSession();
       if (!session?.data?.user?.id) {
         toast.error("Please sign in to upgrade your plan");
+        return;
+      }
+
+      // Handle free plan - no subscription needed
+      if (planId === "free") {
+        toast.success("You're already on the free plan! Start creating your first site.");
+        window.location.href = "/app/sites";
         return;
       }
 

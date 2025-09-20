@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { checkSiteLimit } from "@/lib/plan-limits";
 
 /* ----------  POST /api/client  ----------------------------------------- */
 export async function POST(req: Request) {
@@ -12,6 +13,20 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: "Missing required fields" },
       { status: 400 }
+    );
+  }
+
+  // Check site limit based on user's plan
+  const siteLimit = await checkSiteLimit(userId);
+  if (!siteLimit.allowed) {
+    return NextResponse.json(
+      { 
+        error: `Site limit exceeded. You can create up to ${siteLimit.limit === -1 ? 'unlimited' : siteLimit.limit} sites on your current plan. You currently have ${siteLimit.current} sites.`,
+        limitExceeded: true,
+        current: siteLimit.current,
+        limit: siteLimit.limit
+      },
+      { status: 403 }
     );
   }
 

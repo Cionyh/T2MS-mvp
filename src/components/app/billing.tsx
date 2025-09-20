@@ -32,6 +32,7 @@ interface PlanLimits {
 }
 
 const planLimits: Record<string, PlanLimits> = {
+  free: { websites: 1, messages: 4, storage: 0.1 },
   starter: { websites: 3, messages: 100, storage: 1 },
   pro: { websites: 10, messages: 1000, storage: 10 },
   enterprise: { websites: -1, messages: -1, storage: 100 }

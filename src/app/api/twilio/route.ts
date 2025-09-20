@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkMessageLimit } from "@/lib/plan-limits";
 
 //@ts-ignore
 import * as twilio from "twilio";
@@ -121,6 +122,16 @@ export async function POST(req: NextRequest) {
     }
 
     console.log("📝 Saving message:", { content, type, clientId: client.id });
+
+    // Check message limit based on user's plan
+    const messageLimit = await checkMessageLimit(client.userId, client.id);
+    if (!messageLimit.allowed) {
+      console.warn("❌ Message limit exceeded for user:", client.userId);
+      return new NextResponse(
+        `<Response><Message>Message limit exceeded. You can send up to ${messageLimit.limit === -1 ? 'unlimited' : messageLimit.limit} messages per month on your current plan. You have sent ${messageLimit.current} messages this month. Please upgrade your plan to send more messages.</Message></Response>`,
+        { status: 200, headers: { "Content-Type": "text/xml" } }
+      );
+    }
 
     await prisma.message.create({
       data: { content, clientId: client.id },

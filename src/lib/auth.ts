@@ -47,6 +47,9 @@ export const auth = betterAuth({
               websites: 3,
               messages: 100,
               storage: 1
+            },
+            freeTrial: {
+              days: 14
             }
           },
           {
