@@ -286,14 +286,13 @@ export function BillingSection() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-2">
-              {/* Temporarily disabled until Stripe portal is configured */}
-              {/* <Button
+             <Button
                 onClick={handleBillingPortal}
                 disabled={actionLoading === "billing-portal"}
                 variant="outline"
               >
                 {actionLoading === "billing-portal" ? "Loading..." : "Manage Billing"}
-              </Button> */}
+              </Button>
 
               {/* Upgrade Button - only show for non-enterprise plans */}
               {activeSubscription.plan !== "enterprise" && (
