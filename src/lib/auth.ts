@@ -44,9 +44,9 @@ export const auth = betterAuth({
             name: "starter",
             priceId: process.env.STRIPE_STARTER_PRICE_ID!,
             limits: {
-              websites: 3,
-              messages: 100,
-              storage: 1
+              websites: 50,
+              messages: 10000,
+              storage: 50
             },
             freeTrial: {
               days: 14
@@ -56,9 +56,9 @@ export const auth = betterAuth({
             name: "pro",
             priceId: process.env.STRIPE_PRO_PRICE_ID!,
             limits: {
-              websites: 10,
-              messages: 1000,
-              storage: 10
+              websites: 200,
+              messages: 50000,
+              storage: 200
             },
             freeTrial: {
               days: 14
@@ -70,7 +70,7 @@ export const auth = betterAuth({
             limits: {
               websites: -1, 
               messages: -1, 
-              storage: 100
+              storage: 1000
             }
           }
         ],

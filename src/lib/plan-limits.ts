@@ -7,10 +7,10 @@ export interface PlanLimits {
 }
 
 export const PLAN_LIMITS: Record<string, PlanLimits> = {
-  free: { websites: 1, messages: 4, storage: 0.1 },
-  starter: { websites: 3, messages: 100, storage: 1 },
-  pro: { websites: 10, messages: 1000, storage: 10 },
-  enterprise: { websites: -1, messages: -1, storage: 100 }
+  free: { websites: 10, messages: 1000, storage: 10 },
+  starter: { websites: 50, messages: 10000, storage: 50 },
+  pro: { websites: 200, messages: 50000, storage: 200 },
+  enterprise: { websites: -1, messages: -1, storage: 1000 }
 };
 
 export async function getUserPlan(userId: string): Promise<string> {
