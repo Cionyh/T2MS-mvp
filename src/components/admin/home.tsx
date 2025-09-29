@@ -195,7 +195,7 @@ export default function DashboardPage() {
           </Card>
         </Link>
 
-        <Link href={"/admin/dashboard/analytics"}>
+        <Link href={"/admin/analyze"}>
           <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-primary">Analytics Dashboard</CardTitle>
