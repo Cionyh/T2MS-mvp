@@ -297,7 +297,7 @@ export function BillingSection() {
               {/* Upgrade Button - only show for non-enterprise plans */}
               {activeSubscription.plan !== "enterprise" && (
                 <Button
-                  onClick={() => window.location.href = "/#pricing"}
+                  onClick={() => window.location.href = "/pricing"}
                   variant="default"
                 >
                   Upgrade Plan
@@ -343,7 +343,7 @@ export function BillingSection() {
             <p className="text-muted-foreground mb-4">
               Unlock more features and higher limits with a paid subscription.
             </p>
-            <Button onClick={() => window.location.href = "/#pricing"}>
+            <Button onClick={() => window.location.href = "/pricing"}>
               View Plans
             </Button>
           </CardContent>

@@ -13,7 +13,7 @@ export function ShopifyIntegration() {
           <div>
             <h1 className="text-4xl font-bold mt-4">Shopify Integration</h1>
             <p className="text-muted-foreground text-lg">
-              Add Text2MySite SMS alerts to your Shopify store
+              Add Text2MySite™ SMS alerts to your Shopify store
             </p>
           </div>
         </div>

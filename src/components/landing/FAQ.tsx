@@ -25,7 +25,7 @@ const faqs: FAQItem[] = [
   },
   {
      question: "Do I need to log in?",
-     answer: "No — updates are made by text only, no dashboard required."
+     answer: "No.  Once your widget is configured, updates are made by text only, no complicated dashboard required."
   },
   {
     question: "Do I need to log in to make changes?",

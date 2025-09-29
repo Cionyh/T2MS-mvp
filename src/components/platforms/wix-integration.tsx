@@ -13,7 +13,7 @@ export function WixIntegration() {
           <div>
             <h1 className="text-4xl font-bold mt-4">Wix Integration</h1>
             <p className="text-muted-foreground text-lg">
-              Add Text2MySite SMS alerts to your Wix website
+              Add Text2MySite™ SMS alerts to your Wix website
             </p>
           </div>
         </div>
@@ -62,6 +62,80 @@ export function WixIntegration() {
               <li><strong>Paste the Code:</strong> Click on the iFrame, then click <strong>"Enter Code."</strong> Paste your HTML code snippet into the text box.</li>
               <li><strong>Adjust and Publish:</strong> Resize and position the iFrame on your page as needed. It's important to make sure the iFrame is large enough to display the widget correctly. If the code has fixed pixel dimensions, you might need to adjust them to percentages (e.g., <code>width="100%" height="100%"</code>) to ensure it fits responsively.</li>
             </ol>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Video Tutorials */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Play className="w-5 h-5 text-red-600" />
+            YouTube Tutorials
+          </CardTitle>
+          <CardDescription>
+            Watch step-by-step video guides for adding HTML code to Wix
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Tutorial 1 */}
+          <div className="bg-gray-50 rounded-lg p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Play className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-lg mb-2">How To Add HTML Code or Embed Codes in Wix</h4>
+                <p className="text-muted-foreground mb-3">
+                  Comprehensive guide for adding HTML code and embed codes in Wix
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  From the channel Wix Training Academy • 3 minutes 12 seconds
+                </p>
+                <Button asChild size="sm">
+                  <a 
+                    href="http://www.youtube.com/watch?v=zVqPqDkpjyM" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Watch Tutorial
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Tutorial 2 */}
+          <div className="bg-gray-50 rounded-lg p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Play className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-lg mb-2">Wix Tutorial for Beginners: How To Add HTML Code or Embed Codes in Wix #shorts</h4>
+                <p className="text-muted-foreground mb-3">
+                  Quick beginner tutorial for adding HTML code in Wix
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  From the channel Arbela Media Group • 23 seconds
+                </p>
+                <Button asChild size="sm">
+                  <a 
+                    href="http://www.youtube.com/watch?v=e8SS3nyjvAQ" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Watch Tutorial
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

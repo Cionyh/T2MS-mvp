@@ -22,20 +22,20 @@ const lora = Lora({
 
 // Enhanced SEO & Social Preview Metadata
 export const metadata: Metadata = {
-  title: "Text2MySite — Build & Update Your Site Instantly",
-  description: "Text2MySite (T2MS) lets you manage and update your website content effortlessly. Try live demos, preview banners, modals, and more in real-time.",
+  title: "Text2MySite™ — Build & Update Your Site Instantly",
+  description: "Text2MySite™ (T2MS) lets you manage and update your website content effortlessly. Try live demos, preview banners, modals, and more in real-time.",
   
   openGraph: {
-    title: "Text2MySite — Build & Update Your Site Instantly",
-    description: "Text2MySite (T2MS) lets you manage and update your website content effortlessly. Try live demos, preview banners, modals, and more in real-time.",
+    title: "Text2MySite™ — Build & Update Your Site Instantly",
+    description: "Text2MySite™ (T2MS) lets you manage and update your website content effortlessly. Try live demos, preview banners, modals, and more in real-time.",
     url: "https://www.text2mysite.com/",
-    siteName: "Text2MySite",
+    siteName: "Text2MySite™",
     images: [
       {
         url: "https://www.text2mysite.com/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Text2MySite Preview",
+        alt: "Text2MySite™ Preview",
       },
     ],
     type: "website",
@@ -43,8 +43,8 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "Text2MySite — Build & Update Your Site Instantly",
-    description: "Text2MySite (T2MS) lets you manage and update your website content effortlessly. Try live demos, preview banners, modals, and more in real-time.",
+    title: "Text2MySite™ — Build & Update Your Site Instantly",
+    description: "Text2MySite™ (T2MS) lets you manage and update your website content effortlessly. Try live demos, preview banners, modals, and more in real-time.",
     images: ["https://www.text2mysite.com/og-image.png"],
     site: "@YourTwitterHandle",
     creator: "@YourTwitterHandle",

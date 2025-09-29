@@ -13,7 +13,7 @@ export function GoDaddyIntegration() {
           <div>
             <h1 className="text-4xl font-bold mt-4">GoDaddy Integration</h1>
             <p className="text-muted-foreground text-lg">
-              Add Text2MySite SMS alerts to your GoDaddy website
+              Add Text2MySite™ SMS alerts to your GoDaddy website
             </p>
           </div>
         </div>
@@ -83,41 +83,76 @@ export function GoDaddyIntegration() {
         </CardContent>
       </Card>
 
-      {/* Video Tutorial */}
+      {/* Video Tutorials */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Play className="w-5 h-5 text-red-600" />
-            YouTube Tutorial
+            YouTube Tutorials
           </CardTitle>
           <CardDescription>
-            Watch a step-by-step video guide for adding custom HTML to GoDaddy
+            Watch step-by-step video guides for adding custom HTML to GoDaddy
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="bg-gray-50 rounded-lg p-6 text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Play className="w-8 h-8 text-red-600" />
+        <CardContent className="space-y-4">
+          {/* Tutorial 1 */}
+          <div className="bg-gray-50 rounded-lg p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Play className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-lg mb-2">How to Embed on Godaddy Website Builder</h4>
+                <p className="text-muted-foreground mb-3">
+                  Comprehensive guide for embedding widgets and custom code in GoDaddy
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  From the channel Tutorials by Joe & Lisa • 3 minutes 46 seconds
+                </p>
+                <Button asChild size="sm">
+                  <a 
+                    href="http://www.youtube.com/watch?v=7CI5wz7ir0U" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Watch Tutorial
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </Button>
+              </div>
             </div>
-            <h4 className="font-semibold text-lg mb-2">How To Add Custom HTML Code on GoDaddy Website Builder</h4>
-            <p className="text-muted-foreground mb-2">
-              Visual guide covering HTML section integration in GoDaddy
-            </p>
-            <p className="text-sm text-muted-foreground mb-4">
-              From the channel The Tech Journey
-            </p>
-            <Button asChild>
-              <a 
-                href="https://www.youtube.com/watch?v=FjI8ePj-j5Q" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                <Play className="w-4 h-4" />
-                Watch Tutorial
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </Button>
+          </div>
+
+          {/* Tutorial 2 */}
+          <div className="bg-gray-50 rounded-lg p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Play className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-lg mb-2">How To Add HTML Code To GoDaddy Website Builder</h4>
+                <p className="text-muted-foreground mb-3">
+                  Step-by-step tutorial for adding HTML code to GoDaddy websites
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  From the channel Make Money Anthony • 2 minutes 45 seconds
+                </p>
+                <Button asChild size="sm">
+                  <a 
+                    href="http://www.youtube.com/watch?v=IYqVERymJ5k" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Watch Tutorial
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

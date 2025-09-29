@@ -13,7 +13,7 @@ export function WeeblyIntegration() {
           <div>
             <h1 className="text-4xl font-bold mt-4">Weebly Integration</h1>
             <p className="text-muted-foreground text-lg">
-              Add Text2MySite SMS alerts to your Weebly website
+              Add Text2MySite™ SMS alerts to your Weebly website
             </p>
           </div>
         </div>

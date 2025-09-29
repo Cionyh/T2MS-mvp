@@ -25,9 +25,10 @@ type NavLink = {
 const navLinks: NavLink[] = [
   { label: 'Home', href: '/' },
   { label: 'How it works', href: '#how' },
+  { label: 'Pricing', href: '/pricing' },
   { label: 'FAQs', href: '#faqs' },
   { label: 'Tutorials', href: '/docs' },
-  { label: 'About Us', href: '#about' },
+  { label: 'About', href: '#about' },
 ];
 
 export function Navbar() {
@@ -48,7 +49,7 @@ export function Navbar() {
             className="text-xl font-extrabold tracking-tighter sm:text-xl md:text-2xl lg:text-3xl font-serif"
           >
             <span className="text-primary [text-shadow:0_0_20px_theme(colors.primary/20%)]">
-              Text2MySite
+              Text2MySite™
             </span>
           </motion.p>
         </Link>

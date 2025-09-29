@@ -64,7 +64,7 @@ export function Clients({ textVariants }: HowProps) {
               Who It's For
           </h2>
           <p className="text-lg text-muted-foreground mt-4">
-            Text2MySite empowers website owners to keep their sites fresh and up to date with quick, low-cost updates simply by sending a text.
+            Text2MySite™ empowers website owners to keep their sites fresh and up to date with quick, low-cost updates simply by sending a text.
           </p>
         </div>
 

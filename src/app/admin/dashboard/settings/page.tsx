@@ -1,462 +1,530 @@
 "use client";
-/* eslint-disable */
 
 import { useState } from "react";
+import { useSession, signOut } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { toast, Toaster } from "sonner";
-import { client } from "@/lib/auth-client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import {
-  Loader2,
-  Plus,
-  Trash,
-  RefreshCw,
-  UserCircle,
-  Calendar as CalendarIcon,
-} from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { User, Bell, Shield, LogOut, Save, Edit, Key } from "lucide-react";
+import { toast } from "sonner";
+import { DotPattern } from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
-type User = {
-  id: string;
-  email: string;
-  name: string;
-  role: "admin" | "user";
-};
-
-export default function AdminDashboard() {
-  const queryClient = useQueryClient();
-  const router = useRouter();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({
-    email: "",
-    password: "",
-    name: "",
-    role: "user" as const,
+export default function AdminSettingsPage() {
+  const { data: session } = useSession();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [openSignOutDialog, setOpenSignOutDialog] = useState(false);
+  
+  // User preferences state
+  const [notifications, setNotifications] = useState({
+    email: true,
+    sms: true,
+    push: false,
   });
-  const [isLoading, setIsLoading] = useState<string | undefined>();
-  const [isBanDialogOpen, setIsBanDialogOpen] = useState(false);
-  const [banForm, setBanForm] = useState({
-    userId: "",
-    reason: "",
-    expirationDate: undefined as Date | undefined,
+  
+  const [preferences, setPreferences] = useState({
+    theme: "system",
+    language: "en",
+    timezone: "UTC",
   });
 
-  const { data: users, isLoading: isUsersLoading } = useQuery({
-    queryKey: ["users"],
-    queryFn: async () => {
-      const data = await client.admin.listUsers(
-        {
-          query: {
-            limit: 10,
-            sortBy: "createdAt",
-            sortDirection: "desc",
-          },
-        },
-        {
-          throw: true,
-        }
-      );
-      return data?.users || [];
-    },
+  // Profile update state
+  const [profileData, setProfileData] = useState({
+    name: session?.user?.name || "",
+    email: session?.user?.email || "",
   });
 
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading("create");
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const handleSave = async () => {
+    setIsLoading(true);
     try {
-      await client.admin.createUser({
-        email: newUser.email,
-        password: newUser.password,
-        name: newUser.name,
-        role: newUser.role,
-      });
-      toast.success("User created successfully");
-      setNewUser({ email: "", password: "", name: "", role: "user" });
-      setIsDialogOpen(false);
-      queryClient.invalidateQueries({
-        queryKey: ["users"],
-      });
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create user");
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success("Settings saved successfully!");
+    } catch (error) {
+      toast.error("Failed to save settings");
     } finally {
-      setIsLoading(undefined);
+      setIsLoading(false);
     }
   };
 
-  const handleDeleteUser = async (id: string) => {
-    setIsLoading(`delete-${id}`);
+  const handleUpdateProfile = async () => {
+    setIsUpdatingProfile(true);
     try {
-      await client.admin.removeUser({ userId: id });
-      toast.success("User deleted successfully");
-      queryClient.invalidateQueries({
-        queryKey: ["users"],
-      });
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete user");
-    } finally {
-      setIsLoading(undefined);
-    }
-  };
-
-  const handleRevokeSessions = async (id: string) => {
-    setIsLoading(`revoke-${id}`);
-    try {
-      await client.admin.revokeUserSessions({ userId: id });
-      toast.success("Sessions revoked for user");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to revoke sessions");
-    } finally {
-      setIsLoading(undefined);
-    }
-  };
-
-  const handleImpersonateUser = async (id: string) => {
-    setIsLoading(`impersonate-${id}`);
-    try {
-      await client.admin.impersonateUser({ userId: id });
-      toast.success("Impersonated user");
-      router.push("/dashboard");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to impersonate user");
-    } finally {
-      setIsLoading(undefined);
-    }
-  };
-
-  const handleBanUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(`ban-${banForm.userId}`);
-    try {
-      if (!banForm.expirationDate) {
-        throw new Error("Expiration date is required");
+      // Import authClient dynamically to avoid SSR issues
+      const { client } = await import("@/lib/auth-client");
+      
+      // Check if email has changed
+      const emailChanged = profileData.email !== session?.user?.email;
+      const nameChanged = profileData.name !== session?.user?.name;
+      
+      if (emailChanged) {
+        // Use changeEmail for email updates
+        await client.changeEmail({
+          newEmail: profileData.email,
+          callbackURL: "/admin/dashboard/settings", // redirect after verification
+        });
+        
+        toast.success("Email change initiated! Please check your new email for verification.");
       }
-      await client.admin.banUser({
-        userId: banForm.userId,
-        banReason: banForm.reason,
-        banExpiresIn: banForm.expirationDate.getTime() - new Date().getTime(),
+      
+      if (nameChanged) {
+        // Use updateUser for name updates
+        await client.updateUser({
+          name: profileData.name,
+        });
+        
+        toast.success("Name updated successfully!");
+      }
+      
+      if (!emailChanged && !nameChanged) {
+        toast.info("No changes detected.");
+      }
+      
+      setIsProfileDialogOpen(false);
+      
+      // Refresh the session to get updated data (only if name changed)
+      if (nameChanged && !emailChanged) {
+        window.location.reload();
+      }
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      toast.error(error.message || "Failed to update profile");
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
+  const handleProfileDialogOpen = () => {
+    setProfileData({
+      name: session?.user?.name || "",
+      email: session?.user?.email || "",
+    });
+    setIsProfileDialogOpen(true);
+  };
+
+  const handleChangePassword = async () => {
+    // Validate passwords
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters long");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const { client } = await import("@/lib/auth-client");
+      
+      const { data, error } = await client.changePassword({
+        newPassword: passwordData.newPassword,
+        currentPassword: passwordData.currentPassword,
+        revokeOtherSessions: true,
       });
-      toast.success("User banned successfully");
-      setIsBanDialogOpen(false);
-      queryClient.invalidateQueries({
-        queryKey: ["users"],
+
+      if (error) {
+        throw new Error(error.message || "Failed to change password");
+      }
+
+      toast.success("Password changed successfully! All other sessions have been revoked.");
+      setIsPasswordDialogOpen(false);
+      
+      // Reset password form
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
       });
     } catch (error: any) {
-      toast.error(error.message || "Failed to ban user");
+      console.error("Error changing password:", error);
+      toast.error(error.message || "Failed to change password");
     } finally {
-      setIsLoading(undefined);
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handlePasswordDialogOpen = () => {
+    setPasswordData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+    setIsPasswordDialogOpen(true);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      setOpenSignOutDialog(false);
+      window.location.href = "/admin";
+    } catch (err) {
+      console.error("Sign out failed", err);
+      toast.error("Failed to sign out. Please try again.");
     }
   };
 
   return (
-    <div className="container mx-auto px-4 space-y-4">
-      <Toaster richColors />
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
-          <CardTitle className="text-2xl">Clients Management</CardTitle>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center justify-center gap-2">
-                <Plus className="h-4 w-4" /> Create New Client or Admin
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Create New Client</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreateUser} className="space-y-4">
+    <div className="container mx-auto py-6 relative">
+      <DotPattern
+        className={cn(
+          "-z-50",
+          "[mask-image:radial-gradient(10000px_circle_at_center,white,transparent)]"
+        )}
+      />
+      
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Admin Settings</h1>
+          <p className="text-muted-foreground">
+            Manage your admin account settings and preferences.
+          </p>
+        </div>
+
+        <div className="grid gap-6">
+          {/* Account Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Account Information
+              </CardTitle>
+              <CardDescription>
+                Update your personal information and account details.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="mb-4" htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newUser.email}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, email: e.target.value })
-                    }
-                    required
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <Label className="mb-4" htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={newUser.password}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, password: e.target.value })
-                    }
-                    required
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <Label className="mb-4" htmlFor="name">Name</Label>
+                  <Label htmlFor="name">Full Name</Label>
                   <Input
                     id="name"
-                    value={newUser.name}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, name: e.target.value })
-                    }
-                    required
-                    className="w-full"
+                    value={session?.user?.name || ""}
+                    disabled
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="mb-4" htmlFor="role">Role</Label>
-                  <Select
-                    value={newUser.role}
-                    onValueChange={(value: "admin" | "user") =>
-                      setNewUser({ ...newUser, role: value as "user" })
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="user">User</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading === "create"}
-                >
-                  {isLoading === "create" ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    "Create User"
-                  )}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-          <Dialog open={isBanDialogOpen} onOpenChange={setIsBanDialogOpen}>
-            <DialogContent className="max-w-md sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Ban User</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleBanUser} className="space-y-4">
-                <div>
-                  <Label htmlFor="reason">Reason</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
-                    id="reason"
-                    value={banForm.reason}
-                    onChange={(e) =>
-                      setBanForm({ ...banForm, reason: e.target.value })
-                    }
-                    required
-                    className="w-full"
+                    id="email"
+                    value={session?.user?.email || ""}
+                    disabled
+                    className="mt-1"
                   />
                 </div>
-                <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="expirationDate">Expiration Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        id="expirationDate"
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !banForm.expirationDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {banForm.expirationDate ? (
-                          format(banForm.expirationDate, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={banForm.expirationDate}
-                        onSelect={(date: any) =>
-                          setBanForm({ ...banForm, expirationDate: date })
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading === `ban-${banForm.userId}`}
-                >
-                  {isLoading === `ban-${banForm.userId}` ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Banning...
-                    </>
-                  ) : (
-                    "Ban User"
-                  )}
+              </div>
+              <div className="pt-2 flex gap-2">
+                <Button onClick={handleProfileDialogOpen} variant="outline">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Update Profile
                 </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent>
-          {isUsersLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin" />
+                <Button onClick={handlePasswordDialogOpen} variant="outline">
+                  <Key className="mr-2 h-4 w-4" />
+                  Change Password
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notifications */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Notifications
+              </CardTitle>
+              <CardDescription>
+                Choose how you want to be notified about updates and messages.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Email Notifications</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive updates via email
+                  </p>
+                </div>
+                <Switch
+                  checked={notifications.email}
+                  onCheckedChange={(checked) =>
+                    setNotifications(prev => ({ ...prev, email: checked }))
+                  }
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>SMS Notifications</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive updates via text message
+                  </p>
+                </div>
+                <Switch
+                  checked={notifications.sms}
+                  onCheckedChange={(checked) =>
+                    setNotifications(prev => ({ ...prev, sms: checked }))
+                  }
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Push Notifications</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive browser push notifications
+                  </p>
+                </div>
+                <Switch
+                  checked={notifications.push}
+                  onCheckedChange={(checked) =>
+                    setNotifications(prev => ({ ...prev, push: checked }))
+                  }
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+         
+
+          {/* Admin Role Info */}
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-700">
+                <Shield className="h-5 w-5" />
+                Admin Privileges
+              </CardTitle>
+              <CardDescription>
+                You have administrative access to the Text2MySite™ platform.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <p className="text-blue-700">• Manage all user accounts and permissions</p>
+                <p className="text-blue-700">• Access system analytics and reports</p>
+                <p className="text-blue-700">• Configure platform-wide settings</p>
+                <p className="text-blue-700">• Monitor system health and performance</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Danger Zone */}
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <LogOut className="h-5 w-5" />
+                Danger Zone
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Sign Out</p>
+                  <p className="text-sm text-muted-foreground">
+                    Sign out of your admin account on this device.
+                  </p>
+                </div>
+                <Dialog open={openSignOutDialog} onOpenChange={setOpenSignOutDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="destructive">
+                      Sign Out
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Confirm Sign Out</DialogTitle>
+                      <DialogDescription>
+                        Are you sure you want to sign out of your admin account?
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setOpenSignOutDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button variant="destructive" onClick={handleSignOut}>
+                        Sign Out
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <Button onClick={handleSave} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Save className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Update Profile Dialog */}
+      <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Update Profile</DialogTitle>
+            <DialogDescription>
+              Update your personal information. Name changes are saved immediately, while email changes require verification.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="profile-name">Full Name</Label>
+              <Input
+                id="profile-name"
+                value={profileData.name}
+                onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+                className="mt-1"
+                placeholder="Enter your full name"
+              />
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table className="min-w-[640px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="whitespace-nowrap min-w-[150px]">
-                      Email
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap min-w-[120px]">
-                      Name
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap min-w-[100px]">
-                      Role
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap min-w-[100px]">
-                      Banned
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap min-w-[180px]">
-                      Actions
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users?.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="whitespace-nowrap min-w-[150px]">
-                        {user.email}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap min-w-[120px]">
-                        {user.name}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap min-w-[100px]">
-                        {user.role || "user"}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap min-w-[100px]">
-                        {user.banned ? (
-                          <Badge variant="destructive">Yes</Badge>
-                        ) : (
-                          <Badge variant="outline">No</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap min-w-[180px]">
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteUser(user.id)}
-                            disabled={isLoading?.startsWith("delete")}
-                          >
-                            {isLoading === `delete-${user.id}` ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash className="h-4 w-4" />
-                            )}
-                          </Button>
-    
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={async () => {
-                              setBanForm({
-                                userId: user.id,
-                                reason: "",
-                                expirationDate: undefined,
-                              });
-                              if (user.banned) {
-                                setIsLoading(`ban-${user.id}`);
-                                await client.admin.unbanUser(
-                                  {
-                                    userId: user.id,
-                                  },
-                                  {
-                                    onError(context) {
-                                      toast.error(
-                                        context.error.message ||
-                                          "Failed to unban user"
-                                      );
-                                      setIsLoading(undefined);
-                                    },
-                                    onSuccess() {
-                                      queryClient.invalidateQueries({
-                                        queryKey: ["users"],
-                                      });
-                                      toast.success("User unbanned successfully");
-                                    },
-                                  }
-                                );
-                                queryClient.invalidateQueries({
-                                  queryKey: ["users"],
-                                });
-                              } else {
-                                setIsBanDialogOpen(true);
-                              }
-                            }}
-                            disabled={isLoading?.startsWith("ban")}
-                          >
-                            {isLoading === `ban-${user.id}` ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : user.banned ? (
-                              "Unban"
-                            ) : (
-                              "Ban"
-                            )}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <div>
+              <Label htmlFor="profile-email">Email</Label>
+              <Input
+                id="profile-email"
+                type="email"
+                value={profileData.email}
+                onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                className="mt-1"
+                placeholder="Enter your email address"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                You may need to verify your new email address.
+              </p>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsProfileDialogOpen(false)}
+              disabled={isUpdatingProfile}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateProfile}
+              disabled={isUpdatingProfile || !profileData.name.trim() || !profileData.email.trim()}
+            >
+              {isUpdatingProfile ? (
+                <>
+                  <Save className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Update Profile
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              Update your password. All other sessions will be revoked for security.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="current-password">Current Password</Label>
+              <Input
+                id="current-password"
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                className="mt-1"
+                placeholder="Enter your current password"
+              />
+            </div>
+            <div>
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                className="mt-1"
+                placeholder="Enter your new password"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Password must be at least 8 characters long.
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                className="mt-1"
+                placeholder="Confirm your new password"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsPasswordDialogOpen(false)}
+              disabled={isChangingPassword}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleChangePassword}
+              disabled={isChangingPassword || !passwordData.currentPassword.trim() || !passwordData.newPassword.trim() || !passwordData.confirmPassword.trim()}
+            >
+              {isChangingPassword ? (
+                <>
+                  <Save className="mr-2 h-4 w-4 animate-spin" />
+                  Changing...
+                </>
+              ) : (
+                <>
+                  <Key className="mr-2 h-4 w-4" />
+                  Change Password
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

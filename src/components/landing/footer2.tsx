@@ -70,7 +70,7 @@ export function Footer({ footerRef }: { footerRef?: any }) {
         {/* Copyright */}
         <div className="w-full border-t border-muted mt-4 pt-4 text-center">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Text2MySite. All rights reserved.
+            © {new Date().getFullYear()} Text2MySite™. All rights reserved.
           </p>
         </div>
 

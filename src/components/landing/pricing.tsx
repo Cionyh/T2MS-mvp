@@ -115,8 +115,7 @@ export function PricingSection() {
           Simple, Transparent Pricing
         </h2>
         <p className="text-lg text-muted-foreground mt-4">
-          Choose the plan that's right for you — no hidden fees, no surprises.
-        </p>
+        Choose the plan that's right for you -- no hidden fees, no surprises.        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

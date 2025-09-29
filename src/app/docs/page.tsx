@@ -21,7 +21,7 @@ const platforms = [
   },
   {
     name: "Wix",
-    description: "Add Text2MySite to your Wix site with our custom HTML widget",
+    description: "Add Text2MySite™ to your Wix site with our custom HTML widget",
     difficulty: "Easy",
     href: "/docs/wix",
     logo: "/images/wix.svg"
@@ -35,7 +35,7 @@ const platforms = [
   },
   {
     name: "Shopify",
-    description: "Add Text2MySite to your Shopify store for instant updates",
+    description: "Add Text2MySite™ to your Shopify store for instant updates",
     difficulty: "Easy",
     href: "/docs/shopify",
     logo: "/images/shopify.svg"
@@ -56,7 +56,7 @@ const platforms = [
   },
   {
     name: "Duda",
-    description: "Add Text2MySite to your Duda website with custom HTML",
+    description: "Add Text2MySite™ to your Duda website with custom HTML",
     difficulty: "Easy",
     href: "/docs/duda",
     logo: "/images/duda.png"
@@ -70,7 +70,7 @@ const platforms = [
   },
   {
     name: "GoDaddy",
-    description: "Add Text2MySite to your GoDaddy website builder",
+    description: "Add Text2MySite™ to your GoDaddy website builder",
     difficulty: "Easy",
     href: "/docs/godaddy",
     logo: "/images/gd.svg"
@@ -91,7 +91,7 @@ const platforms = [
   },
   {
     name: "Weebly",
-    description: "Add Text2MySite to your Weebly site with custom HTML",
+    description: "Add Text2MySite™ to your Weebly site with custom HTML",
     difficulty: "Easy",
     href: "/docs/weebly",
     logo: "/images/weebly.svg"

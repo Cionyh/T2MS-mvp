@@ -38,7 +38,7 @@ export function Hero({
     },
   };
 
-  const logoSrc = theme === "dark" ? "/images/logo_dark.png" : "/images/logo_light.png";
+  const logoSrc = "/images/logo.png";
 
   return (
     <motion.div
@@ -67,7 +67,7 @@ export function Hero({
             <span className="text-foreground"> Just Text.</span>
           </h1>
           <CardDescription className="text-base sm:text-lg max-w-2xl text-muted-foreground">
-          Text2MySite lets small business owners easily update key sections of their website by simply sending a text message.  It's fast, smart, and doesn't require any tech skills.  Just text and it's live.          </CardDescription>
+          Text2MySite™ lets small business owners easily update key sections of their website by simply sending a text message.  It's fast, smart, and doesn't require any tech skills.  Just text and it's live.          </CardDescription>
         </CardHeader>
 
         <div className="flex flex-col lg:flex-row items-center justify-center gap-2 px-4 sm:px-8">

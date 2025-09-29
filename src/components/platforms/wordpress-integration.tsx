@@ -13,7 +13,7 @@ export function WordPressIntegration() {
           <div>
             <h1 className="text-4xl font-bold mt-4">WordPress Integration</h1>
             <p className="text-muted-foreground text-lg">
-              Add Text2MySite SMS alerts to your WordPress website
+              Add Text2MySite™ SMS alerts to your WordPress website
             </p>
           </div>
         </div>
@@ -247,65 +247,6 @@ export function WordPressIntegration() {
             </div>
           </div>
 
-          {/* Tutorial 3 */}
-          <div className="bg-gray-50 rounded-lg p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Play className="w-6 h-6 text-red-600" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-semibold text-lg mb-2">How to embed code in wordpress (2025)</h4>
-                <p className="text-muted-foreground mb-3">
-                  Updated 2025 guide for embedding code
-                </p>
-                <p className="text-sm text-muted-foreground mb-3">
-                  From How To 1 Minute • 1 minute 12 seconds
-                </p>
-                <Button asChild size="sm">
-                  <a 
-                    href="http://www.youtube.com/watch?v=iC8dRH2QXk8" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2"
-                  >
-                    <Play className="w-4 h-4" />
-                    Watch Tutorial
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Tutorial 4 */}
-          <div className="bg-gray-50 rounded-lg p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Play className="w-6 h-6 text-red-600" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-semibold text-lg mb-2">How to Embed Code from Popular Social Media Sites to WordPress</h4>
-                <p className="text-muted-foreground mb-3">
-                  Guide for embedding social media code
-                </p>
-                <p className="text-sm text-muted-foreground mb-3">
-                  From VRYN STUDIOS • 3 minutes 24 seconds
-                </p>
-                <Button asChild size="sm">
-                  <a 
-                    href="http://www.youtube.com/watch?v=4Sl2Y4pJbOw" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2"
-                  >
-                    <Play className="w-4 h-4" />
-                    Watch Tutorial
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                </Button>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

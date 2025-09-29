@@ -442,148 +442,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
 
                 <Separator />
                 <CardContent className="px-4 py-1">
-  {false ? (
-    <div className="space-y-3">
-      {/* [Keep all your edit fields exactly as they are] */}
-      <div>
-        <Label className="mb-2">Business Name</Label>
-        <Input
-          value={editedName}
-          onChange={(e) => setEditedName(e.target.value)}
-          className="w-full"
-        />
-      </div>
-      <div>
-        <Label className="mb-2">Domain</Label>
-        <Input
-          value={editedDomain}
-          onChange={(e) => setEditedDomain(e.target.value)}
-          className="w-full"
-        />
-      </div>
-      <div>
-        <Label className="mb-2">Phone</Label>
-        <Input
-          value={editedPhone}
-          onChange={(e) => setEditedPhone(e.target.value)}
-          className="w-full"
-        />
-      </div>
-      <div>
-        <Label className="mb-2">Widget Type</Label>
-        <Select
-          onValueChange={setEditedDefaultType}
-          defaultValue={editedDefaultType}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="banner">
-              <div className="flex flex-col">
-                <span className="font-medium">Banner</span>
-                <span className="text-xs text-muted-foreground">Horizontal banner for announcements</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="popup">
-              <div className="flex flex-col">
-                <span className="font-medium">Popup</span>
-                <span className="text-xs text-muted-foreground">Small corner notification</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="fullscreen">
-              <div className="flex flex-col">
-                <span className="font-medium">Fullscreen</span>
-                <span className="text-xs text-muted-foreground">Covers entire screen</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="modal">
-              <div className="flex flex-col">
-                <span className="font-medium">Modal</span>
-                <span className="text-xs text-muted-foreground">Centered dialog box</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="ticker">
-              <div className="flex flex-col">
-                <span className="font-medium">Ticker</span>
-                <span className="text-xs text-muted-foreground">Scrolling text banner</span>
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
-        
-        {/* Widget Type Instructions */}
-        <div className="mt-2 p-3 bg-muted/50 rounded-lg border">
-          <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-foreground mb-1">
-                {editedDefaultType.charAt(0).toUpperCase() + editedDefaultType.slice(1)} Widget
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {widgetTypeInstructions[editedDefaultType as keyof typeof widgetTypeInstructions]}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div>
-        <Label className="mb-2">Font Family</Label>
-        <Input
-          value={editedDefaultFont}
-          onChange={(e) => setEditedDefaultFont(e.target.value)}
-        />
-      </div>
-      <div>
-        <Label className="mb-2">Background Color</Label>
-        <div className="flex items-center gap-2">
-          <Input
-            type="color"
-            value={editedDefaultBgColor}
-            onChange={(e) => setEditedDefaultBgColor(e.target.value)}
-            className="h-10 w-12 p-1"
-          />
-          <Input
-            value={editedDefaultBgColor}
-            onChange={(e) => setEditedDefaultBgColor(e.target.value)}
-            className="flex-1"
-          />
-        </div>
-      </div>
-      <div>
-        <Label className="mb-2">Text Color</Label>
-        <div className="flex items-center gap-2">
-          <Input
-            type="color"
-            value={editedDefaultTextColor}
-            onChange={(e) => setEditedDefaultTextColor(e.target.value)}
-            className="h-10 w-12 p-1"
-          />
-          <Input
-            value={editedDefaultTextColor}
-            onChange={(e) => setEditedDefaultTextColor(e.target.value)}
-            className="flex-1"
-          />
-        </div>
-      </div>
-      <div>
-        <Label className="mb-2">Dismiss After (ms)</Label>
-        <Input
-          type="number"
-          value={editedDefaultDismissAfter}
-          onChange={(e) => setEditedDefaultDismissAfter(Number(e.target.value))}
-          placeholder="5000"
-        />
-      </div>
-      <div className="flex justify-end space-x-2 pt-2">
-        <Button onClick={() => handleSaveClick(website.id)}>Save</Button>
-        <Button onClick={handleCancelClick} variant="outline">
-          Cancel
-        </Button>
-      </div>
-    </div>
-  ) : (
-    <div className="space-y-3">
+  <div className="space-y-3">
       <p>
         <span className="font-semibold">Domain:</span> {website.domain}
       </p>
@@ -637,8 +496,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         </Button>
       </div>
     </div>
-  )}
-</CardContent>
+  </CardContent>
               </Card>
             </motion.div>
           ))}
@@ -787,12 +645,33 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             )}
             
             <div>
-              <Label className="mb-2 text-sm font-medium"> Font Family</Label>
-              <Input
+              <Label className="mb-2 text-sm font-medium">Font Family</Label>
+              <select
                 value={editedDefaultFont}
                 onChange={(e) => setEditedDefaultFont(e.target.value)}
-                className="w-full"
-              />
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="Helvetica, sans-serif">Helvetica</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="'Courier New', monospace">Courier New</option>
+                <option value="Verdana, sans-serif">Verdana</option>
+                <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                <option value="'Arial Black', sans-serif">Arial Black</option>
+                <option value="Impact, sans-serif">Impact</option>
+                <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+                <option value="'Lucida Console', monospace">Lucida Console</option>
+                <option value="'Palatino Linotype', serif">Palatino Linotype</option>
+                <option value="Tahoma, sans-serif">Tahoma</option>
+                <option value="'Lucida Sans Unicode', sans-serif">Lucida Sans Unicode</option>
+                <option value="'MS Sans Serif', sans-serif">MS Sans Serif</option>
+                <option value="'MS Serif', serif">MS Serif</option>
+                <option value="'New York', serif">New York</option>
+                <option value="'Book Antiqua', serif">Book Antiqua</option>
+                <option value="'Garamond', serif">Garamond</option>
+                <option value="'Century Gothic', sans-serif">Century Gothic</option>
+              </select>
             </div>
             
             <div>
@@ -827,25 +706,28 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               </div>
             </div>
             
-            <div>
-              <Label className="mb-2 text-sm font-medium">Dismiss After (ms)</Label>
-              <Input
-                type="number"
-                value={editedDefaultDismissAfter}
-                onChange={(e) => setEditedDefaultDismissAfter(Number(e.target.value))}
-                placeholder="5000"
-                className="w-full"
-              />
-              <div className="mt-2 p-3 bg-muted/50 rounded-lg border">
-                <p className="text-xs text-muted-foreground">
-                  <strong>Dismiss Timer:</strong> The time in milliseconds that takes the popup and banner widgets to disappear automatically. 
-                  <br />
-                  <span className="text-xs text-muted-foreground mt-1 block">
-                    • 1000ms = 1 second • 5000ms = 5 seconds • 10000ms = 10 seconds
-                  </span>
-                </p>
+            {/* Dismiss After - Only for Banner and Popup Widgets */}
+            {(editedDefaultType === "banner" || editedDefaultType === "popup") && (
+              <div>
+                <Label className="mb-2 text-sm font-medium">Dismiss After (ms)</Label>
+                <Input
+                  type="number"
+                  value={editedDefaultDismissAfter}
+                  onChange={(e) => setEditedDefaultDismissAfter(Number(e.target.value))}
+                  placeholder="5000"
+                  className="w-full"
+                />
+                <div className="mt-2 p-3 bg-muted/50 rounded-lg border">
+                  <p className="text-xs text-muted-foreground">
+                    <strong>Dismiss Timer:</strong> The time in milliseconds that takes the popup and banner widgets to disappear automatically. 
+                    <br />
+                    <span className="text-xs text-muted-foreground mt-1 block">
+                      • 1000ms = 1 second • 5000ms = 5 seconds • 10000ms = 10 seconds
+                    </span>
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
             
             <div>
               <Label className="mb-2 text-sm font-medium">Background Color</Label>

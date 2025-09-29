@@ -13,7 +13,7 @@ export function HtmlIntegration() {
           <div>
             <h1 className="text-4xl font-bold mt-4">HTML5 Integration</h1>
             <p className="text-muted-foreground text-lg">
-              Add Text2MySite SMS alerts to your HTML5 website
+              Add Text2MySite™ SMS alerts to your HTML5 website
             </p>
           </div>
         </div>
@@ -27,7 +27,7 @@ export function HtmlIntegration() {
       <Card>
         <CardContent className="pt-6">
           <p className="text-muted-foreground leading-relaxed">
-            Adding Text2MySite to an HTML5 website is straightforward. Simply place the script tag in your HTML file and upload it to your web server.
+            Adding Text2MySite™ to an HTML5 website is straightforward. Simply place the script tag in your HTML file and upload it to your web server.
           </p>
         </CardContent>
       </Card>
@@ -59,7 +59,7 @@ export function HtmlIntegration() {
               <code>{`<head>
   <!-- Your existing head content -->
   <script>
-    // Your Text2MySite script here
+    // Your Text2MySite™ script here
   </script>
 </head>`}</code>
             </pre>
@@ -101,41 +101,76 @@ export function HtmlIntegration() {
         </CardContent>
       </Card>
 
-      {/* Video Tutorial */}
+      {/* Video Tutorials */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Play className="w-5 h-5 text-red-600" />
-            YouTube Tutorial
+            YouTube Tutorials
           </CardTitle>
           <CardDescription>
-            Watch a step-by-step video guide for embedding widgets in HTML
+            Watch step-by-step video guides for embedding widgets in HTML
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="bg-gray-50 rounded-lg p-6 text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Play className="w-8 h-8 text-red-600" />
+        <CardContent className="space-y-4">
+          {/* Tutorial 1 */}
+          <div className="bg-gray-50 rounded-lg p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Play className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-lg mb-2">Create Custom HTML Widgets</h4>
+                <p className="text-muted-foreground mb-3">
+                  Quick guide for creating and embedding custom HTML widgets
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  From the channel Bug Labs • 47 seconds
+                </p>
+                <Button asChild size="sm">
+                  <a 
+                    href="http://www.youtube.com/watch?v=VpS4uuVfb30" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Watch Tutorial
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </Button>
+              </div>
             </div>
-            <h4 className="font-semibold text-lg mb-2">How to Embed a Widget in HTML | Simple Step-by-Step Guide</h4>
-            <p className="text-muted-foreground mb-2">
-              Visual guide covering widget embedding in static HTML files
-            </p>
-            <p className="text-sm text-muted-foreground mb-4">
-              From the channel Elfsight
-            </p>
-            <Button asChild>
-              <a 
-                href="https://www.youtube.com/watch?v=3-V1t69w1xY" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                <Play className="w-4 h-4" />
-                Watch Tutorial
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </Button>
+          </div>
+
+          {/* Tutorial 2 */}
+          <div className="bg-gray-50 rounded-lg p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Play className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-lg mb-2">How to Embed the SoundCloud Widget API in Your Website - HTML & CSS</h4>
+                <p className="text-muted-foreground mb-3">
+                  Comprehensive guide for embedding widgets and APIs in HTML websites
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  From the channel Web Dev Tutorials • 6 minutes 14 seconds
+                </p>
+                <Button asChild size="sm">
+                  <a 
+                    href="http://www.youtube.com/watch?v=ojjrBqNtUYM" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Watch Tutorial
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -144,7 +144,7 @@ export function PlanUsage({ userId }: PlanUsageProps) {
         {/* Upgrade Button for non-enterprise plans */}
         {usage.plan !== "enterprise" && (
           <Button 
-            onClick={() => window.location.href = "/#pricing"}
+            onClick={() => window.location.href = "/pricing"}
             className="w-full"
             variant="outline"
           >

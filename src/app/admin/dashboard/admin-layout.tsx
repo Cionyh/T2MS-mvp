@@ -70,10 +70,25 @@ export default function ClientDashboardLayout({
       await signOut();
       setOpenSignOutDialog(false);
       // Optionally redirect to login page
-      window.location.href = "/sign-in";
+      window.location.href = "/admin";
     } catch (err) {
       console.error("Sign out failed", err);
     }
+  };
+
+  // Function to get user initials from full name
+  const getUserInitials = (fullName: string) => {
+    if (!fullName) return "U";
+    
+    const nameParts = fullName.trim().split(" ");
+    if (nameParts.length === 1) {
+      return nameParts[0].charAt(0).toUpperCase();
+    }
+    
+    const firstName = nameParts[0];
+    const lastName = nameParts[nameParts.length - 1];
+    
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
   };
 
   return (
@@ -161,7 +176,7 @@ export default function ClientDashboardLayout({
                   alt={session?.user.name}
                 />
                 <AvatarFallback>
-                  {session?.user.name?.charAt(0) || "U"}
+                  {getUserInitials(session?.user.name || "")}
                 </AvatarFallback>
               </Avatar>
             </PopoverTrigger>

@@ -13,7 +13,7 @@ export function GhostIntegration() {
           <div>
             <h1 className="text-4xl font-bold mt-4">Ghost Integration</h1>
             <p className="text-muted-foreground text-lg">
-              Add Text2MySite SMS alerts to your Ghost website
+              Add Text2MySite™ SMS alerts to your Ghost website
             </p>
           </div>
         </div>
@@ -104,41 +104,76 @@ export function GhostIntegration() {
         </CardContent>
       </Card>
 
-      {/* Video Tutorial */}
+      {/* Video Tutorials */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Play className="w-5 h-5 text-red-600" />
-            YouTube Video Instructions
+            YouTube Tutorials
           </CardTitle>
           <CardDescription>
-            Watch a step-by-step video guide for adding code to Ghost
+            Watch step-by-step video guides for adding code to Ghost
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="bg-gray-50 rounded-lg p-6 text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Play className="w-8 h-8 text-red-600" />
+        <CardContent className="space-y-4">
+          {/* Tutorial 1 */}
+          <div className="bg-gray-50 rounded-lg p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Play className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-lg mb-2">Embed A Forum Into Your Ghost Website</h4>
+                <p className="text-muted-foreground mb-3">
+                  Guide for embedding custom content and widgets into Ghost websites
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  From the channel Website Toolbox • 1 minute 29 seconds
+                </p>
+                <Button asChild size="sm">
+                  <a 
+                    href="http://www.youtube.com/watch?v=iq-Pz4dYYFo" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Watch Tutorial
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </Button>
+              </div>
             </div>
-            <h4 className="font-semibold text-lg mb-2">How to Add Code Injection in Ghost</h4>
-            <p className="text-muted-foreground mb-2">
-              Visual guide covering code injection methods in Ghost
-            </p>
-            <p className="text-sm text-muted-foreground mb-4">
-              From the channel The Developer's Journey • 2 minutes 20 seconds
-            </p>
-            <Button asChild>
-              <a 
-                href="https://www.youtube.com/watch?v=F55aTzFq9nI" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                <Play className="w-4 h-4" />
-                Watch Tutorial
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </Button>
+          </div>
+
+          {/* Tutorial 2 */}
+          <div className="bg-gray-50 rounded-lg p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Play className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-lg mb-2">Embed A Chat Room Into Your Ghost Website</h4>
+                <p className="text-muted-foreground mb-3">
+                  Tutorial for embedding interactive widgets and custom code in Ghost
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  From the channel Website Toolbox • 1 minute 25 seconds
+                </p>
+                <Button asChild size="sm">
+                  <a 
+                    href="http://www.youtube.com/watch?v=-TwHLUaS8nI" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Watch Tutorial
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

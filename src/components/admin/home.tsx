@@ -196,14 +196,14 @@ export default function DashboardPage() {
         </Link>
 
         <Link href={"/admin/dashboard/analytics"}>
-          <Card>
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Overall Analytics</CardTitle>
-              <BarChart3 className="h-5 w-5 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-primary">Analytics Dashboard</CardTitle>
+              <BarChart3 className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+18%</div>
-              <p className="text-xs text-muted-foreground">Growth this quarter</p>
+              <div className="text-2xl font-bold text-primary">Comprehensive</div>
+              <p className="text-xs text-primary/70">View detailed insights & trends</p>
             </CardContent>
           </Card>
         </Link>
@@ -359,6 +359,16 @@ export default function DashboardPage() {
                 <div className="flex items-center space-x-3">
                   <CreditCard className="h-5 w-5" />
                   <span className="font-medium">Subscriptions</span>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+              <Link
+                href="/admin/dashboard/analytics"
+                className="flex items-center justify-between p-3 bg-muted hover:bg-background transition-colors rounded-lg"
+              >
+                <div className="flex items-center space-x-3">
+                  <BarChart3 className="h-5 w-5" />
+                  <span className="font-medium">Analytics Dashboard</span>
                 </div>
                 <ArrowRight className="h-4 w-4 text-muted-foreground" />
               </Link>

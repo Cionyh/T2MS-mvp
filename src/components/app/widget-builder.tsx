@@ -5,11 +5,14 @@ import { useSession } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Copy, Plus } from "lucide-react";
 import { Form, FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
@@ -29,8 +32,9 @@ import {
 const clientSchema = z.object({
   name: z.string().min(2, { message: "Business Name must be at least 2 characters." }),
   domain: z.string().url({ message: "Invalid URL format. Include https:// or http://." }),
-  phone: z.string().regex(/^\+[1-9]\d{7,14}$/, {
-    message: "Phone must be in E.164 format (e.g. +14155552671)",
+  phone: z.string().min(1, { message: "Phone number is required." }),
+  websiteOwnership: z.boolean().refine((val) => val === true, {
+    message: "You must acknowledge that you own and/or have rights to this website.",
   }),
 });
 
@@ -49,6 +53,7 @@ export default function ClientWidgetBuilder() {
       name: "",
       domain: "",
       phone: "",
+      websiteOwnership: false,
     },
   });
 
@@ -70,12 +75,15 @@ export default function ClientWidgetBuilder() {
       return;
     }
 
+    // Extract websiteOwnership from values to exclude from API call
+    const { websiteOwnership, ...apiValues } = values;
+
     try {
       const res = await fetch("/api/client", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...values,
+          ...apiValues,
           userId,
           // Send default widget settings if needed
           defaultType: "banner",
@@ -154,11 +162,38 @@ export default function ClientWidgetBuilder() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <Label>Phone (E.164)</Label>
+                    <Label>Phone Number</Label>
                     <FormControl>
-                      <Input placeholder="+14155552671" {...field} />
+                      <PhoneInput
+                        international
+                        defaultCountry="US"
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Enter phone number"
+                        className="phone-input"
+                      />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="websiteOwnership"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <Label className="text-sm font-normal">
+                        I acknowledge that I own and/or have rights to this website.
+                      </Label>
+                      <FormMessage />
+                    </div>
                   </FormItem>
                 )}
               />

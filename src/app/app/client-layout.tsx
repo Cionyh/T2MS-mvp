@@ -104,6 +104,21 @@ export default function ClientDashboardLayout({
     }
   };
 
+  // Function to get user initials from full name
+  const getUserInitials = (fullName: string) => {
+    if (!fullName) return "U";
+    
+    const nameParts = fullName.trim().split(" ");
+    if (nameParts.length === 1) {
+      return nameParts[0].charAt(0).toUpperCase();
+    }
+    
+    const firstName = nameParts[0];
+    const lastName = nameParts[nameParts.length - 1];
+    
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-muted/40">
       <DotPattern
@@ -126,7 +141,7 @@ export default function ClientDashboardLayout({
             <SheetContent side="left" className="w-64 p-4">
               <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
               <div className="space-y-4">
-                <div className="text-lg font-semibold text-primary">T2MS</div>
+                <div className="text-lg font-semibold text-primary">Text2MySite™</div>
                 <nav className="flex flex-col gap-2">
                   {navItems.map(({ label, href, icon: Icon }) => {
                     const isActive = pathname === href;
@@ -153,7 +168,7 @@ export default function ClientDashboardLayout({
           </Sheet>
 
           <div className="hidden md:flex items-center gap-6">
-            <div className="text-lg font-semibold text-primary">T2MS</div>
+            <div className="text-lg font-semibold text-primary">Text2MySite™</div>
             <nav className="flex gap-4">
               {navItems.map(({ label, href }) => {
                 const isActive = pathname === href;
@@ -213,7 +228,7 @@ export default function ClientDashboardLayout({
                   </Link>
                   
                   {currentPlan !== "enterprise" && (
-                    <Link href="/#pricing">
+                    <Link href="/pricing">
                       <Button size="sm" className="w-full">
                         {currentPlan === "free" ? "Upgrade Plan" : "Upgrade Plan"}
                       </Button>
@@ -232,7 +247,7 @@ export default function ClientDashboardLayout({
                   alt={session?.user.name}
                 />
                 <AvatarFallback>
-                  {session?.user.name?.charAt(0) || "U"}
+                  {getUserInitials(session?.user.name || "")}
                 </AvatarFallback>
               </Avatar>
             </PopoverTrigger>

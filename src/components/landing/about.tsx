@@ -24,10 +24,10 @@ export function About({
         <CardContent className="flex flex-col items-center justify-center gap-8 py-14 px-4 sm:px-10 text-center">
           <div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-3 font-serif bg-gradient-to-b from-foreground via-foreground to-background bg-clip-text text-transparent">
-             About Us
+             The Text2MySite Difference
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
-            Text2MySite is a breaktrhough platform that allows small business owners to update their live websites just by sending a simple text message. Whether it's posting holiday hours, announcing special offers, or adjusting your status for the day, Text2MySite makes it effortless - no dashboard, no login, no stress.  Your message is sent, and your website is instantly updated.            </p>
+            Your business is always on the move, and your website should be, too. Text2MySite™ is the revolutionary platform that puts the power of instant updates right in your pocket. Now you can update your website directly from your cell phone, via text. It's the simplest way to keep your customers informed and your online presence fresh—without the stress.            </p>
           </div>
 
 

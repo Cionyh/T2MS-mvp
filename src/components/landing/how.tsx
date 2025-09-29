@@ -61,10 +61,10 @@ export function How({ textVariants }: HowProps) {
         <Card className="rounded-[3em] bg-gradient-to-b from-background via-background to-muted border-none backdrop-blur-md py-20">
           <CardHeader className="text-center space-y-2">
             <CardTitle className="font-extrabold tracking-tight bg-gradient-to-b from-foreground via-foreground to-background bg-clip-text text-transparent text-3xl sm:text-4xl md:text-5xl font-serif">
-                                 How it works
+                                 How Text2MySite™ works
             </CardTitle>
             <CardDescription className="text-lg text-muted-foreground">
-            You register your website with Text2MySite.  We verify your cell phone number and assign you a unique account number.  You select specific sections of your website for banners, tickers, pop-ups or full page -- to receive text-based updates.  Simply send a text message to our number, and Text2MySite takes care of the rest.  Your message appears in real-time where customers can see it.            </CardDescription>
+            You register your website with Text2MySite™.  We verify your cell phone number and assign you a unique account number.  You select specific sections of your website for banners, tickers, pop-ups or full page -- to receive text-based updates.  Simply send a text message to our number, and Text2MySite™ takes care of the rest.  Your message appears in real-time where customers can see it.            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-8 md:grid-cols-3">

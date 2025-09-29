@@ -13,7 +13,7 @@ export function SquarespaceIntegration() {
           <div>
             <h1 className="text-4xl font-bold mt-4">Squarespace Integration</h1>
             <p className="text-muted-foreground text-lg">
-              Add Text2MySite SMS alerts to your Squarespace website
+              Add Text2MySite™ SMS alerts to your Squarespace website
             </p>
           </div>
         </div>
@@ -227,35 +227,6 @@ export function SquarespaceIntegration() {
             </div>
           </div>
 
-          {/* Tutorial 3 */}
-          <div className="bg-gray-50 rounded-lg p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Play className="w-6 h-6 text-red-600" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-semibold text-lg mb-2">How To Embed A Code In Squarespace (2025)</h4>
-                <p className="text-muted-foreground mb-3">
-                  Quick and updated guide for 2025
-                </p>
-                <p className="text-sm text-muted-foreground mb-3">
-                  From the Skill Savvy channel • 1 minute 8 seconds
-                </p>
-                <Button asChild size="sm">
-                  <a 
-                    href="http://www.youtube.com/watch?v=NkTj5Ae3I94" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2"
-                  >
-                    <Play className="w-4 h-4" />
-                    Watch Tutorial
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                </Button>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -13,7 +13,7 @@ export function WebflowIntegration() {
           <div>
             <h1 className="text-4xl font-bold mt-4">Webflow Integration</h1>
             <p className="text-muted-foreground text-lg">
-              Add Text2MySite SMS alerts to your Webflow website
+              Add Text2MySite™ SMS alerts to your Webflow website
             </p>
           </div>
         </div>

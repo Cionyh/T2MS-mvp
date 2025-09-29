@@ -18,7 +18,7 @@ export default function SMSTermsPage() {
       <ScrollArea className="h-[70vh] lg:h-[75vh] overflow-y-auto pr-2">
         <div className="space-y-6 text-sm sm:text-base leading-relaxed text-foreground">
           <p>
-            By opting into SMS messages from <strong>Text2MySite</strong>, a
+            By opting into SMS messages from <strong>Text2MySite™</strong>, a
             service operated by Morning Noon Night, LLC, you agree to receive
             recurring text messages regarding service updates, account
             notifications, and other relevant communications.
@@ -27,7 +27,7 @@ export default function SMSTermsPage() {
           <h3 className="font-semibold">1. Consent to Receive Messages</h3>
           <p>
             By providing your mobile number, you consent to receive SMS
-            communications from Text2MySite. Message frequency will vary based
+            communications from Text2MySite™. Message frequency will vary based
             on your usage of the service. Consent is not a condition of purchase.
           </p>
 
@@ -59,7 +59,7 @@ export default function SMSTermsPage() {
 
           <h3 className="font-semibold">5. Supported Carriers</h3>
           <p>
-            Text2MySite SMS messages are delivered via major U.S. carriers.
+            Text2MySite™ SMS messages are delivered via major U.S. carriers.
             However, delivery is not guaranteed and may be affected by carrier
             limitations, network issues, or technical disruptions.
           </p>
@@ -80,7 +80,7 @@ export default function SMSTermsPage() {
 
           <h3 className="font-semibold">7. Liability</h3>
           <p>
-            Text2MySite is not liable for delayed, undelivered, or misrouted
+            Text2MySite™ is not liable for delayed, undelivered, or misrouted
             messages. Message delivery depends on carrier networks and may be
             subject to interruptions.
           </p>

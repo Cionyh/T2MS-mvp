@@ -13,7 +13,7 @@ export function BigCommerceIntegration() {
           <div>
             <h1 className="text-4xl font-bold mt-4">BigCommerce Integration</h1>
             <p className="text-muted-foreground text-lg">
-              Add Text2MySite SMS alerts to your BigCommerce store
+              Add Text2MySite™ SMS alerts to your BigCommerce store
             </p>
           </div>
         </div>
@@ -51,7 +51,7 @@ export function BigCommerceIntegration() {
         <CardContent className="space-y-4">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <p className="text-green-800 text-sm font-medium">
-              This method is perfect for adding Text2MySite to specific pages like product pages, landing pages, or your homepage.
+              This method is perfect for adding Text2MySite™ to specific pages like product pages, landing pages, or your homepage.
             </p>
           </div>
           
@@ -148,41 +148,76 @@ export function BigCommerceIntegration() {
         </CardContent>
       </Card>
 
-      {/* Video Tutorial */}
+      {/* Video Tutorials */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Play className="w-5 h-5 text-red-600" />
-            YouTube Video Tutorial
+            YouTube Tutorials
           </CardTitle>
           <CardDescription>
-            Watch a step-by-step video guide for adding code to BigCommerce
+            Watch step-by-step video guides for adding code to BigCommerce
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="bg-gray-50 rounded-lg p-6 text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Play className="w-8 h-8 text-red-600" />
+        <CardContent className="space-y-4">
+          {/* Tutorial 1 */}
+          <div className="bg-gray-50 rounded-lg p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Play className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-lg mb-2">BigCommerce Embed Code Screen Cast</h4>
+                <p className="text-muted-foreground mb-3">
+                  Screen cast demonstration of embedding code in BigCommerce
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  From the channel Orderv • 2 minutes 59 seconds
+                </p>
+                <Button asChild size="sm">
+                  <a 
+                    href="http://www.youtube.com/watch?v=bYiBxbQIhXY" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Watch Tutorial
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </Button>
+              </div>
             </div>
-            <h4 className="font-semibold text-lg mb-2">How To Add HTML Code To BigCommerce</h4>
-            <p className="text-muted-foreground mb-2">
-              Visual guide covering Page Builder and other integration methods
-            </p>
-            <p className="text-sm text-muted-foreground mb-4">
-              From the channel ElfSight • 1 minute 53 seconds
-            </p>
-            <Button asChild>
-              <a 
-                href="https://www.youtube.com/watch?v=nDZYV6PZvqc" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                <Play className="w-4 h-4" />
-                Watch Tutorial
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </Button>
+          </div>
+
+          {/* Tutorial 2 */}
+          <div className="bg-gray-50 rounded-lg p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Play className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-lg mb-2">How to Add PDF Embed to BigCommerce</h4>
+                <p className="text-muted-foreground mb-3">
+                  Guide for adding PDF embeds and custom content to BigCommerce
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  From the channel Elfsight • 3 minutes 10 seconds
+                </p>
+                <Button asChild size="sm">
+                  <a 
+                    href="http://www.youtube.com/watch?v=f2M0rR1GcgQ" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Watch Tutorial
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

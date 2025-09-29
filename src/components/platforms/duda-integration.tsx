@@ -13,7 +13,7 @@ export function DudaIntegration() {
           <div>
             <h1 className="text-4xl font-bold mt-4">Duda Integration</h1>
             <p className="text-muted-foreground text-lg">
-              Add Text2MySite SMS alerts to your Duda website
+              Add Text2MySite™ SMS alerts to your Duda website
             </p>
           </div>
         </div>
@@ -51,7 +51,7 @@ export function DudaIntegration() {
         <CardContent className="space-y-4">
           <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
             <p className="text-purple-800 text-sm font-medium">
-              This method is perfect for adding Text2MySite to any page on your Duda website. The HTML widget supports custom HTML, CSS, and JavaScript code.
+              This method is perfect for adding Text2MySite™ to any page on your Duda website. The HTML widget supports custom HTML, CSS, and JavaScript code.
             </p>
           </div>
           

@@ -110,6 +110,9 @@ export function SignUp() {
         <CardDescription className="text-xs md:text-sm">
           Enter your information to create an account
         </CardDescription>
+        <p className="text-xs text-muted-foreground mt-2">
+          (*) Required
+        </p>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -121,7 +124,7 @@ export function SignUp() {
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <Label htmlFor="first-name">First name</Label>
+                      <Label htmlFor="first-name">First name *</Label>
                       <FormControl>
                         <Input
                           id="first-name"
@@ -140,7 +143,7 @@ export function SignUp() {
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <Label htmlFor="last-name">Last name</Label>
+                      <Label htmlFor="last-name">Last name *</Label>
                       <FormControl>
                         <Input
                           id="last-name"
@@ -160,7 +163,7 @@ export function SignUp() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">Email *</Label>
                     <FormControl>
                       <Input
                         id="email"
@@ -180,7 +183,7 @@ export function SignUp() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">Password *</Label>
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -214,7 +217,7 @@ export function SignUp() {
                 name="passwordConfirmation"
                 render={({ field }) => (
                   <FormItem>
-                    <Label htmlFor="password_confirmation">Confirm Password</Label>
+                    <Label htmlFor="password_confirmation">Confirm Password *</Label>
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -251,7 +254,7 @@ export function SignUp() {
                   onCheckedChange={(checked) => setSmsOptIn(checked === true)}
                 />
                 <Label className="text-sm">
-                  I consent to the SMS Terms & Conditions.
+                  I consent to the SMS Terms & Conditions. *
                 </Label>
               </div>
               <Collapsible>
@@ -259,7 +262,7 @@ export function SignUp() {
                   View SMS Terms & Conditions
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-2 text-xs text-muted-foreground leading-relaxed">
-                  <strong>Opt-In (End-User Consent for SMS):</strong> By providing your mobile number and using Text2MySite (T2MS),
+                  <strong>Opt-In (End-User Consent for SMS):</strong> By providing your mobile number and using Text2MySite™ (T2MS),
                   you consent to receive text messages related to website updates,
                   account activity, and service notifications. Message frequency
                   varies based on use. Standard message and data rates may apply.
@@ -290,7 +293,7 @@ export function SignUp() {
                   <Link href="/legal/sms-terms" className="text-primary hover:underline">
                     SMS Terms & Conditions
                   </Link>
-                  .
+                  . *
                 </Label>
               </div>
               <Collapsible>
