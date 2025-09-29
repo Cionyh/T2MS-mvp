@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 import { Skeleton } from "../ui/skeleton";
@@ -102,6 +102,24 @@ export default function ClientDashboardPage({
               <p className="text-3xl font-bold">{initialMessageCount}</p>
               <p className="text-muted-foreground text-sm mt-1">
                 Total messages
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Analytics Card */}
+        <Link href="/app/analytics">
+          <Card className="hover:bg-background bg-muted transition-colors">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Analytics
+              </CardTitle>
+              <CardDescription>View insights and performance metrics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-sm mt-1">
+                View detailed analytics
               </p>
             </CardContent>
           </Card>

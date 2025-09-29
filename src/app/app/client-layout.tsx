@@ -12,6 +12,7 @@ import {
   LogOut,
   LucideSettings,
   CreditCard,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +46,7 @@ const navItems = [
   { label: "Dashboard", href: "/app", icon: LayoutDashboard },
   { label: "Sites", href: "/app/sites", icon: Globe },
   { label: "Messages", href: "/app/messages", icon: MessageSquare },
+  { label: "Analytics", href: "/app/analytics", icon: BarChart3 },
   { label: "Billing", href: "/app/billing", icon: CreditCard },
   { label: "Settings", href: "/app/settings", icon: LucideSettings },
 ];

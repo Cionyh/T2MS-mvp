@@ -49,7 +49,7 @@ export function Navbar() {
             className="text-xl font-extrabold tracking-tighter sm:text-xl md:text-2xl lg:text-3xl font-serif"
           >
             <span className="text-primary [text-shadow:0_0_20px_theme(colors.primary/20%)]">
-              Text2MySite<span className='text-sm'>™</span>
+              Text2MySite™
             </span>
           </motion.p>
         </Link>
