@@ -129,16 +129,16 @@ export default function LearnMorePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="mt-8">
-              <Link href="/sign-in">
-                <Button
-                  size="lg"
-                  onClick={handleCTA}
+        <Link href="/sign-in">
+          <Button
+            size="lg"
+            onClick={handleCTA}
                   className="bg-primary text-foreground hover:bg-primary/90 px-8 py-4 text-lg"
-                >
-                  Register Your Site
+          >
+            Register Your Site
                   <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+          </Button>
+        </Link>
             </CardContent>
           </Card>
         </motion.div>
@@ -234,13 +234,13 @@ export default function LearnMorePage() {
                     >
                       <Icon className="h-8 w-8" />
                     </div>
-                    <CardHeader className="flex flex-col items-center">
-                      <h3 className="text-xl font-bold text-center">{feature.title}</h3>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-center">{feature.description}</CardDescription>
-                    </CardContent>
-                  </Card>
+  <CardHeader className="flex flex-col items-center">
+    <h3 className="text-xl font-bold text-center">{feature.title}</h3>
+  </CardHeader>
+  <CardContent>
+    <CardDescription className="text-center">{feature.description}</CardDescription>
+  </CardContent>
+</Card>
                 </motion.div>
               );
             })}
@@ -463,13 +463,13 @@ export default function LearnMorePage() {
             </CardHeader>
             <CardContent className="mt-8 text-center">
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Link href="/sign-in">
-                  <Button
-                    size="lg"
-                    onClick={handleCTA}
+        <Link href="/sign-in">
+          <Button
+            size="lg"
+            onClick={handleCTA}
                     className="bg-primary text-foreground hover:bg-primary/90 px-8 py-4 text-lg"
-                  >
-                    Register Your Site
+          >
+            Register Your Site
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
@@ -480,8 +480,8 @@ export default function LearnMorePage() {
                     className="px-8 py-4 text-lg border-2 border-primary"
                   >
                     View All Plans
-                  </Button>
-                </Link>
+          </Button>
+        </Link>
               </div>
               <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Star className="h-4 w-4 text-yellow-500" />

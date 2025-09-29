@@ -340,7 +340,7 @@ export default function AnalyticsDashboard() {
                         />
                         <Area
                           type="monotone"
-                          dataKey="websites"
+                          dataKey="clients"
                           stackId="2"
                           stroke={COLORS.secondary}
                           fill={COLORS.secondary}

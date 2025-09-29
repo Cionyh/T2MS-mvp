@@ -200,7 +200,7 @@ export default function AdminSettingsPage() {
 
         <div className="grid gap-6">
           {/* Account Information */}
-          <Card>
+      <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
@@ -283,8 +283,8 @@ export default function AdminSettingsPage() {
                   onCheckedChange={(checked) =>
                     setNotifications(prev => ({ ...prev, sms: checked }))
                   }
-                />
-              </div>
+                  />
+                </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
@@ -298,8 +298,8 @@ export default function AdminSettingsPage() {
                   onCheckedChange={(checked) =>
                     setNotifications(prev => ({ ...prev, push: checked }))
                   }
-                />
-              </div>
+                  />
+                </div>
             </CardContent>
           </Card>
 
@@ -368,7 +368,7 @@ export default function AdminSettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+                </div>
 
         {/* Save Button */}
         <div className="flex justify-end">
@@ -377,37 +377,37 @@ export default function AdminSettingsPage() {
               <>
                 <Save className="mr-2 h-4 w-4 animate-spin" />
                 Saving...
-              </>
-            ) : (
+                    </>
+                  ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
                 Save Changes
               </>
-            )}
-          </Button>
+                  )}
+                </Button>
         </div>
       </div>
 
       {/* Update Profile Dialog */}
       <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+              <DialogHeader>
             <DialogTitle>Update Profile</DialogTitle>
             <DialogDescription>
               Update your personal information. Name changes are saved immediately, while email changes require verification.
             </DialogDescription>
-          </DialogHeader>
+              </DialogHeader>
           <div className="space-y-4">
-            <div>
+                <div>
               <Label htmlFor="profile-name">Full Name</Label>
-              <Input
+                  <Input
                 id="profile-name"
                 value={profileData.name}
                 onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
                 className="mt-1"
                 placeholder="Enter your full name"
-              />
-            </div>
+                  />
+                </div>
             <div>
               <Label htmlFor="profile-email">Email</Label>
               <Input
@@ -424,32 +424,32 @@ export default function AdminSettingsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button
+                      <Button
               variant="outline"
               onClick={() => setIsProfileDialogOpen(false)}
               disabled={isUpdatingProfile}
             >
               Cancel
-            </Button>
-            <Button
+                      </Button>
+                <Button
               onClick={handleUpdateProfile}
               disabled={isUpdatingProfile || !profileData.name.trim() || !profileData.email.trim()}
-            >
+                >
               {isUpdatingProfile ? (
-                <>
+                    <>
                   <Save className="mr-2 h-4 w-4 animate-spin" />
                   Updating...
-                </>
-              ) : (
+                    </>
+                  ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
                   Update Profile
                 </>
-              )}
-            </Button>
+                  )}
+                </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </DialogContent>
+          </Dialog>
 
       {/* Change Password Dialog */}
       <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
@@ -497,16 +497,16 @@ export default function AdminSettingsPage() {
                 placeholder="Confirm your new password"
               />
             </div>
-          </div>
+            </div>
           <DialogFooter>
-            <Button
+                          <Button
               variant="outline"
               onClick={() => setIsPasswordDialogOpen(false)}
               disabled={isChangingPassword}
             >
               Cancel
-            </Button>
-            <Button
+                          </Button>
+                          <Button
               onClick={handleChangePassword}
               disabled={isChangingPassword || !passwordData.currentPassword.trim() || !passwordData.newPassword.trim() || !passwordData.confirmPassword.trim()}
             >
@@ -520,8 +520,8 @@ export default function AdminSettingsPage() {
                   <Key className="mr-2 h-4 w-4" />
                   Change Password
                 </>
-              )}
-            </Button>
+                            )}
+                          </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -196,7 +196,7 @@ export default function SettingsPage() {
           <p className="text-muted-foreground">
             Manage your account settings and preferences.
           </p>
-        </div>
+      </div>
 
         <div className="grid gap-6">
           {/* Account Information */}
@@ -340,7 +340,7 @@ export default function SettingsPage() {
                       </Button>
                       <Button variant="destructive" onClick={handleSignOut}>
                         Sign Out
-                      </Button>
+        </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -363,8 +363,8 @@ export default function SettingsPage() {
                 Save Changes
               </>
             )}
-          </Button>
-        </div>
+        </Button>
+      </div>
       </div>
 
       {/* Update Profile Dialog */}
