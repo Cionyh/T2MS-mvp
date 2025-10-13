@@ -18,7 +18,8 @@ import {
   Users, 
   Settings,
   ArrowRight,
-  Star
+  Star,
+  Download
 } from "lucide-react";
 import { DotPattern } from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
@@ -129,16 +130,26 @@ export default function LearnMorePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="mt-8">
-        <Link href="/sign-in">
-          <Button
-            size="lg"
-            onClick={handleCTA}
-                  className="bg-primary text-foreground hover:bg-primary/90 px-8 py-4 text-lg"
-          >
-            Register Your Site
-                  <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-        </Link>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Link href="/sign-in">
+                  <Button
+                    size="lg"
+                    onClick={handleCTA}
+                    className="bg-primary text-foreground hover:bg-primary/90 px-8 py-4 text-lg"
+                  >
+                    Register Your Site
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <a 
+                  href="/quick_start_manual.pdf" 
+                  download="Text2MySite-Quick-Start-Manual.pdf"
+                  className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors px-4 py-2 rounded-lg hover:bg-primary/5"
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="text-sm font-medium">Download Quick Start Guide</span>
+                </a>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -315,129 +326,6 @@ export default function LearnMorePage() {
                     <span className="text-sm font-medium">{useCase}</span>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </section>
-
-      {/* Pricing Preview */}
-      <section className="max-w-7xl mx-auto px-4 py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-        >
-          <Card className="rounded-[3em] bg-gradient-to-b from-background via-background to-muted border-none backdrop-blur-md py-20">
-            <CardHeader className="text-center space-y-4">
-              <CardTitle className="font-extrabold tracking-tight bg-gradient-to-b from-foreground via-foreground to-background bg-clip-text text-transparent text-3xl sm:text-4xl md:text-5xl font-serif">
-                Simple, Transparent Pricing
-              </CardTitle>
-              <CardDescription className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                Choose the plan that's right for you — no hidden fees, no surprises. Start with our free plan and upgrade as you grow.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="mt-8">
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                <Card className="bg-muted/40 hover:bg-muted/60 transition-colors duration-300 rounded-3xl p-6">
-                  <div className="text-center">
-                    <h3 className="text-2xl font-bold mb-2">Free</h3>
-                    <div className="text-4xl font-extrabold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent mb-2">
-                      $0<span className="text-lg font-normal text-muted-foreground">/mo</span>
-                    </div>
-                    <p className="text-muted-foreground mb-4">Perfect for trying out the platform</p>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span>1 website</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span>10 messages/month</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span>Basic support</span>
-                      </li>
-                    </ul>
-                  </div>
-                </Card>
-
-                <Card className="bg-muted/40 hover:bg-muted/60 transition-colors duration-300 rounded-3xl p-6 border-primary">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <h3 className="text-2xl font-bold">Starter</h3>
-                      <Badge variant="secondary">Popular</Badge>
-                    </div>
-                    <div className="text-4xl font-extrabold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent mb-2">
-                      $9<span className="text-lg font-normal text-muted-foreground">/mo</span>
-                    </div>
-                    <p className="text-muted-foreground mb-4">Perfect for small sites</p>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span>50 websites</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span>10,000 messages/month</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span>14-day free trial</span>
-                      </li>
-                    </ul>
-                  </div>
-                </Card>
-
-                <Card className="bg-muted/40 hover:bg-muted/60 transition-colors duration-300 rounded-3xl p-6">
-                  <div className="text-center">
-                    <h3 className="text-2xl font-bold mb-2">Pro</h3>
-                    <div className="text-4xl font-extrabold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent mb-2">
-                      $29<span className="text-lg font-normal text-muted-foreground">/mo</span>
-                    </div>
-                    <p className="text-muted-foreground mb-4">For growing businesses</p>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span>200 websites</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span>50,000 messages/month</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span>Priority support</span>
-                      </li>
-                    </ul>
-                  </div>
-                </Card>
-
-                <Card className="bg-muted/40 hover:bg-muted/60 transition-colors duration-300 rounded-3xl p-6">
-                  <div className="text-center">
-                    <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
-                    <div className="text-4xl font-extrabold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent mb-2">
-                      $99<span className="text-lg font-normal text-muted-foreground">/mo</span>
-                    </div>
-                    <p className="text-muted-foreground mb-4">For large enterprises</p>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span>Unlimited websites</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span>Unlimited messages</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        <span>Premium support</span>
-                      </li>
-                    </ul>
-                  </div>
-                </Card>
               </div>
             </CardContent>
           </Card>

@@ -9,23 +9,10 @@ import { useState } from "react";
 
 const plans = [
   {
-    name: "Free",
-    planId: "free",
-    price: "$0",
-    description: "Perfect for trying out the platform.",
-    icon: Check,
-    features: [
-      "1 website",
-      "4 messages per month",
-      "Basic support",
-      "Widget customization",
-    ],
-    highlight: false,
-  },
-  {
-    name: "Starter",
+    name: "Introductory Offer",
     planId: "starter",
-    price: "$9",
+    price: "$9.99",
+    priceAnnual: "$119",
     description: "Perfect for small sites or personal projects.",
     icon: Zap,
     features: [
@@ -35,32 +22,16 @@ const plans = [
       "Widget customization",
       "14-day free trial",
     ],
-    highlight: false,
-  },
-  {
-    name: "Pro",
-    planId: "pro",
-    price: "$29",
-    description: "For growing businesses needing more power.",
-    icon: Rocket,
-    features: [
-      "Up to 10 websites",
-      "1,000 messages per month",
-      "Priority support",
-      "14-day free trial",
-    ],
     highlight: true,
   },
   {
-    name: "Enterprise",
+    name: "Enterprise / Teams",
     planId: "enterprise",
-    price: "$99",
-    description: "For large enterprises.",
-    icon: Check,
+    price: "Contact Us",
+    description: "For large enterprises and teams.",
+    icon: Rocket,
     features: [
-      "Unlimited websites",
-      "Unlimited messages",
-      "Premium support",
+      "Contact us at sales@t2ms.biz",
     ],
     highlight: false,
   },
@@ -118,7 +89,7 @@ export function PricingSection() {
         Choose the plan that's right for you -- no hidden fees, no surprises.        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {plans.map((plan) => {
           const Icon = plan.icon;
           const isLoading = loading === plan.planId;
@@ -138,10 +109,18 @@ export function PricingSection() {
 
               <p className="text-4xl font-extrabold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
                 {plan.price}
-                <span className="text-lg font-normal text-muted-foreground">
-                  /mo
-                </span>
+                {plan.price !== "Contact Us" && (
+                  <span className="text-lg font-normal text-muted-foreground">
+                    /mo
+                  </span>
+                )}
               </p>
+              
+              {plan.priceAnnual && (
+                <p className="text-lg text-muted-foreground">
+                  or {plan.priceAnnual} annually
+                </p>
+              )}
 
               <p className="text-muted-foreground mt-2 mb-6">
                 {plan.description}
@@ -157,7 +136,13 @@ export function PricingSection() {
               </ul>
 
               <Button
-                onClick={() => handleUpgrade(plan.planId)}
+                onClick={() => {
+                  if (plan.planId === "enterprise") {
+                    window.location.href = "mailto:sales@t2ms.biz";
+                  } else {
+                    handleUpgrade(plan.planId);
+                  }
+                }}
                 disabled={isLoading}
                 className={cn(
                   "mt-6 w-full",
@@ -166,7 +151,7 @@ export function PricingSection() {
                     : "bg-muted text-foreground hover:bg-muted/80"
                 )}
               >
-                {isLoading ? "Processing..." : "Get Started"}
+                {isLoading ? "Processing..." : plan.planId === "enterprise" ? "Contact Sales" : "Get Started"}
               </Button>
             </div>
           );
