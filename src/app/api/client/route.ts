@@ -8,6 +8,7 @@ import { getActiveOrganization } from "@/lib/organization-helpers";
 /* ----------  POST /api/client  ----------------------------------------- */
 export async function POST(req: Request) {
   let normalizedDomain: string | undefined;
+  let domain: string | undefined;
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -21,7 +22,8 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, domain } = body;
+    const { name, domain: domainValue } = body;
+    domain = domainValue;
 
     if (!name || !domain) {
       return NextResponse.json(
@@ -69,6 +71,14 @@ export async function POST(req: Request) {
       );
     }
 
+    // normalizedDomain is guaranteed to be defined here since we return early on error
+    if (!normalizedDomain) {
+      return NextResponse.json(
+        { error: "Invalid domain format" },
+        { status: 400 }
+      );
+    }
+
     const client = await prisma.client.create({
       data: {
         name,
@@ -99,7 +109,7 @@ export async function POST(req: Request) {
       const target = (error as any).meta?.target;
       if (target === "Client_domain_key" || target.includes("domain")) {
         // Use normalizedDomain if available, otherwise use original domain
-        const errorDomain = normalizedDomain || domain;
+        const errorDomain = normalizedDomain || domain || "unknown";
         return NextResponse.json(
           { error: `The domain "${errorDomain}" is already registered.` },
           { status: 409 } // Conflict
