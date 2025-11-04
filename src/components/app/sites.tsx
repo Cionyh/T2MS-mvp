@@ -62,6 +62,8 @@ import { cn } from "@/lib/utils";
 import { EmbedDialog } from "./embed-dialog"; 
 import { Switch } from "@/components/ui/switch";
 import { Info } from "lucide-react";
+import { PhoneNumberManagement } from "./phone-number-management";
+import { Badge } from "@/components/ui/badge";
 
 // Widget type instructions
 const widgetTypeInstructions = {
@@ -78,8 +80,12 @@ interface Website {
   id: string;
   name: string;
   domain: string;
-  phone: string;
-  userId: string;
+  organizationId?: string;
+  phoneNumbers?: Array<{
+    id: string;
+    phone: string;
+    verified: boolean;
+  }>;
   defaultType?: string;
   defaultBgColor?: string;
   defaultTextColor?: string;
@@ -107,7 +113,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   // Editable fields
   const [editedName, setEditedName] = useState("");
   const [editedDomain, setEditedDomain] = useState("");
-  const [editedPhone, setEditedPhone] = useState("");
   const [editedDefaultType, setEditedDefaultType] = useState("banner");
   const [editedDefaultBgColor, setEditedDefaultBgColor] = useState("#222");
   const [editedDefaultTextColor, setEditedDefaultTextColor] = useState("#fff");
@@ -134,18 +139,23 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-  if (!userId) return;
+    if (!userId) return;
 
-  const fetchWebsites = async () => {
-    setLoading(true);
-    const res = await fetch(`/api/client?userId=${userId}`);
-    const data = await res.json();
-    setWebsites(data); 
-    setLoading(false);
-  };
+    const fetchWebsites = async () => {
+      setLoading(true);
+      // API now returns organization's clients (no userId param needed)
+      const res = await fetch(`/api/client`);
+      if (!res.ok) {
+        setLoading(false);
+        return;
+      }
+      const data = await res.json();
+      setWebsites(data); 
+      setLoading(false);
+    };
 
-  fetchWebsites();
-}, [userId]);
+    fetchWebsites();
+  }, [userId]);
 
   const handleNewSiteClick = () => {
     router.push("/app/build");
@@ -155,7 +165,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     setSelectedWebsite(website);
     setEditedName(website.name);
     setEditedDomain(website.domain);
-    setEditedPhone(website.phone);
     setEditedDefaultType(website.defaultType || "banner");
     setEditedDefaultBgColor(website.defaultBgColor || "#222");
     setEditedDefaultTextColor(website.defaultTextColor || "#fff");
@@ -207,7 +216,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         body: JSON.stringify({
           name: editedName,
           domain: editedDomain,
-          phone: editedPhone,
+          // Phone removed - handled separately via phone management APIs
           defaultType: editedDefaultType,
           defaultBgColor: editedDefaultBgColor,
           defaultTextColor: editedDefaultTextColor,
@@ -233,7 +242,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 ...site,
                 name: editedName,
                 domain: editedDomain,
-                phone: editedPhone,
                 defaultType: editedDefaultType,
                 defaultBgColor: editedDefaultBgColor,
                 defaultTextColor: editedDefaultTextColor,
@@ -446,9 +454,29 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       <p>
         <span className="font-semibold">Domain:</span> {website.domain}
       </p>
-      <p>
-        <span className="font-semibold">Phone:</span> {website.phone}
-      </p>
+      <div>
+        <span className="font-semibold">Phone Numbers:</span>
+        {website.phoneNumbers && website.phoneNumbers.length > 0 ? (
+          <div className="mt-1 space-y-1">
+            {website.phoneNumbers.map((phone) => (
+              <div key={phone.id} className="flex items-center gap-2 text-sm">
+                <span>{phone.phone}</span>
+                {phone.verified ? (
+                  <Badge variant="default" className="bg-green-500 text-xs">
+                    Verified
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-xs">
+                    Unverified
+                  </Badge>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <span className="text-muted-foreground text-sm ml-2">No phone numbers</span>
+        )}
+      </div>
       <p className="flex items-center space-x-2">
         <span className="font-semibold">Client ID:</span>
         <span className="font-mono text-sm">
@@ -539,15 +567,12 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               />
             </div>
             
-            <div>
-              <Label className="mb-2 text-sm font-medium">Phone</Label>
-              <Input
-                value={editedPhone}
-                onChange={(e) => setEditedPhone(e.target.value)}
-                className="w-full"
-                disabled
-              />
-            </div>
+            {/* Phone Numbers Section - Managed separately */}
+            {selectedWebsite && (
+              <PhoneNumberManagement clientId={selectedWebsite.id} />
+            )}
+            
+            <Separator />
             
             {/* Widget Configuration Section */}
             <div className="space-y-4">

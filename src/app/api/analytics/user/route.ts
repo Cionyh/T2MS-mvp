@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { getActiveOrganization } from "@/lib/organization-helpers";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,27 +11,43 @@ export async function GET(req: NextRequest) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
-    const userIdParam = req.nextUrl.searchParams.get("userId");
     const days = parseInt(req.nextUrl.searchParams.get("days") || "30", 10);
 
-    if (!userIdParam || userIdParam !== session.user.id) {
-      return new NextResponse("Unauthorized or missing user ID", { status: 403 });
+    // Get active organization for the user
+    const organizationId = await getActiveOrganization();
+    if (!organizationId) {
+      return NextResponse.json({
+        overview: {
+          totalSites: 0,
+          totalMessages: 0,
+          messagesThisWeek: 0,
+          messagesThisMonth: 0,
+          averageMessagesPerSite: 0
+        },
+        siteStats: [],
+        messageTrends: {
+          daily: [],
+          weekly: [],
+          monthly: []
+        },
+        recentActivity: []
+      });
     }
 
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // Get overview stats
+    // Get overview stats based on organizationId
     const [totalSites, totalMessages, messagesThisWeek, messagesThisMonth] = await Promise.all([
       prisma.client.count({
-        where: { userId: session.user.id }
+        where: { organizationId }
       }),
       prisma.message.count({
-        where: { client: { userId: session.user.id } }
+        where: { client: { organizationId } }
       }),
       prisma.message.count({
         where: {
-          client: { userId: session.user.id },
+          client: { organizationId },
           createdAt: {
             gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
           }
@@ -38,7 +55,7 @@ export async function GET(req: NextRequest) {
       }),
       prisma.message.count({
         where: {
-          client: { userId: session.user.id },
+          client: { organizationId },
           createdAt: {
             gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
           }
@@ -48,7 +65,7 @@ export async function GET(req: NextRequest) {
 
     // Get site stats
     const siteStats = await prisma.client.findMany({
-      where: { userId: session.user.id },
+      where: { organizationId },
       select: {
         id: true,
         name: true,
@@ -83,7 +100,7 @@ export async function GET(req: NextRequest) {
     // Get message trends - fetch all messages and group them in JavaScript
     const allMessages = await prisma.message.findMany({
       where: {
-        client: { userId: session.user.id },
+        client: { organizationId },
         createdAt: { gte: startDate }
       },
       select: { createdAt: true },
@@ -132,7 +149,7 @@ export async function GET(req: NextRequest) {
 
     // Get recent activity
     const recentMessages = await prisma.message.findMany({
-      where: { client: { userId: session.user.id } },
+      where: { client: { organizationId } },
       select: {
         id: true,
         content: true,
@@ -149,7 +166,7 @@ export async function GET(req: NextRequest) {
     });
 
     const recentSites = await prisma.client.findMany({
-      where: { userId: session.user.id },
+      where: { organizationId },
       select: {
         id: true,
         name: true,

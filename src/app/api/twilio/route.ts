@@ -108,11 +108,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const client = await prisma.client.findUnique({ where: { phone: from } });
+    // Look up phone number in PhoneNumber table
+    const phoneNumber = await prisma.phoneNumber.findFirst({
+      where: { 
+        phone: from,
+        verified: true, // Only accept verified phone numbers
+      },
+      include: {
+        client: true,
+      },
+    });
 
-    if (!client) {
-      console.warn("❌ No client found with phone number:", from);
-      return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    if (!phoneNumber || !phoneNumber.client) {
+      console.warn("❌ No verified phone number found:", from);
+      return NextResponse.json({ error: "Phone number not found or not verified" }, { status: 404 });
+    }
+
+    const client = phoneNumber.client;
+
+    if (!client.organizationId) {
+      console.warn("❌ Client has no organization:", client.id);
+      return NextResponse.json({ error: "Client not associated with an organization" }, { status: 400 });
     }
 
     let type = "banner", content = body;
@@ -121,12 +137,12 @@ export async function POST(req: NextRequest) {
       content = body.substring(6).trim();
     }
 
-    console.log("📝 Saving message:", { content, type, clientId: client.id });
+    console.log("📝 Saving message:", { content, type, clientId: client.id, organizationId: client.organizationId });
 
-    // Check message limit based on user's plan
-    const messageLimit = await checkMessageLimit(client.userId, client.id);
+    // Check message limit based on organization's plan
+    const messageLimit = await checkMessageLimit(client.organizationId, client.id);
     if (!messageLimit.allowed) {
-      console.warn("❌ Message limit exceeded for user:", client.userId);
+      console.warn("❌ Message limit exceeded for organization:", client.organizationId);
       return new NextResponse(
         `<Response><Message>Message limit exceeded. You can send up to ${messageLimit.limit === -1 ? 'unlimited' : messageLimit.limit} messages per month on your current plan. You have sent ${messageLimit.current} messages this month. Please upgrade your plan to send more messages.</Message></Response>`,
         { status: 200, headers: { "Content-Type": "text/xml" } }

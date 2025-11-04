@@ -32,29 +32,28 @@ export interface UserAnalyticsData {
   }>;
 }
 
-export function useUserAnalytics(userId: string, days: number = 30) {
+export function useUserAnalytics(days: number = 30) {
   return useQuery<UserAnalyticsData>({
-    queryKey: ["user-analytics", userId, days],
+    queryKey: ["user-analytics", days],
     queryFn: async () => {
-      const response = await fetch(`/api/analytics/user?userId=${userId}&days=${days}`);
+      const response = await fetch(`/api/analytics/user?days=${days}`);
       if (!response.ok) {
         throw new Error("Failed to fetch user analytics");
       }
       return response.json();
     },
-    enabled: !!userId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 }
 
-export function useUserSiteAnalytics(userId: string, siteId?: string) {
+export function useUserSiteAnalytics(siteId?: string) {
   return useQuery({
-    queryKey: ["user-site-analytics", userId, siteId],
+    queryKey: ["user-site-analytics", siteId],
     queryFn: async () => {
       const url = siteId 
-        ? `/api/analytics/site?userId=${userId}&siteId=${siteId}`
-        : `/api/analytics/sites?userId=${userId}`;
+        ? `/api/analytics/site?siteId=${siteId}`
+        : `/api/analytics/sites`;
       
       const response = await fetch(url);
       if (!response.ok) {
@@ -62,7 +61,7 @@ export function useUserSiteAnalytics(userId: string, siteId?: string) {
       }
       return response.json();
     },
-    enabled: !!userId,
+    enabled: true,
     staleTime: 5 * 60 * 1000,
   });
 }

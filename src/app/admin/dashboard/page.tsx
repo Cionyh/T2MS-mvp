@@ -3,27 +3,14 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import ClientDashboardPage from "@/components/admin/home";
-import { getWebsitesByUserId } from "@/lib/queries/getWebsites";
-
-interface Website {
-  id: string;
-  name: string;
-  domain: string;
-  phone: string;
-  userId: string;
-}
 
 export default async function DashboardServerPage() {  
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  const userId = session?.user?.id;
-  let websites: Website[] = [];
-
-  if (userId) {
-    websites = await getWebsitesByUserId(userId);
-  }
+  // Admin dashboard - no need to fetch websites here if not used
+  // If admin needs to see all websites, they can fetch via API routes
 
   return <ClientDashboardPage />; 
 }

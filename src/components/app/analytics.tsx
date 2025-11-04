@@ -46,16 +46,14 @@ import { useUserAnalytics } from "@/lib/hooks/useUserAnalytics";
 import { useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
-interface AnalyticsProps {
-  userId: string;
-}
+interface AnalyticsProps {}
 
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#00ff00"];
 
-export default function AnalyticsPage({ userId }: AnalyticsProps) {
+export default function AnalyticsPage({}: AnalyticsProps) {
   const [timeRange, setTimeRange] = useState("30");
   const { data: session } = useSession();
-  const { data: analytics, isLoading, error } = useUserAnalytics(userId, parseInt(timeRange));
+  const { data: analytics, isLoading, error } = useUserAnalytics(parseInt(timeRange));
 
   if (error) {
     return (

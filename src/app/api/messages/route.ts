@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { Prisma } from "@prisma/client";
+import { getActiveOrganization } from "@/lib/organization-helpers";
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,9 +12,18 @@ export async function GET(req: NextRequest) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
-    const userIdParam = req.nextUrl.searchParams.get("userId");
-    if (!userIdParam || userIdParam !== session.user.id) {
-      return new NextResponse("Unauthorized or missing user ID", { status: 403 });
+    // Get active organization
+    const organizationId = await getActiveOrganization();
+    if (!organizationId) {
+      return NextResponse.json({
+        data: [],
+        pagination: {
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0,
+        },
+      });
     }
 
     const page = parseInt(req.nextUrl.searchParams.get("page") || "1", 10);
@@ -22,7 +32,7 @@ export async function GET(req: NextRequest) {
     const q = req.nextUrl.searchParams.get("q") || "";
 
     const where: Prisma.MessageWhereInput = {
-      client: { userId: session.user.id },
+      client: { organizationId },
       ...(q
         ? {
             OR: [
@@ -42,7 +52,7 @@ export async function GET(req: NextRequest) {
               id: true,
               name: true,
               domain: true,
-              user: { select: { id: true, name: true, email: true } },
+              organizationId: true,
             },
           },
         },

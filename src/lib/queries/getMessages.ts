@@ -1,22 +1,22 @@
 import { prisma } from "@/lib/prisma";
 
 /**
- * Counts the total number of messages for a given user.
- * @param userId The ID of the user.
+ * Counts the total number of messages for a given organization.
+ * @param organizationId The ID of the organization.
  * @returns A promise that resolves to the total number of messages.
  */
-export async function getMessageCountByUserId(userId: string): Promise<number> {
-  // Ensure you have a valid userId before querying
-  if (!userId) {
+export async function getMessageCountByOrganizationId(organizationId: string | null): Promise<number> {
+  // Ensure you have a valid organizationId before querying
+  if (!organizationId) {
     return 0;
   }
 
   try {
     const count = await prisma.message.count({
       where: {
-        // We filter messages based on the userId of the associated client
+        // We filter messages based on the organizationId of the associated client
         client: {
-          userId: userId,
+          organizationId: organizationId,
         },
       },
     });

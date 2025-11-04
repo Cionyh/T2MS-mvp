@@ -10,10 +10,12 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { User, Bell, Shield, LogOut, Save, Edit, Key } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User, Bell, Shield, LogOut, Save, Edit, Key, Users } from "lucide-react";
 import { toast } from "sonner";
 import { DotPattern } from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
+import { TeamManagementTab } from "@/components/app/team-management";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -196,9 +198,16 @@ export default function SettingsPage() {
           <p className="text-muted-foreground">
             Manage your account settings and preferences.
           </p>
-      </div>
+        </div>
 
-        <div className="grid gap-6">
+        <Tabs defaultValue="account" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="team">Team</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="account" className="space-y-6">
+            <div className="grid gap-6">
           {/* Account Information */}
           <Card>
             <CardHeader>
@@ -363,8 +372,14 @@ export default function SettingsPage() {
                 Save Changes
               </>
             )}
-        </Button>
-      </div>
+          </Button>
+        </div>
+          </TabsContent>
+
+          <TabsContent value="team" className="space-y-6">
+            <TeamManagementTab />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Update Profile Dialog */}

@@ -5,8 +5,7 @@ import { useSession } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import PhoneInput from "react-phone-number-input";
-import "react-phone-number-input/style.css";
+// PhoneInput removed - phone numbers are now managed separately
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -29,10 +28,10 @@ import {
 } from "@/components/ui/dialog";
 
 // Client validation schema
+// Note: Phone is removed - phone numbers are added separately after client creation
 const clientSchema = z.object({
   name: z.string().min(2, { message: "Business Name must be at least 2 characters." }),
   domain: z.string().url({ message: "Invalid URL format. Include https:// or http://." }),
-  phone: z.string().min(1, { message: "Phone number is required." }),
   websiteOwnership: z.boolean().refine((val) => val === true, {
     message: "You must acknowledge that you own and/or have rights to this website.",
   }),
@@ -52,7 +51,6 @@ export default function ClientWidgetBuilder() {
     defaultValues: {
       name: "",
       domain: "",
-      phone: "",
       websiteOwnership: false,
     },
   });
@@ -75,17 +73,20 @@ export default function ClientWidgetBuilder() {
       return;
     }
 
-    // Extract websiteOwnership from values to exclude from API call
-    const { websiteOwnership, ...apiValues } = values;
+    // Extract websiteOwnership and phone from values
+    // Phone numbers are now handled separately via phone management APIs
+    const { websiteOwnership, phone, ...apiValues } = values;
 
     try {
       const res = await fetch("/api/client", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...apiValues,
-          userId,
-          // Send default widget settings if needed
+          name: apiValues.name,
+          domain: apiValues.domain,
+          // Phone removed - will be added separately via phone management
+          // OrganizationId is handled server-side from active organization
+          // Default widget settings
           defaultType: "banner",
           defaultBgColor: "#222",
           defaultTextColor: "#fff",
@@ -157,26 +158,7 @@ export default function ClientWidgetBuilder() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Phone Number</Label>
-                    <FormControl>
-                      <PhoneInput
-                        international
-                        defaultCountry="US"
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Enter phone number"
-                        className="phone-input"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Phone numbers are now added separately after client creation via phone management */}
               <FormField
                 control={form.control}
                 name="websiteOwnership"

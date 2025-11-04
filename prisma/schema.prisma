@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -20,29 +19,32 @@ model User {
   accounts      Account[]
   role          String?
 
-  clients    Client[]  @relation("UserClients")
+  // Note: clients relation removed - clients now belong to organizations
   banned     Boolean?
   banReason  String?
   banExpires DateTime?
 
   stripeCustomerId String?
 
+  members     Member[]
+  invitations Invitation[]
+
   @@unique([email])
   @@map("user")
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  expiresAt DateTime
-  token     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  impersonatedBy String?
+  id                   String   @id @default(cuid())
+  expiresAt            DateTime
+  token                String   @unique
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  ipAddress            String?
+  userAgent            String?
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy       String?
+  activeOrganizationId String?
 
   @@map("session")
 }
@@ -78,12 +80,11 @@ model Verification {
 }
 
 model Client {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation("UserClients", fields: [userId], references: [id], onDelete: Cascade)
-  name   String
-  domain String @unique
-  phone  String @unique
+  id             String  @id @default(cuid())
+  organizationId String? // Nullable - clients can exist without organization (for backward compatibility)
+  name           String
+  domain         String  @unique
+  // phone field removed - now in PhoneNumber model
 
   // Defaults for messages
   defaultType         String? @default("banner") // fallback type if message.type not set
@@ -96,9 +97,10 @@ model Client {
   // Widget configuration settings
   widgetConfig Json? @default("{}") // JSON object containing all widget customization settings
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  messages  Message[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  messages     Message[]
+  phoneNumbers PhoneNumber[]
 }
 
 model Message {
@@ -124,4 +126,66 @@ model Subscription {
   seats                Int?
 
   @@map("subscription")
+}
+
+model PhoneNumber {
+  id                 String    @id @default(cuid())
+  clientId           String
+  client             Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  phone              String
+  verified           Boolean   @default(false)
+  verificationMethod String? // "PIN" or "INVITE"
+  pinCode            String? // 6-digit PIN code
+  pinExpiresAt       DateTime? // PIN expiration time
+  invitedBy          String? // userId who invited this phone
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  // Same phone can't be added twice to same client
+  @@unique([phone, clientId])
+  @@map("phone_number")
+}
+
+// Note: Organization, Member, and Invitation tables will be created
+// by running: npx @better-auth/cli migrate
+// These tables are managed by Better Auth organization plugin
+
+model Organization {
+  id          String       @id
+  name        String
+  slug        String?
+  logo        String?
+  createdAt   DateTime
+  metadata    String?
+  members     Member[]
+  invitations Invitation[]
+
+  @@unique([slug])
+  @@map("organization")
+}
+
+model Member {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String
+  createdAt      DateTime
+
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String
+  expiresAt      DateTime
+  inviterId      String
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@map("invitation")
 }

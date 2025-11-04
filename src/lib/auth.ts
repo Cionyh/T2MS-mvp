@@ -3,6 +3,7 @@ import { betterAuth } from "better-auth";
 import { PrismaClient } from "@prisma/client";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin } from "better-auth/plugins";
+import { organization } from "better-auth/plugins";
 import { stripe } from "@better-auth/stripe"
 import Stripe from "stripe"
 
@@ -36,6 +37,20 @@ export const auth = betterAuth({
 
     plugins: [
     admin(),
+    organization({
+      async sendInvitationEmail(data) {
+        // TODO: Implement email sending for organization invitations
+        // You can use your email service here (e.g., Resend, SendGrid, etc.)
+        const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation/${data.id}`;
+        console.log(`Invitation email should be sent to ${data.email} with link: ${inviteLink}`);
+        // Example:
+        // await sendEmail({
+        //   to: data.email,
+        //   subject: `You've been invited to join ${data.organization.name}`,
+        //   html: `...`
+        // });
+      },
+    }),
     stripe({
       stripeClient,
       stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,

@@ -25,5 +25,5 @@ export default async function Analytics() {
     );
   }
 
-  return <AnalyticsPage userId={session.user.id} />;
+  return <AnalyticsPage />;
 }
