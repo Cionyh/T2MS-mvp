@@ -10,11 +10,7 @@ export interface Message {
     id: string;
     name: string;
     domain: string;
-    user: {
-      id: string;
-      name: string;
-      email: string;
-    };
+    organizationId?: string | null;
   };
 }
 
@@ -32,7 +28,6 @@ interface UseMessagesOptions {
   page?: number;
   limit?: number;
   search?: string;
-  userId: string;
   enabled?: boolean;
 }
 
@@ -41,18 +36,14 @@ export const useMessages = ({
   page = 1,
   limit = 10,
   search = "",
-  userId,
   enabled = true,
 }: UseMessagesOptions) => {
   return useQuery<MessagesResponse, Error>({
-    queryKey: ["messages", userId, page, limit, search],
+    queryKey: ["messages", page, limit, search],
     queryFn: async () => {
-      if (!userId) throw new Error("User ID is required");
-
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
-        userId,
       });
       if (search) params.append("q", search);
 
@@ -61,7 +52,7 @@ export const useMessages = ({
 
       return res.json();
     },
-    enabled: enabled && !!userId,
+    enabled,
     staleTime: 5000,
   });
 };

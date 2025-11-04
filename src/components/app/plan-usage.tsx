@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Globe, MessageSquare, HardDrive, Crown } from "lucide-react";
-import { getUserPlanLimits, formatLimit } from "@/lib/plan-limits";
-import { prisma } from "@/lib/prisma";
+import { formatLimit } from "@/lib/plan-limits";
+
+// Note: Prisma removed - using API route instead
 
 interface PlanUsageProps {
   userId: string;
@@ -29,25 +30,16 @@ export function PlanUsage({ userId }: PlanUsageProps) {
 
   const fetchUsageStats = async () => {
     try {
-      // Get current websites count
-      const websitesCount = await prisma.client.count({
-        where: { userId }
-      });
-
-      // Get current month messages count
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-
-      const messagesCount = await prisma.message.count({
-        where: {
-          client: { userId },
-          createdAt: { gte: startOfMonth, lte: endOfMonth }
-        }
-      });
-
-      // Get plan limits
-      const limits = await getUserPlanLimits(userId);
+      // Fetch usage stats from API
+      const res = await fetch("/api/plan/usage");
+      if (!res.ok) {
+        throw new Error("Failed to fetch usage stats");
+      }
+      
+      const data = await res.json();
+      const limits = data.limits;
+      const websitesCount = data.websitesCount;
+      const messagesCount = data.messagesCount;
       
       setUsage({
         websites: { current: websitesCount, limit: limits.websites },

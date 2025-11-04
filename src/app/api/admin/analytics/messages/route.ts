@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
           id: true,
           name: true,
           domain: true,
-          user: { select: { name: true, email: true } }
+          organizationId: true,
         },
         orderBy: { createdAt: "desc" },
         take: 10
@@ -133,9 +133,28 @@ export async function GET(req: NextRequest) {
           const messageCount = await prisma.message.count({
             where: { clientId: client.id }
           });
+          
+          // Get organization owner info
+          let owner = null;
+          if (client.organizationId) {
+            const ownerResult = await prisma.$queryRaw<Array<{ name: string; email: string }>>`
+              SELECT u.name, u.email
+              FROM "user" u
+              INNER JOIN member m ON u.id = m."userId"
+              WHERE m."organizationId" = ${client.organizationId} AND m.role = 'owner'
+              LIMIT 1
+            `;
+            if (ownerResult && ownerResult.length > 0) {
+              owner = ownerResult[0];
+            }
+          }
+
           return {
-            ...client,
-            _count: { messages: messageCount }
+            id: client.id,
+            name: client.name,
+            domain: client.domain,
+            user: owner,
+            messageCount
           };
         })
       ),

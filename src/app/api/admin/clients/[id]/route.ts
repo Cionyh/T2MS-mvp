@@ -44,10 +44,10 @@ export async function PUT(
 
   try {
     const body = await req.json();
-    const { name, domain, phone } = body;
+    const { name, domain } = body;
 
-    if (!name || !domain || !phone) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    if (!name || !domain) {
+      return NextResponse.json({ error: "Missing fields: name and domain" }, { status: 400 });
     }
 
     const updatedClient = await prisma.client.update({
@@ -55,7 +55,7 @@ export async function PUT(
       data: {
         name,
         domain,
-        phone,
+        // Note: phone field removed - phone numbers are managed separately via PhoneNumber model
       },
     });
 
@@ -77,8 +77,13 @@ export async function GET(
   try {
     const client = await prisma.client.findUnique({
       where: { id: params.id },
-      include: {
-        user: { select: { id: true, name: true, email: true, role: true } },
+      select: {
+        id: true,
+        name: true,
+        domain: true,
+        createdAt: true,
+        updatedAt: true,
+        organizationId: true,
         _count: { select: { messages: true } },
       },
     });
@@ -87,7 +92,27 @@ export async function GET(
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ client });
+    // Get organization owner info
+    let owner = null;
+    if (client.organizationId) {
+      const ownerResult = await prisma.$queryRaw<Array<{ id: string; name: string; email: string; role: string | null }>>`
+        SELECT u.id, u.name, u.email, u.role
+        FROM "user" u
+        INNER JOIN member m ON u.id = m."userId"
+        WHERE m."organizationId" = ${client.organizationId} AND m.role = 'owner'
+        LIMIT 1
+      `;
+      if (ownerResult && ownerResult.length > 0) {
+        owner = ownerResult[0];
+      }
+    }
+
+    return NextResponse.json({ 
+      client: {
+        ...client,
+        user: owner,
+      }
+    });
   } catch (error) {
     console.error("[GET_CLIENT]", error);
     return NextResponse.json({ error: "Failed to fetch client" }, { status: 500 });

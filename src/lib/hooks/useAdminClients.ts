@@ -5,18 +5,19 @@ export interface Client {
   id: string;
   name: string;
   domain: string;
-  phone: string;
   createdAt: string;
   updatedAt: string;
+  organizationId?: string | null;
   user: {
     id: string;
     name: string;
     email: string;
     role: string | null;
-  };
+  } | null;
   _count: {
     messages: number;
   };
+  // Note: phone field removed - phone numbers are managed separately
 }
 
 export interface ClientsResponse {

@@ -16,7 +16,6 @@ export default async function MessagesPage() {
     redirect("/sign-in"); // Adjust this path to your actual sign-in page
   }
 
-  // 3. Render the client component and pass the user's ID as a prop.
-  //    This is the crucial step that makes the client-side hook work.
-  return <MessagesClient userId={session.user.id} />;
+  // 3. Render the client component
+  return <MessagesClient />;
 }

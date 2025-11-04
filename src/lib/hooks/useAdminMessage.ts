@@ -10,11 +10,12 @@ export interface Message {
     id: string;
     name: string;
     domain: string;
+    organizationId?: string | null;
     user: {
       id: string;
       name: string;
       email: string;
-    };
+    } | null;
   };
 }
 

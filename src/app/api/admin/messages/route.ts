@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
             { content: { contains: q, mode: "insensitive" } },
             { client: { name: { contains: q, mode: "insensitive" } } },
             { client: { domain: { contains: q, mode: "insensitive" } } },
-            { client: { user: { email: { contains: q, mode: "insensitive" } } } },
+            // Note: user relation removed - removed user email search
           ],
         }
       : {};
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
               id: true,
               name: true,
               domain: true,
-              user: { select: { id: true, name: true, email: true } },
+              organizationId: true,
             },
           },
         },
@@ -52,11 +52,37 @@ export async function GET(req: NextRequest) {
       prisma.message.count({ where }),
     ]);
 
+    // 5️⃣ Get organization owner info for each message's client
+    const messagesWithOwner = await Promise.all(
+      messages.map(async (message) => {
+        let owner = null;
+        if (message.client.organizationId) {
+          const ownerResult = await prisma.$queryRaw<Array<{ id: string; name: string; email: string }>>`
+            SELECT u.id, u.name, u.email
+            FROM "user" u
+            INNER JOIN member m ON u.id = m."userId"
+            WHERE m."organizationId" = ${message.client.organizationId} AND m.role = 'owner'
+            LIMIT 1
+          `;
+          if (ownerResult && ownerResult.length > 0) {
+            owner = ownerResult[0];
+          }
+        }
+        return {
+          ...message,
+          client: {
+            ...message.client,
+            user: owner,
+          },
+        };
+      })
+    );
+
     const totalPages = Math.ceil(total / limit);
 
-    // 5️⃣ Return JSON response
+    // 6️⃣ Return JSON response
     return NextResponse.json({
-      data: messages,
+      data: messagesWithOwner,
       pagination: {
         total,
         page,

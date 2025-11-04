@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
           name: true,
           domain: true,
           createdAt: true,
-          user: { select: { name: true, email: true } }
+          organizationId: true,
         },
         orderBy: { createdAt: "desc" },
         take: 10
@@ -105,10 +105,33 @@ export async function GET(req: NextRequest) {
       trends: {
         growth: growthTrend
       },
-      topClients: topClientsByMessages.map(client => ({
-        ...client,
-        messageCount: 0 // We'll calculate this separately if needed
-      }))
+      topClients: await Promise.all(
+        topClientsByMessages.map(async (client) => {
+          // Get organization owner info if organization exists
+          let ownerInfo = null;
+          if (client.organizationId) {
+            const owner = await prisma.$queryRaw<Array<{ name: string; email: string }>>`
+              SELECT u.name, u.email
+              FROM "user" u
+              INNER JOIN member m ON u.id = m."userId"
+              WHERE m."organizationId" = ${client.organizationId} AND m.role = 'owner'
+              LIMIT 1
+            `;
+            if (owner && owner.length > 0) {
+              ownerInfo = owner[0];
+            }
+          }
+
+          return {
+            id: client.id,
+            name: client.name,
+            domain: client.domain,
+            createdAt: client.createdAt,
+            owner: ownerInfo,
+            messageCount: 0 // We'll calculate this separately if needed
+          };
+        })
+      )
     });
   } catch (error) {
     console.error("Error fetching client analytics:", error);

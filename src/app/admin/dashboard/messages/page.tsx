@@ -72,7 +72,7 @@ export default function AdminMessagesPage() {
                 </TableCell>
                 <TableCell>{msg.client.name}</TableCell>
                 <TableCell>{msg.client.domain}</TableCell>
-                <TableCell>{msg.client.user.email}</TableCell>
+                <TableCell>{msg.client.user?.email || "N/A"}</TableCell>
                 <TableCell>
                   {new Date(msg.createdAt).toLocaleString()}
                 </TableCell>

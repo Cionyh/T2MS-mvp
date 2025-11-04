@@ -25,8 +25,7 @@ export async function GET(req: NextRequest) {
           OR: [
             { name: { contains: q, mode: "insensitive" } },
             { domain: { contains: q, mode: "insensitive" } },
-            { phone: { contains: q, mode: "insensitive" } },
-            { user: { email: { contains: q, mode: "insensitive" } } },
+            // Note: phone field removed, and user relation removed - search by organizationId if needed
           ],
         }
       : {};
@@ -38,17 +37,45 @@ export async function GET(req: NextRequest) {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: {
-          user: { select: { id: true, name: true, email: true, role: true } },
+        select: {
+          id: true,
+          name: true,
+          domain: true,
+          createdAt: true,
+          updatedAt: true,
+          organizationId: true,
           _count: { select: { messages: true } },
         },
       }),
       prisma.client.count({ where }),
     ]);
 
-    // 5️⃣ Return JSON response
+    // 5️⃣ Get organization owner info for each client
+    const clientsWithOwner = await Promise.all(
+      clients.map(async (client) => {
+        let owner = null;
+        if (client.organizationId) {
+          const ownerResult = await prisma.$queryRaw<Array<{ id: string; name: string; email: string; role: string | null }>>`
+            SELECT u.id, u.name, u.email, u.role
+            FROM "user" u
+            INNER JOIN member m ON u.id = m."userId"
+            WHERE m."organizationId" = ${client.organizationId} AND m.role = 'owner'
+            LIMIT 1
+          `;
+          if (ownerResult && ownerResult.length > 0) {
+            owner = ownerResult[0];
+          }
+        }
+        return {
+          ...client,
+          user: owner,
+        };
+      })
+    );
+
+    // 6️⃣ Return JSON response
     return NextResponse.json({
-      data: clients,
+      data: clientsWithOwner,
       pagination: {
         total,
         page,

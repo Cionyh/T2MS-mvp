@@ -22,7 +22,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Message ID is required" }, { status: 400 });
     }
 
-    // Verify the message exists and belongs to one of the user's clients
+    // Verify the message exists and user has access via organization
     const message = await prisma.message.findUnique({
       where: { id },
       include: { client: true },
@@ -32,8 +32,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Message not found" }, { status: 404 });
     }
 
-    // Check if the message belongs to a client of the logged-in user
-    if (message.client.userId !== session.user.id) {
+    // Check if user has access to the client via organization
+    const { verifyClientAccess } = await import("@/lib/organization-helpers");
+    const access = await verifyClientAccess(session.user.id, message.client.id);
+    if (!access.hasAccess) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

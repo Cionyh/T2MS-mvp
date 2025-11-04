@@ -69,7 +69,6 @@ export default function AdminClientsPage() {
         id: editingClient.id,
         name: editingClient.name,
         domain: editingClient.domain,
-        phone: editingClient.phone,
       },
       {
         onSuccess: () => {
@@ -96,7 +95,7 @@ export default function AdminClientsPage() {
 
       {/* Search */}
       <Input
-        placeholder="Search Sites by name, domain, or phone..."
+        placeholder="Search Sites by name or domain..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="max-w-md"
@@ -121,7 +120,6 @@ export default function AdminClientsPage() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Domain</TableHead>
-                  <TableHead>Phone</TableHead>
                   <TableHead>User Email</TableHead>
                   <TableHead>Messages</TableHead>
                   <TableHead>Created At</TableHead>
@@ -133,8 +131,7 @@ export default function AdminClientsPage() {
                   <TableRow key={client.id}>
                     <TableCell>{client.name}</TableCell>
                     <TableCell>{client.domain}</TableCell>
-                    <TableCell>{client.phone}</TableCell>
-                    <TableCell>{client.user.email}</TableCell>
+                    <TableCell>{client.user?.email || "N/A"}</TableCell>
                     <TableCell>{client._count.messages}</TableCell>
                     <TableCell>
                       {new Date(client.createdAt).toLocaleDateString()}
@@ -177,15 +174,7 @@ export default function AdminClientsPage() {
                                 )
                               }
                             />
-                            <Input
-                              placeholder="Phone"
-                              value={editingClient?.phone ?? ""}
-                              onChange={(e) =>
-                                setEditingClient((prev) =>
-                                  prev ? { ...prev, phone: e.target.value } : null
-                                )
-                              }
-                            />
+                            {/* Note: Phone field removed - phone numbers are managed separately via PhoneNumber model */}
                           </div>
                           <DialogFooter>
                             <Button onClick={handleSave} disabled={isUpdating}>

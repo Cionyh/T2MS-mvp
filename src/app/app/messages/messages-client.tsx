@@ -14,11 +14,9 @@ import { Trash } from "lucide-react";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { useMessages, useDeleteMessage } from "@/lib/hooks/useMessages";
 
-interface Props {
-  userId: string;
-}
+interface Props {}
 
-export default function MessagesClient({ userId }: Props) {
+export default function MessagesClient({}: Props) {
   const [page, setPage] = useState<number>(1);
   const [deleteId, setDeleteId] = useState<string | null>(null); // Track which message is being deleted
   const limit = 10;
@@ -26,7 +24,6 @@ export default function MessagesClient({ userId }: Props) {
   const { data, isLoading, isError } = useMessages({
     page,
     limit,
-    userId,
   });
 
   const deleteMessage = useDeleteMessage();
