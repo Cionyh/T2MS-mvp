@@ -7,6 +7,7 @@ import { getActiveOrganization } from "@/lib/organization-helpers";
 
 /* ----------  POST /api/client  ----------------------------------------- */
 export async function POST(req: Request) {
+  let normalizedDomain: string | undefined;
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -52,22 +53,21 @@ export async function POST(req: Request) {
       );
     }
 
-  // ✅ Normalize domain: remove protocol, www, and trailing slashes
-  let normalizedDomain;
-  try {
-    const url = new URL(
-      domain.startsWith("http://") || domain.startsWith("https://")
-        ? domain
-        : `https://${domain}`
-    );
-    normalizedDomain = url.hostname.replace(/^www\./, "");
-  } catch (err) {
-    console.error("[DOMAIN_NORMALIZATION_ERROR]", err);
-    return NextResponse.json(
-      { error: "Invalid domain format" },
-      { status: 400 }
-    );
-  }
+    // ✅ Normalize domain: remove protocol, www, and trailing slashes
+    try {
+      const url = new URL(
+        domain.startsWith("http://") || domain.startsWith("https://")
+          ? domain
+          : `https://${domain}`
+      );
+      normalizedDomain = url.hostname.replace(/^www\./, "");
+    } catch (err) {
+      console.error("[DOMAIN_NORMALIZATION_ERROR]", err);
+      return NextResponse.json(
+        { error: "Invalid domain format" },
+        { status: 400 }
+      );
+    }
 
     const client = await prisma.client.create({
       data: {
@@ -98,8 +98,10 @@ export async function POST(req: Request) {
     if (error instanceof Error && (error as any).code === "P2002") {
       const target = (error as any).meta?.target;
       if (target === "Client_domain_key" || target.includes("domain")) {
+        // Use normalizedDomain if available, otherwise use original domain
+        const errorDomain = normalizedDomain || domain;
         return NextResponse.json(
-          { error: `The domain "${normalizedDomain}" is already registered.` },
+          { error: `The domain "${errorDomain}" is already registered.` },
           { status: 409 } // Conflict
         );
       }
