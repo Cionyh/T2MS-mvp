@@ -218,7 +218,8 @@ export async function hasOrganizationPermission(
       },
     });
 
-    return result.data || false;
+    // Better Auth hasPermission returns { success: boolean } or boolean directly
+    return (result as any)?.data ?? (result as any)?.success ?? false;
   } catch (error) {
     console.error("Error checking organization permission:", error);
     return false;

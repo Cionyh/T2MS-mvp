@@ -20,8 +20,12 @@ interface Website {
   id: string;
   name: string;
   domain: string;
-  phone: string;
-  userId: string;
+  organizationId: string | null;
+  phoneNumbers: Array<{
+    id: string;
+    phone: string;
+    verified: boolean;
+  }>;
 }
 
 // 1. UPDATE THE PROPS INTERFACE HERE

@@ -57,7 +57,7 @@ export function TeamManagementTab() {
   const [loading, setLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("member");
+  const [inviteRole, setInviteRole] = useState<"member" | "admin" | "owner">("member");
   const [isInviting, setIsInviting] = useState(false);
   const [activeOrganization, setActiveOrganization] = useState<any>(null);
 
@@ -80,15 +80,8 @@ export function TeamManagementTab() {
       if (ensureRes.ok) {
         const { organizationId } = await ensureRes.json();
         
-        // Set as active organization in Better Auth
-        try {
-          await client.organization.setActiveOrganization({
-            organizationId,
-          });
-        } catch (setError) {
-          console.warn("Could not set active organization via Better Auth client:", setError);
-          // Continue anyway - the session should already have it set
-        }
+        // Note: Setting active organization is handled server-side via the ensure endpoint
+        // The session should already have it set, so we don't need to call the client method
 
         // Now fetch the organization
         const { data } = await client.organization.getFullOrganization({});
@@ -126,8 +119,13 @@ export function TeamManagementTab() {
         setMembers([]); // Ensure it's always an array
         return;
       }
-      // Ensure data is always an array
-      const membersArray = Array.isArray(data) ? data : (data?.members || []);
+      // Ensure data is always an array and properly typed
+      let membersArray: Member[] = [];
+      if (Array.isArray(data)) {
+        membersArray = data as Member[];
+      } else if (data && typeof data === 'object' && 'members' in data && Array.isArray(data.members)) {
+        membersArray = (data.members as any[]) as Member[];
+      }
       setMembers(membersArray);
     } catch (error) {
       console.error("Error fetching members:", error);
@@ -286,7 +284,7 @@ export function TeamManagementTab() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="invite-role">Role</Label>
-                    <Select value={inviteRole} onValueChange={setInviteRole}>
+                    <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as "member" | "admin" | "owner")}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>

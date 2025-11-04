@@ -73,9 +73,9 @@ export default function ClientWidgetBuilder() {
       return;
     }
 
-    // Extract websiteOwnership and phone from values
+    // Extract websiteOwnership from values
     // Phone numbers are now handled separately via phone management APIs
-    const { websiteOwnership, phone, ...apiValues } = values;
+    const { websiteOwnership, ...apiValues } = values;
 
     try {
       const res = await fetch("/api/client", {
