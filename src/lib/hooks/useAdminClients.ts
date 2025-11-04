@@ -89,7 +89,6 @@ interface UpdateClientInput {
   id: string;
   name: string;
   domain: string;
-  phone: string;
 }
 
 export const useUpdateClient = () => {
@@ -100,11 +99,11 @@ export const useUpdateClient = () => {
     Error,
     UpdateClientInput
   >({
-    mutationFn: async ({ id, name, domain, phone }) => {
+    mutationFn: async ({ id, name, domain }) => {
       const res = await fetch(`/api/admin/clients/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, domain, phone }),
+        body: JSON.stringify({ name, domain }),
       });
       if (!res.ok) throw new Error("Failed to update client");
       return res.json();
