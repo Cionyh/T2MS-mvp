@@ -16,12 +16,13 @@ const getEnvVar = (name: string): string => {
 const twilioAccountSid = getEnvVar("TWILIO_ACCOUNT_SID");
 const twilioAuthToken = getEnvVar("TWILIO_AUTH_TOKEN");
 const twilioPhoneNumber = getEnvVar("TWILIO_PHONE_NUMBER");
+const twilioVerifyServiceSid = getEnvVar("TWILIO_VERIFY_SERVICE_SID");
 
 const twilioClient = twilio.default(twilioAccountSid, twilioAuthToken);
 
 /**
  * POST /api/phone/verify
- * Generate a PIN code and send it via SMS for phone verification
+ * Send OTP via Twilio Verify API for owner's first phone, or use invite for team members
  */
 export async function POST(req: NextRequest) {
   try {
@@ -52,9 +53,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate 6-digit PIN
-    const pinCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const pinExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+    // Check if this is the first phone number for this client (owner's phone)
+    const existingVerifiedPhones = await prisma.phoneNumber.count({
+      where: {
+        clientId,
+        verified: true,
+      },
+    });
+
+    const isFirstPhone = existingVerifiedPhones === 0;
 
     // Check if phone number already exists for this client
     let phoneNumber = await prisma.phoneNumber.findFirst({
@@ -64,51 +71,64 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    if (phoneNumber) {
-      // Update existing phone number with new PIN
-      phoneNumber = await prisma.phoneNumber.update({
-        where: { id: phoneNumber.id },
-        data: {
-          pinCode,
-          pinExpiresAt,
-          verificationMethod: "PIN",
-          verified: false, // Reset verification status
-        },
-      });
-    } else {
-      // Create new phone number record
-      phoneNumber = await prisma.phoneNumber.create({
-        data: {
-          clientId,
-          phone,
-          pinCode,
-          pinExpiresAt,
-          verificationMethod: "PIN",
-          verified: false,
-        },
-      });
-    }
+    if (isFirstPhone) {
+      // Use Twilio Verify API for owner's first phone
+      try {
+        // Initiate Twilio Verify verification
+        const verification = await twilioClient.verify.v2
+          .services(twilioVerifyServiceSid)
+          .verifications.create({
+            to: phone,
+            channel: "sms",
+          });
 
-    // Send PIN via SMS
-    try {
-      await twilioClient.messages.create({
-        body: `Your Text2MySite verification code is: ${pinCode}. This code expires in 10 minutes.`,
-        from: twilioPhoneNumber,
-        to: phone,
-      });
-    } catch (smsError) {
-      console.error("Failed to send verification SMS:", smsError);
+        if (phoneNumber) {
+          // Update existing phone number with Twilio Verify SID
+          phoneNumber = await prisma.phoneNumber.update({
+            where: { id: phoneNumber.id },
+            data: {
+              twilioVerifySid: verification.sid,
+              verificationMethod: "OTP",
+              verified: false, // Reset verification status
+            },
+          });
+        } else {
+          // Create new phone number record with Twilio Verify SID
+          phoneNumber = await prisma.phoneNumber.create({
+            data: {
+              clientId,
+              phone,
+              twilioVerifySid: verification.sid,
+              verificationMethod: "OTP",
+              verified: false,
+            },
+          });
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: "Verification code sent successfully via Twilio Verify",
+          phoneNumberId: phoneNumber.id,
+          verificationMethod: "OTP",
+        });
+      } catch (verifyError: any) {
+        console.error("Failed to send Twilio Verify OTP:", verifyError);
+        return NextResponse.json(
+          { error: `Failed to send verification code: ${verifyError.message || "Please check the phone number and try again."}` },
+          { status: 500 }
+        );
+      }
+    } else {
+      // For team members (not first phone), use invite system
+      // This means the owner should use the invite flow for additional phones
       return NextResponse.json(
-        { error: "Failed to send verification code. Please check the phone number and try again." },
-        { status: 500 }
+        { 
+          error: "This phone number requires an invite link. Please use the invite flow for team members.",
+          requiresInvite: true 
+        },
+        { status: 400 }
       );
     }
-
-    return NextResponse.json({
-      success: true,
-      message: "Verification code sent successfully",
-      phoneNumberId: phoneNumber.id,
-    });
   } catch (error) {
     console.error("Error in phone verification:", error);
     return NextResponse.json(

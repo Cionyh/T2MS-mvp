@@ -134,10 +134,11 @@ model PhoneNumber {
   client             Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   phone              String
   verified           Boolean   @default(false)
-  verificationMethod String? // "PIN" or "INVITE"
-  pinCode            String? // 6-digit PIN code
-  pinExpiresAt       DateTime? // PIN expiration time
+  verificationMethod String? // "OTP", "PIN", or "INVITE"
+  pinCode            String? // 6-digit PIN code (legacy) or invite token
+  pinExpiresAt       DateTime? // PIN expiration time or invite expiration
   invitedBy          String? // userId who invited this phone
+  twilioVerifySid    String? // Twilio Verify Service SID for OTP verification
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
