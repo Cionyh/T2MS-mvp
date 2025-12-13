@@ -4,66 +4,209 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const js = `
 (async function () {
-  if (window.__T2MS_WIDGET_INITIALIZED__) return;
-  window.__T2MS_WIDGET_INITIALIZED__ = true;
-  window.__T2MS_WIDGET_SHOWN__ = false; // show once per page load
+  try {
+    // Prevent duplicate initialization
+    if (window.__T2MS_WIDGET_INITIALIZED__) return;
+    window.__T2MS_WIDGET_INITIALIZED__ = true;
+    window.__T2MS_WIDGET_SHOWN__ = false;
 
-  const script = document.currentScript;
-  const clientId = script.dataset.clientId;
-  const WIDGET_ID = "t2ms-widget";
-  const API_BASE = script.dataset.api || window.location.origin;
-  const interval = 15000;
-
-  
-
-  if (!clientId) {
-    console.error("T2MS widget: Missing data-client-id");
-    return;
-  }
-
-    
-
-  function removeWidget() {
-    const existing = document.getElementById(WIDGET_ID);
-    if (existing) existing.remove();
-    const overlay = document.getElementById(WIDGET_ID + "-overlay");
-    if (overlay) overlay.remove();
-
-    if (document.body.dataset.t2msLock === "1") {
-      document.body.style.overflow = "";
-      delete document.body.dataset.t2msLock;
+    // Wait for DOM to be ready
+    function waitForDOM(callback) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', callback);
+      } else {
+        callback();
+      }
     }
 
-    if (window.__t2msEscHandler__) {
-      window.removeEventListener("keydown", window.__t2msEscHandler__);
-      window.__t2msEscHandler__ = null;
+    // Get script element with fallback
+    function getScriptElement() {
+      // Try currentScript first (modern browsers)
+      if (document.currentScript) {
+        return document.currentScript;
+      }
+      // Fallback: find script tag by src attribute
+      const scripts = document.getElementsByTagName('script');
+      for (let i = scripts.length - 1; i >= 0; i--) {
+        const script = scripts[i];
+        if (script.src && script.src.includes('/widget') && script.dataset.clientId) {
+          return script;
+        }
+      }
+      return null;
     }
-  }
 
-  async function fetchMessage() {
-    try {
-      const res = await fetch(\`\${API_BASE}/api/message/\${clientId}\`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const { content, type, bgColor, textColor, font, dismissAfter, pinned, widgetConfig } = data;
-
-      if (!pinned) {
-        removeWidget();
+    waitForDOM(function() {
+      const script = getScriptElement();
+      if (!script) {
+        console.error("T2MS widget: Could not find script element");
         return;
       }
 
-      if (!content || window.__T2MS_WIDGET_SHOWN__) return;
-      renderMessage({ content, type, bgColor, textColor, font, dismissAfter, widgetConfig });
-    } catch (err) {
-      console.error("T2MS widget fetch error:", err);
-    }
-  }
+      const clientId = script.dataset.clientId;
+      const WIDGET_ID = "t2ms-widget";
+      const API_BASE = script.dataset.api || window.location.origin;
+      const interval = 15000;
+      
+      // Track last message state to detect changes
+      let lastMessageContent = null;
+      let lastPinnedState = null;
+      
+      // Race condition protection: prevent concurrent fetches
+      let isFetching = false;
+      
+      // Debounce timer
+      let debounceTimer = null;
+      const debounceDelay = 500; // 500ms debounce
 
-  function renderMessage({ content, type, bgColor, textColor, font, dismissAfter, widgetConfig = {} }) {
-    if (window.__T2MS_WIDGET_SHOWN__) return;
-    window.__T2MS_WIDGET_SHOWN__ = true;
+      if (!clientId) {
+        console.error("T2MS widget: Missing data-client-id");
+        return;
+      }
 
-    removeWidget();
+    
+
+      function removeWidget() {
+        const existing = document.getElementById(WIDGET_ID);
+        if (existing) existing.remove();
+        const overlay = document.getElementById(WIDGET_ID + "-overlay");
+        if (overlay) overlay.remove();
+
+        if (document.body && document.body.dataset.t2msLock === "1") {
+          document.body.style.overflow = "";
+          delete document.body.dataset.t2msLock;
+        }
+
+        if (window.__t2msEscHandler__) {
+          window.removeEventListener("keydown", window.__t2msEscHandler__);
+          window.__t2msEscHandler__ = null;
+        }
+        
+        // Reset widget shown flag when widget is removed
+        window.__T2MS_WIDGET_SHOWN__ = false;
+      }
+
+      // Retry mechanism with exponential backoff
+      async function fetchMessageWithRetry(maxRetries = 3, retryDelay = 1000) {
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+          try {
+            // Create timeout controller for fetch
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            
+            const res = await fetch(\`\${API_BASE}/api/message/\${clientId}\`, {
+              method: 'GET',
+              headers: {
+                'Accept': 'application/json',
+              },
+              signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (res.ok) {
+              return await res.json();
+            }
+            
+            // If not OK and not last attempt, retry
+            if (attempt < maxRetries - 1) {
+              await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(2, attempt)));
+              continue;
+            }
+            
+            return null;
+          } catch (err) {
+            // Network error or timeout
+            if (err.name === 'AbortError') {
+              console.warn("T2MS widget: Request timeout");
+            }
+            
+            if (attempt < maxRetries - 1) {
+              const delay = retryDelay * Math.pow(2, attempt);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              continue;
+            }
+            console.error("T2MS widget: Failed to fetch message after", maxRetries, "attempts:", err);
+            return null;
+          }
+        }
+        return null;
+      }
+
+      // Debounced fetch function
+      function debouncedFetchMessage() {
+        // Clear existing timer
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
+        
+        // Set new timer
+        debounceTimer = setTimeout(() => {
+          fetchMessage();
+        }, debounceDelay);
+      }
+
+      async function fetchMessage() {
+        // Prevent race condition: skip if already fetching
+        if (isFetching) {
+          return;
+        }
+        
+        try {
+          isFetching = true;
+          
+          const data = await fetchMessageWithRetry();
+          if (!data) {
+            return;
+          }
+          
+          const { content, type, bgColor, textColor, font, dismissAfter, pinned, widgetConfig } = data;
+
+          // Check if pinned state changed
+          if (!pinned) {
+            // If message is no longer pinned, remove widget
+            if (lastPinnedState === true) {
+              removeWidget();
+              lastPinnedState = false;
+              lastMessageContent = null;
+            }
+            return;
+          }
+
+          // Check if message content or pinned state changed
+          const contentChanged = content !== lastMessageContent;
+          const pinnedStateChanged = pinned !== lastPinnedState;
+          
+          // Update tracked state
+          lastMessageContent = content;
+          lastPinnedState = pinned;
+
+          // Render if:
+          // 1. Content exists
+          // 2. Either content changed OR pinned state changed OR widget not shown yet
+          if (content && (contentChanged || pinnedStateChanged || !window.__T2MS_WIDGET_SHOWN__)) {
+            // Reset flag to allow re-rendering
+            window.__T2MS_WIDGET_SHOWN__ = false;
+            renderMessage({ content, type, bgColor, textColor, font, dismissAfter, widgetConfig });
+          }
+        } catch (err) {
+          console.error("T2MS widget fetch error:", err);
+        } finally {
+          isFetching = false;
+        }
+      }
+
+      function renderMessage({ content, type, bgColor, textColor, font, dismissAfter, widgetConfig = {} }) {
+        if (window.__T2MS_WIDGET_SHOWN__) return;
+        window.__T2MS_WIDGET_SHOWN__ = true;
+
+        // Ensure document.body exists before rendering
+        if (!document.body) {
+          console.error("T2MS widget: document.body not available");
+          return;
+        }
+
+        removeWidget();
 
     const wrapper = document.createElement("div");
     wrapper.id = WIDGET_ID;
@@ -691,14 +834,25 @@ export async function GET() {
 }
   }
 
-  function escapeHtml(text) {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
-  }
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
 
-  fetchMessage();
-  setInterval(fetchMessage, interval);
+      // Initial fetch
+      fetchMessage();
+      
+      // Set up polling with debouncing
+      setInterval(() => {
+        debouncedFetchMessage();
+      }, interval);
+    });
+  } catch (err) {
+    console.error("T2MS widget initialization error:", err);
+    // Reset initialization flag on error to allow retry
+    window.__T2MS_WIDGET_INITIALIZED__ = false;
+  }
 })();
 `.trim();
 
