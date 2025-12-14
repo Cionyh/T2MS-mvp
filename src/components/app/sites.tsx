@@ -59,7 +59,8 @@ import {
 } from "@/components/ui/select";
 import { DotPattern } from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
-import { EmbedDialog } from "./embed-dialog"; 
+import { EmbedDialog } from "./embed-dialog";
+import { IframeDialog } from "./iframe-dialog"; 
 import { Switch } from "@/components/ui/switch";
 import { Info } from "lucide-react";
 import { PhoneNumberManagement } from "./phone-number-management";
@@ -130,9 +131,12 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [fontSize, setFontSize] = useState(14);
   const [attachImage, setAttachImage] = useState("");
   const [presetText, setPresetText] = useState("");
+  const [iframeWidth, setIframeWidth] = useState("100%");
+  const [iframeHeight, setIframeHeight] = useState("100vh");
 
   const [showClientId, setShowClientId] = useState<Record<string, boolean>>({});
   const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
+  const [iframeDialogOpen, setIframeDialogOpen] = useState(false);
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null);
   const [configureDialogOpen, setConfigureDialogOpen] = useState(false);
   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null);
@@ -183,6 +187,8 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     setFontSize(widgetConfig.fontSize || 14);
     setAttachImage(widgetConfig.attachImage || "");
     setPresetText(widgetConfig.presetText || "");
+    setIframeWidth(widgetConfig.iframeWidth || "100%");
+    setIframeHeight(widgetConfig.iframeHeight || "100vh");
     
     setConfigureDialogOpen(true);
   };
@@ -208,6 +214,8 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         fontSize,
         attachImage,
         presetText,
+        iframeWidth,
+        iframeHeight,
       };
 
       const res = await fetch(`/api/client/${websiteId}`, {
@@ -320,6 +328,11 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const handleOpenEmbedDialog = (websiteId: string) => {
     setSelectedWebsiteId(websiteId);
     setEmbedDialogOpen(true);
+  };
+
+  const handleOpenIframeDialog = (websiteId: string) => {
+    setSelectedWebsiteId(websiteId);
+    setIframeDialogOpen(true);
   };
 
   return (
@@ -513,7 +526,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         </Button>
       </div>
 
-      {/* ✅ Embed Script Button Moved Here */}
+      {/* ✅ Embed Script Button */}
       <div className="pt-2">
         <Button
           variant="outline"
@@ -521,6 +534,17 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           onClick={() => handleOpenEmbedDialog(website.id)}
         >
           <Target className="mr-2 h-4 w-4" /> Copy Embed Script 
+        </Button>
+      </div>
+
+      {/* ✅ iFrame Embed Button */}
+      <div className="pt-2">
+        <Button
+          variant="outline"
+          className="w-full border-2 border-primary rounded-full hover:bg-primary/20 text-foreground"
+          onClick={() => handleOpenIframeDialog(website.id)}
+        >
+          <Copy className="mr-2 h-4 w-4" /> Copy iFrame Embed
         </Button>
       </div>
     </div>
@@ -536,6 +560,14 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         open={embedDialogOpen}
         onOpenChange={setEmbedDialogOpen}
         clientId={selectedWebsiteId}
+      />
+
+      {/* iFrame Embed Dialog */}
+      <IframeDialog
+        open={iframeDialogOpen}
+        onOpenChange={setIframeDialogOpen}
+        clientId={selectedWebsiteId}
+        widgetConfig={selectedWebsiteId ? websites.find(w => w.id === selectedWebsiteId)?.widgetConfig : undefined}
       />
 
       {/* Configure Sheet */}
@@ -897,6 +929,37 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                   <SelectItem value="1200">Very Slow (1.2s)</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <Separator />
+
+            {/* iFrame Configuration */}
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-2 text-sm font-medium">iFrame Width</Label>
+                <Input
+                  value={iframeWidth}
+                  onChange={(e) => setIframeWidth(e.target.value)}
+                  placeholder="100%"
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Set the width of the iframe. Examples: "100%", "500px", "50vw"
+                </p>
+              </div>
+
+              <div>
+                <Label className="mb-2 text-sm font-medium">iFrame Height</Label>
+                <Input
+                  value={iframeHeight}
+                  onChange={(e) => setIframeHeight(e.target.value)}
+                  placeholder="100vh"
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Set the height of the iframe. Examples: "100vh", "600px", "50vh"
+                </p>
+              </div>
             </div>
 
             {/* SMS Disclaimer */}
