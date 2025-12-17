@@ -23,17 +23,19 @@ interface EmbedDialogProps {
 }
 
 export function EmbedDialog({ open, onOpenChange, clientId }: EmbedDialogProps) {
-  const embedCode = `
+  const apiBase = "https://www.t2ms.biz";
+
+  const scriptEmbedCode = `
 <script
-  src="https://www.t2ms.biz/widget"
+  src="${apiBase}/widget"
   data-client-id="${clientId || ''}"
-  data-api="https://www.t2ms.biz"
+  data-api="${apiBase}"
   defer
 ></script>`.trim();
 
   const handleCopy = () => {
     if (!clientId) return;
-    navigator.clipboard.writeText(embedCode);
+    navigator.clipboard.writeText(scriptEmbedCode);
     toast.success("Embed code copied to clipboard!");
   };
 
@@ -48,7 +50,7 @@ export function EmbedDialog({ open, onOpenChange, clientId }: EmbedDialogProps) 
         <DialogHeader>
           <DialogTitle>Embed Script</DialogTitle>
           <DialogDescription>
-            Copy and paste this code into your website's HTML.
+            Copy and paste this code into your website's HTML. Standard script embed works on most websites that allow external scripts.
           </DialogDescription>
         </DialogHeader>
 
@@ -56,7 +58,7 @@ export function EmbedDialog({ open, onOpenChange, clientId }: EmbedDialogProps) 
           <div>
             <label className="text-sm font-medium">Embed Code</label>
             <Textarea
-              value={embedCode}
+              value={scriptEmbedCode}
               readOnly
               rows={5}
               className="font-mono text-sm leading-tight mt-1 bg-background"
