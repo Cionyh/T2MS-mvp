@@ -231,21 +231,21 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
 
   // Generate widget HTML and styles based on type
   function getWidgetHTML() {
-    const baseContainerStyle = {
-      position: "fixed" as const,
+    const baseContainerStyle: Record<string, string | undefined> = {
+      position: "fixed",
       zIndex: "999999",
       fontFamily: font || "Arial, sans-serif",
       fontSize: `${config.fontSize}px`,
       backgroundColor: bgColor || "#fff",
       color: textColor || "#000",
-      boxSizing: "border-box" as const,
+      boxSizing: "border-box",
       border: config.borderStyle !== "none" ? `1px ${config.borderStyle} #e5e7eb` : "none",
       boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
       opacity: "1",
       transition: `all ${config.animationDuration}ms ease`,
     };
 
-    let containerStyle = { ...baseContainerStyle };
+    let containerStyle: Record<string, string | undefined> = { ...baseContainerStyle };
     let contentHTML = escapeHtml(content);
     let additionalStyles = "";
     let additionalHTML = "";

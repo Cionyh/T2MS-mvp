@@ -65,11 +65,19 @@ export async function GET() {
     iframe.src = apiBase + '/widget/iframe?clientId=' + encodeURIComponent(clientId);
     iframe.width = width;
     iframe.height = height;
-    iframe.style.cssText = style;
+    iframe.style.cssText = style + ' max-width: 100%; box-sizing: border-box;';
     iframe.setAttribute('frameborder', '0');
     iframe.setAttribute('scrolling', 'no');
     iframe.setAttribute('allowtransparency', 'true');
     iframe.setAttribute('loading', 'lazy');
+    
+    // Add responsive styles for iframe container
+    if (!document.getElementById('t2ms-iframe-responsive-styles')) {
+      const responsiveStyleTag = document.createElement('style');
+      responsiveStyleTag.id = 't2ms-iframe-responsive-styles';
+      responsiveStyleTag.textContent = '@media (max-width: 768px) { #' + containerId + ' { width: 100% !important; max-width: 100vw !important; height: auto !important; min-height: 200px !important; } }';
+      document.head.appendChild(responsiveStyleTag);
+    }
 
     // Find insertion point
     const insertTarget = script.dataset.insertTarget || 'body';
@@ -120,4 +128,5 @@ export async function GET() {
     },
   });
 }
+
 

@@ -234,21 +234,21 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
   }
 
   function getWidgetHTML() {
-    const baseContainerStyle = {
-      position: "fixed" as const,
+    const baseContainerStyle: Record<string, string | undefined> = {
+      position: "fixed",
       zIndex: "999999",
       fontFamily: font || "Arial, sans-serif",
       fontSize: `${config.fontSize}px`,
       backgroundColor: bgColor || "#fff",
       color: textColor || "#000",
-      boxSizing: "border-box" as const,
+      boxSizing: "border-box",
       border: config.borderStyle !== "none" ? `1px ${config.borderStyle} #e5e7eb` : "none",
       boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
       opacity: "1",
       transition: `all ${config.animationDuration}ms ease`,
     };
 
-    let containerStyle = { ...baseContainerStyle };
+    let containerStyle: Record<string, string | undefined> = { ...baseContainerStyle };
     let contentHTML = escapeHtml(content);
     let additionalStyles = "";
     let additionalHTML = "";
@@ -283,6 +283,24 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       height: 60px;
       line-height: 60px;
       font-size: ${config.fontSize}px;
+    }
+    @media (max-width: 768px) {
+      .t2ms-widget-container[data-type="banner"] {
+        height: auto;
+        min-height: 50px;
+        line-height: 1.4;
+        white-space: normal;
+      }
+      .t2ms-widget-container[data-type="banner"] .t2ms-content {
+        padding: 12px 50px 12px 16px;
+        height: auto;
+        min-height: 50px;
+        line-height: 1.4;
+        font-size: ${Math.max(config.fontSize - 1, 13)}px;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+      }
     }`;
         break;
       }
@@ -320,6 +338,19 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       font-size: ${config.fontSize + 4}px;
       height: 60px;
       line-height: 60px;
+    }
+    @media (max-width: 768px) {
+      .t2ms-widget-container[data-type="ticker"] {
+        height: auto;
+        min-height: 50px;
+      }
+      .t2ms-widget-container[data-type="ticker"] .t2ms-content {
+        padding-right: 50px;
+        font-size: ${Math.max(config.fontSize + 2, 14)}px;
+        height: auto;
+        min-height: 50px;
+        line-height: 50px;
+      }
     }`;
         break;
       }
@@ -369,6 +400,22 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       font-size: ${config.fontSize}px;
       line-height: 1.4;
       width: 100%;
+    }
+    @media (max-width: 768px) {
+      .t2ms-widget-container[data-type="popup"] {
+        min-width: calc(100vw - 32px) !important;
+        max-width: calc(100vw - 32px) !important;
+        width: calc(100vw - 32px) !important;
+        left: 16px !important;
+        right: 16px !important;
+        top: auto !important;
+        bottom: 16px !important;
+        transform: none !important;
+        padding: 12px !important;
+      }
+      .t2ms-widget-container[data-type="popup"] .t2ms-content {
+        font-size: ${Math.max(config.fontSize - 1, 13)}px;
+      }
     }`;
         
         if (config.companyWebsiteLink) {
@@ -405,6 +452,17 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
         }
         
         fullscreenContent += `<div class="t2ms-content" style="font-size: ${config.fontSize + 10}px; line-height: 1.5; max-width: 85vw; text-align: center; padding: 20px; margin-bottom: 20px;">${escapeHtml(content)}</div>`;
+        additionalStyles += `
+    @media (max-width: 768px) {
+      .t2ms-widget-container[data-type="fullscreen"] .t2ms-content {
+        font-size: ${Math.max(config.fontSize + 6, 18)}px !important;
+        padding: 16px !important;
+        max-width: 95vw !important;
+      }
+      .t2ms-widget-container[data-type="fullscreen"] > div {
+        padding: 16px !important;
+      }
+    }`;
         fullscreenContent += `</div>`;
         
         contentHTML = fullscreenContent;
@@ -439,6 +497,18 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       font-size: ${config.fontSize + 4}px;
       line-height: 1.5;
       max-width: min(480px, 90vw);
+    }
+    @media (max-width: 768px) {
+      .t2ms-widget-container[data-type="modal"] {
+        max-width: calc(100vw - 32px) !important;
+        width: calc(100vw - 32px) !important;
+        padding: 20px 24px !important;
+        padding-right: 40px !important;
+      }
+      .t2ms-widget-container[data-type="modal"] .t2ms-content {
+        font-size: ${Math.max(config.fontSize + 2, 15)}px;
+        max-width: 100%;
+      }
     }`;
         break;
       }
@@ -456,7 +526,20 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
     }
 
     if (config.logoUrl && ["popup", "fullscreen", "modal"].includes(type)) {
-      additionalHTML += `<div style="position: absolute; top: 8px; left: 12px; z-index: 10; display: inline-flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(1px);"><img src="${config.logoUrl}" style="max-width: 32px; max-height: 32px; width: auto; height: auto; object-fit: contain; border-radius: 50%;" alt="Logo" /></div>`;
+      additionalHTML += `<div class="t2ms-logo-container" style="position: absolute; top: 8px; left: 12px; z-index: 10; display: inline-flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(1px);"><img src="${config.logoUrl}" style="max-width: 32px; max-height: 32px; width: auto; height: auto; object-fit: contain; border-radius: 50%;" alt="Logo" /></div>`;
+      additionalStyles += `
+    @media (max-width: 768px) {
+      .t2ms-logo-container {
+        width: 40px !important;
+        height: 40px !important;
+        top: 6px !important;
+        left: 8px !important;
+      }
+      .t2ms-logo-container img {
+        max-width: 24px !important;
+        max-height: 24px !important;
+      }
+    }`;
     }
 
     if (config.companyWebsiteLink && !["ticker", "banner", "popup"].includes(type)) {
@@ -527,6 +610,23 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       opacity: 1;
       transform: scale(1.05);
       color: #ff5555;
+    }
+    
+    @media (max-width: 768px) {
+      .t2ms-close {
+        top: 6px;
+        right: 8px;
+        font-size: 1.3em;
+        padding: 6px;
+        min-width: 32px;
+        min-height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .t2ms-content {
+        font-size: 14px;
+      }
     }
     
     ${additionalStyles}
