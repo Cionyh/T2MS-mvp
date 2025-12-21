@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkMessageLimit } from "@/lib/plan-limits";
+import { shouldSendSMS } from "@/lib/sms-whitelist";
 
 //@ts-ignore
 import * as twilio from "twilio";
@@ -153,16 +154,21 @@ export async function POST(req: NextRequest) {
       data: { content, clientId: client.id },
     });
 
-    try {
-      console.log("📤 Sending confirmation SMS...");
-      await twilioClient.messages.create({
-        body: `✅ Your message has been posted to your site!`,
-        from: twilioPhoneNumber,
-        to: from,
-      });
-      console.log("✅ Confirmation SMS sent.");
-    } catch (e) {
-      console.warn("⚠️ Failed to send confirmation SMS:", e);
+    // Check if SMS should be sent (staging whitelist check)
+    if (shouldSendSMS(from)) {
+      try {
+        console.log("📤 Sending confirmation SMS...");
+        await twilioClient.messages.create({
+          body: `✅ Your message has been posted to your site!`,
+          from: twilioPhoneNumber,
+          to: from,
+        });
+        console.log("✅ Confirmation SMS sent.");
+      } catch (e) {
+        console.warn("⚠️ Failed to send confirmation SMS:", e);
+      }
+    } else {
+      console.log("🚫 Confirmation SMS skipped (staging environment, number not whitelisted)");
     }
 
     return new NextResponse(
