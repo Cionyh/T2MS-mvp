@@ -14,8 +14,9 @@ export function isStagingEnvironment(): boolean {
     return true;
   }
   
-  // Check if NODE_ENV is staging
-  if (process.env.NODE_ENV === "staging") {
+  // Check if NODE_ENV is staging (access as string to avoid TypeScript strict typing)
+  const nodeEnv = process.env.NODE_ENV as string | undefined;
+  if (nodeEnv === "staging") {
     return true;
   }
   
