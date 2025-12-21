@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { verifyClientAccess } from "@/lib/organization-helpers";
+import { shouldSendSMS } from "@/lib/sms-whitelist";
 
 //@ts-ignore
 import * as twilio from "twilio";
@@ -73,6 +74,17 @@ export async function POST(req: NextRequest) {
 
     if (isFirstPhone) {
       // Use Twilio Verify API for owner's first phone
+      // Check if SMS should be sent (staging whitelist check)
+      if (!shouldSendSMS(phone)) {
+        return NextResponse.json(
+          { 
+            error: "SMS verification is not available for this number in staging environment. Please add this number to the SMS whitelist.",
+            requiresWhitelist: true 
+          },
+          { status: 403 }
+        );
+      }
+      
       try {
         // Initiate Twilio Verify verification
         const verification = await twilioClient.verify.v2
