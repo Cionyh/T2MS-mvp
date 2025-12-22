@@ -91,27 +91,53 @@ export function isPhoneNumberWhitelisted(phone: string): boolean {
 /**
  * Check if SMS should be sent to a given phone number
  * Returns true if:
- * - Not in staging environment, OR
- * - In staging environment AND phone number is whitelisted
+ * - Not in staging environment AND no whitelist is configured, OR
+ * - Phone number is whitelisted (if whitelist is configured or in staging)
  */
 export function shouldSendSMS(phoneNumber: string): boolean {
   const isStaging = isStagingEnvironment();
+  const whitelistNumbers = getWhitelistedNumbers();
+  const hasWhitelist = whitelistNumbers.length > 0;
   
-  // If not staging, always allow SMS
-  if (!isStaging) {
-    return true;
+  // Log environment detection for debugging
+  console.log("🔍 SMS Whitelist Check:", {
+    phoneNumber,
+    isStaging,
+    hasWhitelist,
+    whitelistCount: whitelistNumbers.length,
+    ENVIRONMENT: process.env.ENVIRONMENT,
+    NODE_ENV: process.env.NODE_ENV,
+    baseUrl: process.env.NEXT_PUBLIC_BASE_URL || process.env.BETTER_AUTH_URL,
+  });
+  
+  // If whitelist is configured, enforce it regardless of environment detection
+  // This provides a safety net if environment detection fails
+  if (hasWhitelist) {
+    const isWhitelisted = isPhoneNumberWhitelisted(phoneNumber);
+    
+    if (!isWhitelisted) {
+      console.warn(
+        `🚫 SMS blocked: Phone number ${phoneNumber} is not in whitelist. ` +
+        `Whitelisted numbers: ${whitelistNumbers.join(", ")}`
+      );
+    } else {
+      console.log(`✅ SMS allowed: Phone number ${phoneNumber} is whitelisted`);
+    }
+    
+    return isWhitelisted;
   }
   
-  // If staging, only allow if whitelisted
-  const isWhitelisted = isPhoneNumberWhitelisted(phoneNumber);
-  
-  if (!isWhitelisted) {
+  // If no whitelist is configured but we're in staging, block all SMS
+  if (isStaging) {
     console.warn(
-      `🚫 SMS blocked in staging environment for non-whitelisted number: ${phoneNumber}. ` +
-      `Add this number to SMS_WHITELIST_NUMBERS environment variable to allow SMS in staging.`
+      `🚫 SMS blocked: Staging environment detected but no SMS_WHITELIST_NUMBERS configured. ` +
+      `Set SMS_WHITELIST_NUMBERS environment variable to allow SMS in staging.`
     );
+    return false;
   }
   
-  return isWhitelisted;
+  // Production or development without whitelist - allow all SMS
+  console.log("✅ SMS allowed: Not in staging and no whitelist configured");
+  return true;
 }
 
