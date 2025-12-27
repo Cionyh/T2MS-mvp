@@ -23,7 +23,7 @@ interface EmbedDialogProps {
 }
 
 export function EmbedDialog({ open, onOpenChange, clientId }: EmbedDialogProps) {
-  const apiBase = "https://www.t2ms.biz";
+  const apiBase = process.env.NEXT_PUBLIC_BASE_URL || "https://www.t2ms.biz";
 
   const scriptEmbedCode = `
 <script

@@ -132,9 +132,14 @@ export async function GET(req: NextRequest) {
     };
 
     // Get API base URL from request
-    const protocol = req.headers.get("x-forwarded-proto") || "https";
-    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "www.t2ms.biz";
-    const apiBase = `${protocol}://${host}`;
+    let apiBase: string;
+    if (process.env.NEXT_PUBLIC_BASE_URL) {
+      apiBase = process.env.NEXT_PUBLIC_BASE_URL;
+    } else {
+      const protocol = req.headers.get("x-forwarded-proto") || "https";
+      const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "www.t2ms.biz";
+      apiBase = `${protocol}://${host}`;
+    }
 
     // Generate HTML with embedded widget
     const html = generateWidgetHTML(clientId, messageData, apiBase);

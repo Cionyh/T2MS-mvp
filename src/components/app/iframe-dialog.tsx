@@ -29,7 +29,7 @@ interface IframeDialogProps {
 }
 
 export function IframeDialog({ open, onOpenChange, clientId, widgetConfig }: IframeDialogProps) {
-  const apiBase = "https://www.t2ms.biz";
+  const apiBase = process.env.NEXT_PUBLIC_BASE_URL || "https://www.t2ms.biz";
   const [activeTab, setActiveTab] = useState("iframe");
   const iframeWidth = widgetConfig?.iframeWidth || "100%";
   const iframeHeight = widgetConfig?.iframeHeight || "400";

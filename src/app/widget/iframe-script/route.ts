@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
+  const defaultApiBase = process.env.NEXT_PUBLIC_BASE_URL || "https://www.t2ms.biz";
   const js = `
 (function() {
   'use strict';
@@ -41,7 +42,7 @@ export async function GET() {
     }
 
     const clientId = script.dataset.clientId;
-    const apiBase = script.dataset.api || 'https://www.t2ms.biz';
+    const apiBase = script.dataset.api || '${defaultApiBase}';
     const containerId = script.dataset.containerId || 't2ms-iframe-widget';
     const width = script.dataset.width || '100%';
     const height = script.dataset.height || '400';

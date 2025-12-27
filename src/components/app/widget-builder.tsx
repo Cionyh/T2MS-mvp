@@ -58,11 +58,12 @@ export default function ClientWidgetBuilder() {
   const { handleSubmit, formState } = form;
   const { isSubmitting } = formState;
 
+  const apiBase = process.env.NEXT_PUBLIC_BASE_URL || "https://www.t2ms.biz";
   const embedCode = clientId
     ? `<script
-  src="https://www.t2ms.biz/widget"
+  src="${apiBase}/widget"
   data-client-id="${clientId}"
-  data-api="https://www.t2ms.biz"
+  data-api="${apiBase}"
   defer
 ></script>`
     : "";
