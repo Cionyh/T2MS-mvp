@@ -701,7 +701,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       setInterval(fetchMessage, interval);
     })();
   </script>
-</body>
+</body> 
 </html>`;
 }
 
