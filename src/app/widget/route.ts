@@ -1,5 +1,16 @@
 import { NextResponse } from "next/server";
 
+// OPTIONS preflight for CORS
+export async function OPTIONS() {
+  return NextResponse.json({}, {
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
+}
+
 export async function GET() {
   const js = `
 (function () {
@@ -7,14 +18,54 @@ export async function GET() {
   window.__T2MS_WIDGET_INITIALIZED__ = true;
   window.__T2MS_WIDGET_SHOWN__ = false;
 
-  const script = document.currentScript;
+  // Wait for DOM to be ready
+  function waitForDOM(callback) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', callback);
+    } else {
+      callback();
+    }
+  }
+
+  waitForDOM(function() {
+  // Get script element with fallback for defer attribute
+  function getScriptElement() {
+    // Try currentScript first (works if script isn't deferred)
+    if (document.currentScript) {
+      return document.currentScript;
+    }
+    // Fallback: find script tag by src attribute
+    const scripts = document.getElementsByTagName('script');
+    for (let i = scripts.length - 1; i >= 0; i--) {
+      const script = scripts[i];
+      if (script.src && script.src.includes('/widget') && script.dataset.clientId) {
+        return script;
+      }
+    }
+    return null;
+  }
+
+  const script = getScriptElement();
   const clientId = script?.dataset?.clientId;
   const API_BASE = script?.dataset?.api || window.location.origin;
   const WIDGET_ID = "t2ms-widget";
   const interval = 15000;
 
+  // Debug logging
+  console.log("T2MS widget: Initializing", {
+    clientId: clientId,
+    apiBase: API_BASE,
+    scriptSrc: script?.src,
+    dataApi: script?.dataset?.api
+  });
+
   if (!clientId) {
     console.error("T2MS widget: Missing data-client-id");
+    return;
+  }
+  
+  if (!script) {
+    console.error("T2MS widget: Could not find script element");
     return;
   }
 
@@ -37,19 +88,42 @@ export async function GET() {
 
   async function fetchMessage() {
     try {
-      const res = await fetch(\`\${API_BASE}/api/message/\${clientId}\`);
-      if (!res.ok) return;
+      const fetchUrl = \`\${API_BASE}/api/message/\${clientId}\`;
+      console.log("T2MS widget: Fetching message from", fetchUrl);
+      
+      const res = await fetch(fetchUrl);
+      
+      if (!res.ok) {
+        console.warn(\`T2MS widget: Request failed with status \${res.status} \${res.statusText}\`);
+        const errorText = await res.text();
+        console.error("T2MS widget: Error response:", errorText);
+        return;
+      }
 
       const data = await res.json();
-      if (!data?.pinned || !data?.content) {
+      console.log("T2MS widget: Received data", data);
+      
+      if (!data?.pinned) {
+        console.log("T2MS widget: Message is not pinned, not showing widget");
+        removeWidget();
+        return;
+      }
+      
+      if (!data?.content) {
+        console.log("T2MS widget: Message has no content, not showing widget");
         removeWidget();
         return;
       }
 
-      if (window.__T2MS_WIDGET_SHOWN__) return;
+      if (window.__T2MS_WIDGET_SHOWN__) {
+        console.log("T2MS widget: Widget already shown, skipping");
+        return;
+      }
+      
+      console.log("T2MS widget: Rendering message");
       renderMessage(data);
     } catch (e) {
-      console.error("T2MS fetch error", e);
+      console.error("T2MS widget: Fetch error", e);
     }
   }
 
@@ -198,6 +272,7 @@ export async function GET() {
 
   fetchMessage();
   setInterval(fetchMessage, interval);
+  });
 })();
 `.trim();
 
@@ -205,6 +280,8 @@ export async function GET() {
     headers: {
       "Content-Type": "application/javascript",
       "Cache-Control": "no-cache",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
     },
   });
 }
