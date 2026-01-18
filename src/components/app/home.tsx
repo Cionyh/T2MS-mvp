@@ -53,34 +53,36 @@ export default function ClientDashboardPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold tracking-tight">
-                      Welcome back,{" "}
-                      <span className="font-bold">
-                        {isPending ? (
-                          <Skeleton className="inline-block h-6 w-24 rounded" />
-                        ) : (
-                          firstName
-                        )}
-                      </span>
-                    </h2>
+            Welcome back,{" "}
+            <span className="font-bold">
+              {isPending ? (
+                <Skeleton className="inline-block h-6 w-24 rounded" />
+              ) : (
+                firstName
+              )}
+            </span>
+          </h2>
           <p className="text-muted-foreground">
-            Here’s a quick overview of your activity.
+            Here's a quick overview of your activity.
           </p>
         </div>
-        <Link href="/app/build">
-          <Button className="text-foreground">
-            <Plus className="mr-2 h-4 w-4 text-foreground" />
-            New Site
-          </Button>
-        </Link>
-        <Link href="/app/onboarding">
-          <Button className="text-foreground">
-            <Plus className="mr-2 h-4 w-4 text-foreground" />
-            Get Widget Installed
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/app/build">
+            <Button variant="outline" className="text-foreground">
+              <Plus className="mr-2 h-4 w-4" />
+              New Site
+            </Button>
+          </Link>
+          <Link href="/app/onboarding">
+            <Button className="text-foreground">
+              <Plus className="mr-2 h-4 w-4" />
+              Get Widget Installed
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
