@@ -75,6 +75,12 @@ export default function ClientDashboardPage({
             New Site
           </Button>
         </Link>
+        <Link href="/app/onboarding">
+          <Button className="text-foreground">
+            <Plus className="mr-2 h-4 w-4 text-foreground" />
+            Get Widget Installed
+          </Button>
+        </Link>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

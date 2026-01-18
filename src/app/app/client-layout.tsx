@@ -13,6 +13,7 @@ import {
   LucideSettings,
   CreditCard,
   BarChart3,
+  Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +48,7 @@ const navItems = [
   { label: "Sites", href: "/app/sites", icon: Globe },
   { label: "Messages", href: "/app/messages", icon: MessageSquare },
   { label: "Analytics", href: "/app/analytics", icon: BarChart3 },
+  { label: "Get Widget Installed", href: "/app/onboarding", icon: Wrench },
   { label: "Billing", href: "/app/billing", icon: CreditCard },
   { label: "Settings", href: "/app/settings", icon: LucideSettings },
 ];
