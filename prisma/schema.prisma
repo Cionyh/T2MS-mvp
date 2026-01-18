@@ -28,6 +28,8 @@ model User {
 
   members     Member[]
   invitations Invitation[]
+  customer    Customer? // Phase 2: Customer record for install jobs
+  worker      Worker? // Phase 2: Worker profile
 
   @@unique([email])
   @@map("user")
@@ -189,4 +191,102 @@ model Invitation {
   user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
   @@map("invitation")
+}
+
+// Phase 2: Install Job System
+// Customer model - will be expanded in Phase 2 step 8 (Multi-User Architecture)
+model Customer {
+  id                    String    @id @default(cuid())
+  userId                String    @unique // Links to User who owns this customer record
+  smsConsentConfirmedAt DateTime? // SMS consent confirmation timestamp
+  onboardingCompletedAt DateTime? // Onboarding completion timestamp
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  installJobs InstallJob[]
+
+  @@map("customer")
+}
+
+// Install Job model - tracks widget installation jobs
+model InstallJob {
+  id                 String   @id @default(cuid())
+  customerId         String
+  platform           String // WordPress, Squarespace, Google Sites, Custom, etc.
+  installType        String // "script" | "iframe"
+  websiteUrls        String[] // Array of URLs
+  preferredPlacement String? // Preferred widget placement
+  accessMethod       String // "temporary_login" | "admin_invite" | "instructions"
+  accessCredentials  String? // Encrypted JSON (temporary login, admin invite details, or instructions)
+  notes              String? // Customer notes/constraints
+  status             String   @default("QUEUED") // Job status enum
+  priority           Int      @default(0)
+  assignedWorkerId   String?
+  checklistCompleted Boolean  @default(false)
+  proofUploaded      Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  customer       Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  assignedWorker Worker?        @relation(fields: [assignedWorkerId], references: [id], onDelete: SetNull)
+  proofs         Proof[]
+  payouts        WorkerPayout[]
+
+  @@index([status])
+  @@index([assignedWorkerId, status])
+  @@index([customerId])
+  @@map("install_job")
+}
+
+// Worker model - Philippines workers who install widgets
+model Worker {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  availability  String   @default("OFF_SHIFT") // "OFF_SHIFT" | "ON_SHIFT" | "PAUSED"
+  maxActiveJobs Int      @default(2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedJobs InstallJob[]
+  payouts      WorkerPayout[]
+
+  @@index([availability])
+  @@map("worker")
+}
+
+// Proof model - stores proof uploads for install jobs
+model Proof {
+  id         String   @id @default(cuid())
+  jobId      String
+  type       String // "desktop" | "mobile" | "message"
+  fileUrl    String // S3 URL or file path
+  fileSize   Int // File size in bytes
+  uploadedAt DateTime @default(now())
+
+  // Relations
+  job InstallJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@map("proof")
+}
+
+// Worker Payout model - tracks worker earnings per job
+model WorkerPayout {
+  id        String    @id @default(cuid())
+  workerId  String
+  jobId     String
+  amount    Decimal // Payout amount in USD
+  status    String    @default("EARNED") // "EARNED" | "APPROVED" | "PAID"
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
+
+  // Relations
+  worker Worker     @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  job    InstallJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@map("worker_payout")
 }
