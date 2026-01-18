@@ -38,7 +38,6 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ACCESS_METHOD, INSTALL_TYPE } from "@/lib/job-status";
-import { ACCESS_METHOD, INSTALL_TYPE } from "@/lib/job-status";
 
 // Platform options
 const PLATFORMS = [
@@ -59,9 +58,7 @@ const onboardingSchema = z
       .array(z.string().url({ message: "Invalid URL format. Include https:// or http://." }))
       .min(1, { message: "At least one website URL is required." }),
     platform: z.string().min(1, { message: "Platform selection is required." }),
-    installType: z.enum([INSTALL_TYPE.SCRIPT, INSTALL_TYPE.IFRAME], {
-      required_error: "Install type is required.",
-    }),
+    installType: z.enum([INSTALL_TYPE.SCRIPT, INSTALL_TYPE.IFRAME]),
     preferredPlacement: z.string().optional(),
     accessMethod: z.enum([
       ACCESS_METHOD.TEMPORARY_LOGIN,
