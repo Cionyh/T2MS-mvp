@@ -15,6 +15,7 @@ import {
   LogOut,
   CreditCard,
   Briefcase,
+  ClipboardList,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +47,7 @@ import { signOut } from "@/lib/auth-client";
 const navItems = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Clients", href: "/admin/dashboard/clients", icon: Users },
+  { label: "Jobs", href: "/admin/dashboard/jobs", icon: ClipboardList },
   { label: "Sites", href: "/admin/dashboard/sites", icon: Database },
   { label: "Messages", href: "/admin/dashboard/messages", icon: MessageSquare },
   { label: "Workers", href: "/admin/dashboard/workers", icon: Briefcase },

@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status");
     const workerId = searchParams.get("workerId");
     const assignedToMe = searchParams.get("assignedToMe") === "true";
+    const search = searchParams.get("search");
 
     // Check if user is worker
     const worker = await verifyWorker();
@@ -32,6 +33,27 @@ export async function GET(req: NextRequest) {
 
     if (status) {
       where.status = status;
+    }
+
+    // Search functionality (for admin)
+    if (search && !worker) {
+      where.OR = [
+        {
+          customer: {
+            user: {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                { email: { contains: search, mode: "insensitive" } },
+              ],
+            },
+          },
+        },
+        {
+          websiteUrls: {
+            hasSome: [search],
+          },
+        },
+      ];
     }
 
     // If worker, only show their assigned jobs or queued jobs
