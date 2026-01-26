@@ -70,12 +70,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       payouts,
       summary: {
-        totalAmount: summary._sum.amount || 0,
+        totalAmount: summary._sum.amount ? Number(summary._sum.amount) : 0,
         totalCount: summary._count.id || 0,
         byStatus: byStatus.reduce(
           (acc, item) => {
             acc[item.status] = {
-              amount: item._sum.amount || 0,
+              amount: item._sum.amount ? Number(item._sum.amount) : 0,
               count: item._count.id || 0,
             };
             return acc;
