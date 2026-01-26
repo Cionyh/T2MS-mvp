@@ -88,13 +88,20 @@ export default function AdminWorkersPage() {
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
   const [isLoading, setIsLoading] = useState<string | undefined>();
 
-  const [newWorker, setNewWorker] = useState({
+  const [newWorker, setNewWorker] = useState<{
+    userId: string;
+    availability: string;
+    maxActiveJobs: number;
+  }>({
     userId: "",
     availability: WORKER_AVAILABILITY.OFF_SHIFT,
     maxActiveJobs: 2,
   });
 
-  const [editWorker, setEditWorker] = useState({
+  const [editWorker, setEditWorker] = useState<{
+    availability: string;
+    maxActiveJobs: number;
+  }>({
     availability: WORKER_AVAILABILITY.OFF_SHIFT,
     maxActiveJobs: 2,
   });
