@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
             installType: true,
             websiteUrls: true,
             status: true,
-            completedAt: true,
+            updatedAt: true,
           },
         },
       },
