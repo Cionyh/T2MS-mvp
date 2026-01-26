@@ -130,43 +130,84 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { userId, availability, maxActiveJobs } = body;
+    const { userId, email, name, password, availability, maxActiveJobs } = body;
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId is required" },
-        { status: 400 }
-      );
-    }
+    let targetUserId: string;
 
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    // If userId is provided, use existing user
+    if (userId) {
+      // Check if user exists
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
-    }
+      if (!user) {
+        return NextResponse.json(
+          { error: "User not found" },
+          { status: 404 }
+        );
+      }
 
-    // Check if worker already exists for this user
-    const existingWorker = await prisma.worker.findUnique({
-      where: { userId },
-    });
+      // Check if worker already exists for this user
+      const existingWorker = await prisma.worker.findUnique({
+        where: { userId },
+      });
 
-    if (existingWorker) {
-      return NextResponse.json(
-        { error: "Worker already exists for this user" },
-        { status: 400 }
-      );
+      if (existingWorker) {
+        return NextResponse.json(
+          { error: "Worker already exists for this user" },
+          { status: 400 }
+        );
+      }
+
+      targetUserId = userId;
+    } else {
+      // Create new user + worker
+      if (!email || !name || !password) {
+        return NextResponse.json(
+          { error: "email, name, and password are required when creating a new user" },
+          { status: 400 }
+        );
+      }
+
+      // Check if user with this email already exists
+      const existingUser = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (existingUser) {
+        return NextResponse.json(
+          { error: "User with this email already exists. Please use 'Convert Existing User' option instead." },
+          { status: 400 }
+        );
+      }
+
+      // Import auth to create user with proper password hashing
+      const { auth } = await import("@/lib/auth");
+
+      // Create new user using better-auth
+      const signUpResult = await auth.api.signUpEmail({
+        body: {
+          email,
+          password,
+          name,
+        },
+      });
+
+      if (!signUpResult || !signUpResult.user) {
+        return NextResponse.json(
+          { error: "Failed to create user account" },
+          { status: 500 }
+        );
+      }
+
+      targetUserId = signUpResult.user.id;
     }
 
     // Create worker
     const worker = await prisma.worker.create({
       data: {
-        userId,
+        userId: targetUserId,
         availability: availability || WORKER_AVAILABILITY.OFF_SHIFT,
         maxActiveJobs: maxActiveJobs || 2,
       },
@@ -184,7 +225,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       worker,
-      message: "Worker created successfully",
+      message: userId ? "Worker created successfully" : "Worker account created successfully",
     });
   } catch (error: any) {
     console.error("[ADMIN_WORKERS_POST]", error);

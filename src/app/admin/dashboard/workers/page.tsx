@@ -88,12 +88,19 @@ export default function AdminWorkersPage() {
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
   const [isLoading, setIsLoading] = useState<string | undefined>();
 
+  const [createMode, setCreateMode] = useState<"existing" | "new">("existing");
   const [newWorker, setNewWorker] = useState<{
     userId: string;
+    email: string;
+    name: string;
+    password: string;
     availability: string;
     maxActiveJobs: number;
   }>({
     userId: "",
+    email: "",
+    name: "",
+    password: "",
     availability: WORKER_AVAILABILITY.OFF_SHIFT,
     maxActiveJobs: 2,
   });
@@ -163,12 +170,27 @@ export default function AdminWorkersPage() {
     e.preventDefault();
     setIsLoading("create");
     try {
+      const payload =
+        createMode === "existing"
+          ? {
+              userId: newWorker.userId,
+              availability: newWorker.availability,
+              maxActiveJobs: newWorker.maxActiveJobs,
+            }
+          : {
+              email: newWorker.email,
+              name: newWorker.name,
+              password: newWorker.password,
+              availability: newWorker.availability,
+              maxActiveJobs: newWorker.maxActiveJobs,
+            };
+
       const response = await fetch("/api/admin/workers", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newWorker),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -179,9 +201,13 @@ export default function AdminWorkersPage() {
       toast.success("Worker created successfully");
       setNewWorker({
         userId: "",
+        email: "",
+        name: "",
+        password: "",
         availability: WORKER_AVAILABILITY.OFF_SHIFT,
         maxActiveJobs: 2,
       });
+      setCreateMode("existing");
       setIsCreateDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["admin-workers"] });
       queryClient.invalidateQueries({ queryKey: ["admin-existing-workers"] });
@@ -287,47 +313,116 @@ export default function AdminWorkersPage() {
               Create Worker
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Create New Worker</DialogTitle>
               <DialogDescription>
-                Convert an existing user to a worker account
+                Create a new worker account or convert an existing user
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateWorker}>
               <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="userId">User</Label>
-                  <Select
-                    value={newWorker.userId}
-                    onValueChange={(value) =>
-                      setNewWorker({ ...newWorker, userId: value })
-                    }
-                    required
+                {/* Mode Toggle */}
+                <div className="flex gap-2 border-b pb-4">
+                  <Button
+                    type="button"
+                    variant={createMode === "existing" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCreateMode("existing")}
+                    className="flex-1"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a user" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableUsers.length === 0 ? (
-                        <SelectItem value="none" disabled>
-                          No available users
-                        </SelectItem>
-                      ) : (
-                        availableUsers.map((user: User) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.name} ({user.email})
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {availableUsers.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      All users are already workers, or no users available
-                    </p>
-                  )}
+                    Convert Existing User
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={createMode === "new" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCreateMode("new")}
+                    className="flex-1"
+                  >
+                    Create New User
+                  </Button>
                 </div>
+
+                {createMode === "existing" ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="userId">User</Label>
+                    <Select
+                      value={newWorker.userId}
+                      onValueChange={(value) =>
+                        setNewWorker({ ...newWorker, userId: value })
+                      }
+                      required={createMode === "existing"}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a user" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableUsers.length === 0 ? (
+                          <SelectItem value="none" disabled>
+                            No available users
+                          </SelectItem>
+                        ) : (
+                          availableUsers.map((user: User) => (
+                            <SelectItem key={user.id} value={user.id}>
+                              {user.name} ({user.email})
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {availableUsers.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        All users are already workers, or no users available
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full Name</Label>
+                      <Input
+                        id="name"
+                        value={newWorker.name}
+                        onChange={(e) =>
+                          setNewWorker({ ...newWorker, name: e.target.value })
+                        }
+                        placeholder="John Doe"
+                        required={createMode === "new"}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={newWorker.email}
+                        onChange={(e) =>
+                          setNewWorker({ ...newWorker, email: e.target.value })
+                        }
+                        placeholder="worker@example.com"
+                        required={createMode === "new"}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={newWorker.password}
+                        onChange={(e) =>
+                          setNewWorker({ ...newWorker, password: e.target.value })
+                        }
+                        placeholder="Minimum 8 characters"
+                        required={createMode === "new"}
+                        minLength={8}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Worker will use this to log in to the worker portal
+                      </p>
+                    </div>
+                  </>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="availability">Initial Availability</Label>
@@ -379,18 +474,32 @@ export default function AdminWorkersPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
+                  onClick={() => {
+                    setIsCreateDialogOpen(false);
+                    setCreateMode("existing");
+                  }}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading === "create" || !newWorker.userId}>
+                <Button
+                  type="submit"
+                  disabled={
+                    isLoading === "create" ||
+                    (createMode === "existing" && !newWorker.userId) ||
+                    (createMode === "new" &&
+                      (!newWorker.email || !newWorker.name || !newWorker.password))
+                  }
+                >
                   {isLoading === "create" ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Creating...
                     </>
                   ) : (
-                    "Create Worker"
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Worker
+                    </>
                   )}
                 </Button>
               </DialogFooter>
