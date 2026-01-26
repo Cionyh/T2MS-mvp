@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Loader2, DollarSign, CheckCircle2, Clock, XCircle } from "lucide-react";
 import {
   Card,
@@ -68,13 +68,13 @@ export default function WorkerPayoutsPage() {
       [PAYOUT_STATUS.PAID]: "default",
     };
 
-    const icons: Record<string, typeof Clock> = {
+    const icons: Record<string, React.ComponentType<{ className?: string }>> = {
       [PAYOUT_STATUS.EARNED]: Clock,
       [PAYOUT_STATUS.APPROVED]: CheckCircle2,
       [PAYOUT_STATUS.PAID]: DollarSign,
     };
 
-    const Icon = icons[status] || Clock;
+    const Icon = (icons[status] as React.ComponentType<{ className?: string }>) || Clock;
 
     return (
       <Badge variant={variants[status] || "outline"} className="flex items-center gap-1">
