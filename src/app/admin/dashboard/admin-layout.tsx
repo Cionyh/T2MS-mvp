@@ -14,6 +14,7 @@ import {
   Database,
   LogOut,
   CreditCard,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +48,7 @@ const navItems = [
   { label: "Clients", href: "/admin/dashboard/clients", icon: Users },
   { label: "Sites", href: "/admin/dashboard/sites", icon: Database },
   { label: "Messages", href: "/admin/dashboard/messages", icon: MessageSquare },
+  { label: "Workers", href: "/admin/dashboard/workers", icon: Briefcase },
   { label: "Subscriptions", href: "/admin/dashboard/subscriptions", icon: CreditCard },
   { label: "Analytics", href: "/admin/dashboard/analytics", icon: BarChart3 },
   { label: "Settings", href: "/admin/dashboard/settings", icon: Settings },

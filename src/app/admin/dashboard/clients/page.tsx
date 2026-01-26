@@ -241,7 +241,7 @@ export default function AdminDashboard() {
                   <Select
                     value={newUser.role}
                     onValueChange={(value: "admin" | "user") =>
-                      setNewUser({ ...newUser, role: value as "user" })
+                      setNewUser({ ...newUser, role: value })
                     }
                   >
                     <SelectTrigger className="w-full">
