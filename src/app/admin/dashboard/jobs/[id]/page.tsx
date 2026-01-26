@@ -138,7 +138,7 @@ export default function AdminJobDetailPage() {
     },
   });
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, assignedWorker: any) => {
     const variants: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
       [INSTALL_JOB_STATUS.QUEUED]: "outline",
       [INSTALL_JOB_STATUS.ASSIGNED]: "secondary",
@@ -151,9 +151,15 @@ export default function AdminJobDetailPage() {
       [INSTALL_JOB_STATUS.HOLD_FINANCE_REVIEW]: "outline",
     };
 
+    // Show "Unassigned" for QUEUED jobs with no worker, otherwise show status
+    let displayText = status.replace(/_/g, " ");
+    if (status === INSTALL_JOB_STATUS.QUEUED && !assignedWorker) {
+      displayText = "Unassigned";
+    }
+
     return (
       <Badge variant={variants[status] || "outline"}>
-        {status.replace(/_/g, " ")}
+        {displayText}
       </Badge>
     );
   };
@@ -304,7 +310,7 @@ export default function AdminJobDetailPage() {
           </Button>
         </Link>
         <h1 className="text-3xl font-bold">Job Details</h1>
-        {getStatusBadge(job.status)}
+        {getStatusBadge(job.status, job.assignedWorker)}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -112,7 +112,7 @@ export default function AdminJobsPage() {
     },
   });
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, assignedWorker: any) => {
     const variants: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
       [INSTALL_JOB_STATUS.QUEUED]: "outline",
       [INSTALL_JOB_STATUS.ASSIGNED]: "secondary",
@@ -138,11 +138,17 @@ export default function AdminJobsPage() {
     };
 
     const Icon = icons[status] || Clock;
+    
+    // Show "Unassigned" for QUEUED jobs with no worker, otherwise show status
+    let displayText = status.replace(/_/g, " ");
+    if (status === INSTALL_JOB_STATUS.QUEUED && !assignedWorker) {
+      displayText = "Unassigned";
+    }
 
     return (
       <Badge variant={variants[status] || "outline"} className="flex items-center gap-1">
         <Icon className="h-3 w-3" />
-        {status.replace(/_/g, " ")}
+        {displayText}
       </Badge>
     );
   };
@@ -339,7 +345,7 @@ export default function AdminJobsPage() {
                       <span className="text-muted-foreground">Unassigned</span>
                     )}
                   </TableCell>
-                  <TableCell>{getStatusBadge(job.status)}</TableCell>
+                  <TableCell>{getStatusBadge(job.status, job.assignedWorker)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {job.proofUploaded ? (
