@@ -68,7 +68,7 @@ export default function WorkerPayoutsPage() {
       [PAYOUT_STATUS.PAID]: "default",
     };
 
-    const icons = {
+    const icons: Record<string, typeof Clock> = {
       [PAYOUT_STATUS.EARNED]: Clock,
       [PAYOUT_STATUS.APPROVED]: CheckCircle2,
       [PAYOUT_STATUS.PAID]: DollarSign,
