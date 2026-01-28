@@ -192,7 +192,14 @@ export default function SignIn() {
         </Form>
 
       </CardContent>
-      <CardFooter></CardFooter>
+      <CardFooter className="flex justify-center pt-0">
+        <Link
+          href="/admin"
+          className="text-sm text-muted-foreground hover:text-primary underline"
+        >
+          Login to Admin
+        </Link>
+      </CardFooter>
     
     </Card>
   );
