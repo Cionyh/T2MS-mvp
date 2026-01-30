@@ -40,16 +40,17 @@ const planLimits: Record<string, PlanLimits> = {
 
 export function BillingSection() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [onboardingPlanId, setOnboardingPlanId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSubscriptions();
+    fetchOnboardingPlan();
   }, []);
 
   const fetchSubscriptions = async () => {
     try {
-      // Get the current session to get the user ID
       const session = await client.getSession();
       if (!session?.data?.user?.id) {
         toast.error("Please sign in to view subscriptions");
@@ -72,6 +73,19 @@ export function BillingSection() {
       toast.error(error.message || "Something went wrong");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOnboardingPlan = async () => {
+    try {
+      const res = await fetch("/api/onboarding/status");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.planId && data.planId !== "free") {
+        setOnboardingPlanId(data.planId);
+      }
+    } catch {
+      // Ignore
     }
   };
 
@@ -162,6 +176,36 @@ export function BillingSection() {
     }
   };
 
+  const handleCompletePayment = async () => {
+    if (!onboardingPlanId || onboardingPlanId === "free") return;
+    setActionLoading("complete-payment");
+    try {
+      const session = await client.getSession();
+      if (!session?.data?.user?.id) {
+        toast.error("Please sign in to continue");
+        setActionLoading(null);
+        return;
+      }
+      const { data, error } = await client.subscription.upgrade({
+        plan: onboardingPlanId,
+        referenceId: session.data.user.id,
+        successUrl: `${window.location.origin}/app/billing?upgraded=true`,
+        cancelUrl: `${window.location.origin}/app/billing`,
+      });
+      if (error) {
+        toast.error(error.message || "Failed to start checkout");
+        setActionLoading(null);
+        return;
+      }
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong");
+      setActionLoading(null);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -192,8 +236,10 @@ export function BillingSection() {
   }
 
   const activeSubscription = subscriptions.find(sub => sub.status === "active" || sub.status === "trialing");
-  const currentPlan = activeSubscription?.plan || "free";
+  // Use onboarding plan as fallback when user chose a paid plan during onboarding but subscription isn't synced yet
+  const currentPlan = activeSubscription?.plan || onboardingPlanId || "free";
   const limits = planLimits[currentPlan] || { websites: 1, messages: 10, storage: 0.1 };
+  const paymentPending = !activeSubscription && onboardingPlanId && onboardingPlanId !== "free";
 
   return (
     <div className="space-y-6">
@@ -224,13 +270,15 @@ export function BillingSection() {
                       </span>
                     )}
                   </>
+                ) : paymentPending ? (
+                  "Selected during onboarding — complete payment to activate"
                 ) : (
                   "Free Plan"
                 )}
               </p>
             </div>
-            <Badge className={getStatusColor(activeSubscription?.status || "free")}>
-              {activeSubscription?.status || "free"}
+            <Badge className={getStatusColor(activeSubscription?.status || (paymentPending ? "past_due" : "free"))}>
+              {activeSubscription?.status || (paymentPending ? "Payment pending" : "free")}
             </Badge>
           </div>
 
@@ -333,8 +381,29 @@ export function BillingSection() {
         </Card>
       )}
 
+      {/* Payment pending: user chose paid plan during onboarding but subscription not synced */}
+      {paymentPending && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Complete your subscription</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              You selected the <strong className="capitalize">{onboardingPlanId}</strong> plan during onboarding.
+              Complete payment to activate your subscription and unlock plan limits.
+            </p>
+            <Button
+              onClick={handleCompletePayment}
+              disabled={actionLoading === "complete-payment"}
+            >
+              {actionLoading === "complete-payment" ? "Loading..." : "Complete payment"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Upgrade Options */}
-      {!activeSubscription && (
+      {!activeSubscription && !paymentPending && (
         <Card>
           <CardHeader>
             <CardTitle>Upgrade Your Plan</CardTitle>
