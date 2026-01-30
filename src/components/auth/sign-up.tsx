@@ -81,7 +81,7 @@ export function SignUp() {
         email: values.email,
         password: values.password,
         name: `${values.firstName} ${values.lastName}`,
-        callbackURL: "/app",
+        callbackURL: "/onboarding",
         fetchOptions: {
           onResponse: () => {
             setLoading(false);
@@ -93,7 +93,7 @@ export function SignUp() {
             toast.error(ctx.error.message);
           },
           onSuccess: async () => {
-            router.push("/app");
+            router.push("/onboarding");
           },
         },
       });
