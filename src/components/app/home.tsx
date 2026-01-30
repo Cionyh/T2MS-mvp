@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable */
 
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -9,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, BarChart3 } from "lucide-react";
+import { Plus, BarChart3, Wrench } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 import { Skeleton } from "../ui/skeleton";
@@ -47,6 +48,14 @@ export default function ClientDashboardPage({
   const { data: session, isPending } = useSession();
   const fullName = session?.user?.name?.trim() || "Guest";
   const firstName = fullName.split(" ")[0];
+
+  const [hasInstallRequest, setHasInstallRequest] = useState<boolean | null>(null);
+  useEffect(() => {
+    fetch("/api/onboarding/status")
+      .then((r) => r.json())
+      .then((d) => setHasInstallRequest(!!d.installAddonSku))
+      .catch(() => setHasInstallRequest(false));
+  }, []);
 
   // 3. The `useMessages` hook and all its related logic are GONE.
   //    This makes the component lighter and faster.
@@ -128,6 +137,28 @@ export default function ClientDashboardPage({
             </CardContent>
           </Card>
         </Link>
+
+        {/* Widget Install Request Card - shown when user has paid/pending install add-on */}
+        {hasInstallRequest && (
+          <Link href="/app/settings?tab=setup">
+            <Card className="hover:bg-background bg-muted transition-colors border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wrench className="h-5 w-5" />
+                  Widget Install Request
+                </CardTitle>
+                <CardDescription>
+                  View your install request status and details
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm mt-1">
+                  Our team will reach out to complete the installation
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
       </div>
     </div>
   );

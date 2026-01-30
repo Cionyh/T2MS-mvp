@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "@/lib/auth-client";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,14 @@ import { SetupDetailsTab } from "@/components/app/setup-details";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<"account" | "setup" | "team">(
+    tabParam === "setup" || tabParam === "team" ? tabParam : "account"
+  );
+  useEffect(() => {
+    if (tabParam === "setup" || tabParam === "team") setActiveTab(tabParam);
+  }, [tabParam]);
   const [isLoading, setIsLoading] = useState(false);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
@@ -201,7 +210,7 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <Tabs defaultValue="account" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "account" | "setup" | "team")} className="space-y-6">
           <TabsList>
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="setup">Setup</TabsTrigger>

@@ -152,8 +152,7 @@ export function SetupDetailsTab() {
     );
   }
 
-  const hasWidgetRequest =
-    data.installAddonSku && (data.installAddonStatus === "paid" || data.installAddonStatus === null);
+  const hasWidgetRequest = !!data.installAddonSku;
 
   return (
     <div className="space-y-6">
