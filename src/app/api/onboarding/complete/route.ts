@@ -54,14 +54,14 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const urls = Array.isArray(websiteUrls)
-      ? websiteUrls.filter((u) => typeof u === "string" && u.trim())
+    const urls: string[] = Array.isArray(websiteUrls)
+      ? (websiteUrls as string[]).filter((u) => typeof u === "string" && u.trim())
       : [];
 
     await prisma.onboarding.update({
       where: { userId: session.user.id },
       data: {
-        websiteUrls: urls,
+        websiteUrls: { set: urls },
         platform: platform ?? null,
         installType: installType ?? null,
         preferredPlacement: preferredPlacement ?? null,

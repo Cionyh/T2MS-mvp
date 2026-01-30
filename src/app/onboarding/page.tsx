@@ -64,9 +64,13 @@ const setupSchema = z.object({
   platform: z.string().min(1, "Platform is required"),
   installType: z.enum(["script", "iframe"], { required_error: "Install type is required" }),
   preferredPlacement: z.string().optional(),
-  accessMethod: z.enum(["temporary_login", "admin_invite", "instructions"], { required_error: "Access method is required" }),
+  accessMethod: z.enum(["temporary_login", "admin_invite", "instructions"], {
+    required_error: "Access method is required",
+  }),
   notes: z.string().optional(),
 });
+
+type SetupFormValues = z.infer<typeof setupSchema>;
 
 const SMS_CONSENT_TEXT =
   "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
@@ -89,14 +93,14 @@ export default function OnboardingPage() {
   const [smsConsentChecked, setSmsConsentChecked] = useState(false);
   const [smsConsentTyped, setSmsConsentTyped] = useState("");
 
-  const setupForm = useForm<z.infer<typeof setupSchema>>({
+  const setupForm = useForm<SetupFormValues>({
     resolver: zodResolver(setupSchema),
     defaultValues: {
       websiteUrls: "",
       platform: "",
-      installType: undefined,
+      installType: "script",
       preferredPlacement: "",
-      accessMethod: undefined,
+      accessMethod: "instructions",
       notes: "",
     },
   });
@@ -277,12 +281,21 @@ export default function OnboardingPage() {
     }
     setLoading(true);
     try {
+      const values = setupForm.getValues();
+      const websiteUrlsArray: string[] = values.websiteUrls
+        .split(/[\n,]/)
+        .map((u) => u.trim())
+        .filter(Boolean);
       const res = await fetch("/api/onboarding/complete", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...setupForm.getValues(),
-          websiteUrls: setupForm.getValues("websiteUrls").split(/[\n,]/).map((u) => u.trim()).filter(Boolean),
+          websiteUrls: websiteUrlsArray,
+          platform: values.platform,
+          installType: values.installType,
+          preferredPlacement: values.preferredPlacement,
+          accessMethod: values.accessMethod,
+          notes: values.notes,
           smsConsentConfirmed: true,
           smsConsentText: smsConsentTyped,
         }),

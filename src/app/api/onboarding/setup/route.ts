@@ -24,9 +24,18 @@ export async function PATCH(req: NextRequest) {
       notes,
     } = body;
 
-    const urls = Array.isArray(websiteUrls)
-      ? websiteUrls.filter((u) => typeof u === "string" && u.trim())
+    const urls: string[] = Array.isArray(websiteUrls)
+      ? (websiteUrls as string[]).filter((u) => typeof u === "string" && u.trim())
       : [];
+
+    const baseData = {
+      platform: platform ?? null,
+      installType: installType ?? null,
+      preferredPlacement: preferredPlacement ?? null,
+      accessMethod: accessMethod ?? null,
+      accessCredentials: accessCredentials ?? null,
+      notes: notes ?? null,
+    };
 
     await prisma.onboarding.upsert({
       where: { userId: session.user.id },
@@ -34,21 +43,11 @@ export async function PATCH(req: NextRequest) {
         userId: session.user.id,
         planId: "free",
         websiteUrls: urls,
-        platform: platform ?? null,
-        installType: installType ?? null,
-        preferredPlacement: preferredPlacement ?? null,
-        accessMethod: accessMethod ?? null,
-        accessCredentials: accessCredentials ?? null,
-        notes: notes ?? null,
+        ...baseData,
       },
       update: {
-        websiteUrls: urls,
-        platform: platform ?? null,
-        installType: installType ?? null,
-        preferredPlacement: preferredPlacement ?? null,
-        accessMethod: accessMethod ?? null,
-        accessCredentials: accessCredentials ?? null,
-        notes: notes ?? null,
+        websiteUrls: { set: urls },
+        ...baseData,
       },
     });
 
