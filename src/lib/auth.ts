@@ -8,34 +8,13 @@ import { stripe } from "@better-auth/stripe"
 import Stripe from "stripe"
 
 const db = new PrismaClient();
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-08-27.basil",
-})
 
-export const auth = betterAuth({
-	database: prismaAdapter(db, {
-		provider: "postgresql",
-	}),
-    secret: process.env.BETTER_AUTH_SECRET || "your-secret-key-change-this-in-production",
-    user: {
-    additionalFields: {
-      role: {
-        type: "string",
-        required: false,
-        defaultValue: "user",
-        input: false,
-      },
-    },
-    changeEmail: {
-      enabled: true,
-    },
-  },
+// Only create Stripe client when key is set (avoids build failure when env is missing)
+const stripeClient = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" })
+  : null;
 
-	emailAndPassword: {
-		enabled: true,
-    },
-
-    plugins: [
+const plugins: Parameters<typeof betterAuth>[0]["plugins"] = [
     admin(),
     organization({
       async sendInvitationEmail(data) {
@@ -51,9 +30,13 @@ export const auth = betterAuth({
         // });
       },
     }),
+  ];
+
+if (stripeClient && process.env.STRIPE_WEBHOOK_SECRET) {
+  plugins.push(
     stripe({
       stripeClient,
-      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
       createCustomerOnSignUp: true,
       subscription: {
         enabled: true,
@@ -86,25 +69,46 @@ export const auth = betterAuth({
             name: "enterprise",
             priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID!,
             limits: {
-              websites: -1, 
-              messages: -1, 
+              websites: -1,
+              messages: -1,
               storage: 1000
             }
           }
         ],
         authorizeReference: async ({ user, session, referenceId, action }) => {
-          // Allow users to manage their own subscriptions
-          // For now, we'll allow any authenticated user to manage subscriptions with their own user ID
           if (referenceId === user.id) {
             return true;
           }
-          
-          // You can add more complex authorization logic here
-          // For example, check if the user is an admin or has permission to manage the organization
           return false;
         },
         requireEmailVerification: false
       }
     })
-  ],
+  );
+}
+
+export const auth = betterAuth({
+	database: prismaAdapter(db, {
+		provider: "postgresql",
+	}),
+    secret: process.env.BETTER_AUTH_SECRET || "your-secret-key-change-this-in-production",
+    user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "user",
+        input: false,
+      },
+    },
+    changeEmail: {
+      enabled: true,
+    },
+  },
+
+	emailAndPassword: {
+		enabled: true,
+    },
+
+    plugins,
 });

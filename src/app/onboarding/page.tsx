@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,14 +59,20 @@ const PLATFORMS = [
   "Other",
 ];
 
+const installTypeEnum = z.enum(["script", "iframe"] as const, {
+  message: "Install type is required",
+});
+const accessMethodEnum = z.enum(
+  ["temporary_login", "admin_invite", "instructions"] as const,
+  { message: "Access method is required" }
+);
+
 const setupSchema = z.object({
   websiteUrls: z.string().min(1, "At least one website URL is required"),
   platform: z.string().min(1, "Platform is required"),
-  installType: z.enum(["script", "iframe"], { required_error: "Install type is required" }),
+  installType: installTypeEnum,
   preferredPlacement: z.string().optional(),
-  accessMethod: z.enum(["temporary_login", "admin_invite", "instructions"], {
-    required_error: "Access method is required",
-  }),
+  accessMethod: accessMethodEnum,
   notes: z.string().optional(),
 });
 
@@ -87,9 +93,9 @@ interface CompleteOnboardingBody {
   websiteUrls: string[];
   platform: string;
   installType: "script" | "iframe";
-  preferredPlacement: string;
+  preferredPlacement?: string;
   accessMethod: "temporary_login" | "admin_invite" | "instructions";
-  notes: string;
+  notes?: string;
   smsConsentConfirmed: boolean;
   smsConsentText: string;
 }
@@ -97,7 +103,7 @@ interface CompleteOnboardingBody {
 const SMS_CONSENT_TEXT =
   "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const stepParam = searchParams.get("step");
@@ -313,9 +319,9 @@ export default function OnboardingPage() {
         websiteUrls: websiteUrlsArray,
         platform: values.platform,
         installType: values.installType,
-        preferredPlacement: values.preferredPlacement,
+        preferredPlacement: values.preferredPlacement ?? undefined,
         accessMethod: values.accessMethod,
-        notes: values.notes,
+        notes: values.notes ?? undefined,
         smsConsentConfirmed: true,
         smsConsentText: smsConsentTyped,
       };
@@ -638,5 +644,19 @@ export default function OnboardingPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-muted/30">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <OnboardingContent />
+    </Suspense>
   );
 }
