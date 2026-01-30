@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
@@ -28,7 +29,20 @@ export async function PATCH(req: NextRequest) {
       ? (websiteUrls as string[]).filter((u) => typeof u === "string" && u.trim())
       : [];
 
-    const baseData = {
+    const updateData: Prisma.OnboardingUpdateInput = {
+      websiteUrls: { set: urls },
+      platform: platform ?? null,
+      installType: installType ?? null,
+      preferredPlacement: preferredPlacement ?? null,
+      accessMethod: accessMethod ?? null,
+      accessCredentials: accessCredentials ?? null,
+      notes: notes ?? null,
+    };
+
+    const createData: Prisma.OnboardingUncheckedCreateInput = {
+      userId: session.user.id,
+      planId: "free",
+      websiteUrls: urls,
       platform: platform ?? null,
       installType: installType ?? null,
       preferredPlacement: preferredPlacement ?? null,
@@ -39,16 +53,8 @@ export async function PATCH(req: NextRequest) {
 
     await prisma.onboarding.upsert({
       where: { userId: session.user.id },
-      create: {
-        userId: session.user.id,
-        planId: "free",
-        websiteUrls: urls,
-        ...baseData,
-      },
-      update: {
-        websiteUrls: { set: urls },
-        ...baseData,
-      },
+      create: createData,
+      update: updateData,
     });
 
     return NextResponse.json({ success: true });

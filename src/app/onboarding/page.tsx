@@ -72,6 +72,28 @@ const setupSchema = z.object({
 
 type SetupFormValues = z.infer<typeof setupSchema>;
 
+/** Request body for /api/onboarding/setup */
+interface SetupOnboardingBody {
+  websiteUrls: string[];
+  platform: string;
+  installType: "script" | "iframe";
+  preferredPlacement?: string;
+  accessMethod: "temporary_login" | "admin_invite" | "instructions";
+  notes?: string;
+}
+
+/** Request body for /api/onboarding/complete */
+interface CompleteOnboardingBody {
+  websiteUrls: string[];
+  platform: string;
+  installType: "script" | "iframe";
+  preferredPlacement: string;
+  accessMethod: "temporary_login" | "admin_invite" | "instructions";
+  notes: string;
+  smsConsentConfirmed: boolean;
+  smsConsentText: string;
+}
+
 const SMS_CONSENT_TEXT =
   "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
 
@@ -246,21 +268,22 @@ export default function OnboardingPage() {
     setLoading(true);
     try {
       const values = setupForm.getValues();
-      const urls = values.websiteUrls
+      const urls: string[] = values.websiteUrls
         .split(/[\n,]/)
         .map((u) => u.trim())
         .filter(Boolean);
+      const setupBody: SetupOnboardingBody = {
+        websiteUrls: urls,
+        platform: values.platform,
+        installType: values.installType,
+        preferredPlacement: values.preferredPlacement || undefined,
+        accessMethod: values.accessMethod,
+        notes: values.notes || undefined,
+      };
       await fetch("/api/onboarding/setup", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          websiteUrls: urls,
-          platform: values.platform,
-          installType: values.installType,
-          preferredPlacement: values.preferredPlacement || undefined,
-          accessMethod: values.accessMethod,
-          notes: values.notes || undefined,
-        }),
+        body: JSON.stringify(setupBody),
       });
       setStep(4);
     } catch {
@@ -286,19 +309,20 @@ export default function OnboardingPage() {
         .split(/[\n,]/)
         .map((u) => u.trim())
         .filter(Boolean);
+      const completeBody: CompleteOnboardingBody = {
+        websiteUrls: websiteUrlsArray,
+        platform: values.platform,
+        installType: values.installType,
+        preferredPlacement: values.preferredPlacement,
+        accessMethod: values.accessMethod,
+        notes: values.notes,
+        smsConsentConfirmed: true,
+        smsConsentText: smsConsentTyped,
+      };
       const res = await fetch("/api/onboarding/complete", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          websiteUrls: websiteUrlsArray,
-          platform: values.platform,
-          installType: values.installType,
-          preferredPlacement: values.preferredPlacement,
-          accessMethod: values.accessMethod,
-          notes: values.notes,
-          smsConsentConfirmed: true,
-          smsConsentText: smsConsentTyped,
-        }),
+        body: JSON.stringify(completeBody),
       });
       const data = await res.json();
       if (!res.ok) {
