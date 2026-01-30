@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { DotPattern } from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
 import { TeamManagementTab } from "@/components/app/team-management";
+import { SetupDetailsTab } from "@/components/app/setup-details";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -203,6 +204,7 @@ export default function SettingsPage() {
         <Tabs defaultValue="account" className="space-y-6">
           <TabsList>
             <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="setup">Setup</TabsTrigger>
             <TabsTrigger value="team">Team</TabsTrigger>
           </TabsList>
 
@@ -374,6 +376,10 @@ export default function SettingsPage() {
             )}
           </Button>
         </div>
+          </TabsContent>
+
+          <TabsContent value="setup" className="space-y-6">
+            <SetupDetailsTab />
           </TabsContent>
 
           <TabsContent value="team" className="space-y-6">
