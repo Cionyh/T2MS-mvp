@@ -68,6 +68,9 @@ export default function ClientDashboardLayout({
   const [planStatus, setPlanStatus] = useState<string>("");
 
   useEffect(() => {
+    // Skip onboarding for admins — onboarding is for customers only
+    if (session?.user?.role === "admin") return;
+
     const checkOnboarding = async () => {
       try {
         const res = await fetch("/api/onboarding/status");
@@ -82,7 +85,7 @@ export default function ClientDashboardLayout({
     if (session?.user?.id) {
       checkOnboarding();
     }
-  }, [session?.user?.id, router]);
+  }, [session?.user?.id, session?.user?.role, router]);
 
   useEffect(() => {
     const fetchSubscription = async () => {
