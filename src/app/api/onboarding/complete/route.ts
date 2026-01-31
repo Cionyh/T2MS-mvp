@@ -45,25 +45,9 @@ export async function PATCH(req: NextRequest) {
       smsConsentText?: string;
     };
 
-    if (!smsConsentConfirmed) {
-      return NextResponse.json(
-        { error: "SMS consent must be confirmed" },
-        { status: 400 }
-      );
-    }
-    if (
-      typeof smsConsentText !== "string" ||
-      smsConsentText.trim().toLowerCase() !== REQUIRED_CONSENT_TEXT.toLowerCase()
-    ) {
-      return NextResponse.json(
-        { error: "SMS consent text must be typed exactly as shown" },
-        { status: 400 }
-      );
-    }
-
     const now = new Date();
 
-    // If install setup fields provided → create Customer + InstallJob (install request flow)
+    // If install setup fields provided → create Customer + InstallJob (requires SMS consent per requirements)
     const hasInstallSetup =
       websiteUrls &&
       Array.isArray(websiteUrls) &&
@@ -72,6 +56,25 @@ export async function PATCH(req: NextRequest) {
       installType &&
       ["script", "iframe"].includes(installType) &&
       accessMethod;
+
+    // SMS consent is required only when creating an Install Job (per requirements: "hard gate before we create the Install Job")
+    if (hasInstallSetup) {
+      if (!smsConsentConfirmed) {
+        return NextResponse.json(
+          { error: "SMS consent must be confirmed" },
+          { status: 400 }
+        );
+      }
+      if (
+        typeof smsConsentText !== "string" ||
+        smsConsentText.trim().toLowerCase() !== REQUIRED_CONSENT_TEXT.toLowerCase()
+      ) {
+        return NextResponse.json(
+          { error: "SMS consent text must be typed exactly as shown" },
+          { status: 400 }
+        );
+      }
+    }
 
     if (hasInstallSetup) {
       // Validate access credentials only when provided (onboarding form may not send them yet)

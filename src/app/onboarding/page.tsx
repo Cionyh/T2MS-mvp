@@ -157,6 +157,25 @@ function OnboardingContent() {
     if (s >= 1 && s <= 4) setStep(s);
   }, [stepParam]);
 
+  // When on step 3 with no add-on (e.g. return from Stripe subscription-only), complete and redirect
+  useEffect(() => {
+    if (step === 3 && !installAddonSku && status !== null) {
+      fetch("/api/onboarding/complete", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (!data.error) {
+            toast.success("Onboarding complete!");
+            router.replace("/app");
+          }
+        })
+        .catch(() => {});
+    }
+  }, [step, installAddonSku, status, router]);
+
   useEffect(() => {
     if (sessionId && step === 3) {
       fetch("/api/onboarding/confirm-addon", {
@@ -234,6 +253,24 @@ function OnboardingContent() {
           setLoading(false);
           return;
         }
+      }
+
+      // No install add-on: skip setup & SMS consent, complete and redirect (per requirements)
+      if (!installAddonSku || installAddonSku === "") {
+        const res = await fetch("/api/onboarding/complete", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json();
+        if (res.ok && !data.error) {
+          toast.success("Onboarding complete!");
+          router.replace("/app");
+          return;
+        }
+        toast.error(data.error || "Failed to complete onboarding");
+        setLoading(false);
+        return;
       }
 
       setStep(3);
@@ -327,12 +364,18 @@ function OnboardingContent() {
     );
   }
 
-  const steps = [
-    { num: 1, label: "Plan & Add-on", icon: CreditCard },
-    { num: 2, label: "Payment", icon: CreditCard },
-    { num: 3, label: "Setup", icon: Globe },
-    { num: 4, label: "SMS Consent", icon: ShieldCheck },
-  ];
+  const hasInstallAddon = !!(installAddonSku && installAddonSku !== "");
+  const steps = hasInstallAddon
+    ? [
+        { num: 1, label: "Plan & Add-on", icon: CreditCard },
+        { num: 2, label: "Payment", icon: CreditCard },
+        { num: 3, label: "Setup", icon: Globe },
+        { num: 4, label: "SMS Consent", icon: ShieldCheck },
+      ]
+    : [
+        { num: 1, label: "Plan & Add-on", icon: CreditCard },
+        { num: 2, label: "Payment", icon: CreditCard },
+      ];
 
   return (
     <div className="min-h-screen bg-muted/30 py-8 px-4">
@@ -439,7 +482,14 @@ function OnboardingContent() {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 3 && !hasInstallAddon && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="ml-3 text-muted-foreground">Completing your setup…</p>
+          </div>
+        )}
+
+        {step === 3 && hasInstallAddon && (
           <Card>
             <CardHeader>
               <CardTitle>Complete setup</CardTitle>
@@ -574,7 +624,7 @@ function OnboardingContent() {
           </Card>
         )}
 
-        {step === 4 && (
+        {step === 4 && hasInstallAddon && (
           <Card>
             <CardHeader>
               <CardTitle>SMS consent</CardTitle>
