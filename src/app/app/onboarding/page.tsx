@@ -202,12 +202,11 @@ export default function OnboardingPage() {
     setSubmitting(true);
 
     try {
-      // Prepare access credentials based on access method
-      let accessCredentials: any = {};
+      // Prepare access credentials for InstallJob (API expects adminUrl, username, etc.)
+      let accessCredentials: Record<string, unknown> = {};
 
       if (values.accessMethod === ACCESS_METHOD.TEMPORARY_LOGIN) {
         accessCredentials = {
-          method: ACCESS_METHOD.TEMPORARY_LOGIN,
           adminUrl: values.tempLoginUrl,
           username: values.tempLoginUsername,
           password: values.tempLoginPassword,
@@ -215,19 +214,17 @@ export default function OnboardingPage() {
         };
       } else if (values.accessMethod === ACCESS_METHOD.ADMIN_INVITE) {
         accessCredentials = {
-          method: ACCESS_METHOD.ADMIN_INVITE,
           email: values.inviteEmail,
           sender: values.inviteSender || "installer@t2ms.com",
         };
       } else if (values.accessMethod === ACCESS_METHOD.INSTRUCTIONS_ONLY) {
         accessCredentials = {
-          method: ACCESS_METHOD.INSTRUCTIONS_ONLY,
           steps: values.instructions,
         };
       }
 
-      const response = await fetch("/api/onboarding", {
-        method: "POST",
+      const response = await fetch("/api/onboarding/complete", {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
@@ -239,18 +236,21 @@ export default function OnboardingPage() {
           accessMethod: values.accessMethod,
           accessCredentials,
           notes: values.notes || null,
+          smsConsentConfirmed: true,
+          smsConsentText: values.smsConsentText,
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to submit onboarding");
+        throw new Error(data.error || "Failed to complete onboarding");
       }
 
       toast.success("Onboarding completed! Your install job has been created.");
       router.push("/app");
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred. Please try again.");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "An error occurred. Please try again.");
     } finally {
       setSubmitting(false);
     }

@@ -114,26 +114,19 @@ model WorkerPayout {
   @@map("worker_payout")
 }
 
+// Plan + add-on billing only. Install setup (URLs, platform, access, etc.) lives in Customer + InstallJob.
 model Onboarding {
-  id                      String    @id @default(cuid())
-  userId                  String    @unique
-  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  planId                  String    @default("free")
-  installAddonSku         String?   // "standard" | "restricted" | null
-  installAddonStatus      String?   // "paid" | "refunded" | "disputed" | null
-  stripeSubscriptionId    String?
-  stripePaymentIntentId   String?
-  websiteUrls             String[]  @default([])
-  platform                String?
-  installType             String?   // "script" | "iframe"
-  preferredPlacement      String?
-  accessMethod            String?   // "temporary_login" | "admin_invite" | "instructions"
-  accessCredentials       String?
-  notes                   String?
-  smsConsentConfirmedAt  DateTime?
-  completedAt             DateTime?
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId               String    @default("free")
+  installAddonSku      String?   // "standard" | "restricted" | null
+  installAddonStatus   String?   // "paid" | "refunded" | "disputed" | null
+  stripeSubscriptionId String?
+  stripePaymentIntentId String?
+  completedAt          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@map("onboarding")
 }

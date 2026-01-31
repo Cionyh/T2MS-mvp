@@ -33,16 +33,11 @@ const PLATFORMS = [
   "Other",
 ];
 
+// Plan + add-on only. Install setup data lives in InstallJob (see installJobs).
 interface OnboardingData {
   planId: string;
   installAddonSku: string | null;
   installAddonStatus: string | null;
-  websiteUrls: string[];
-  platform: string | null;
-  installType: string | null;
-  preferredPlacement: string | null;
-  accessMethod: string | null;
-  notes: string | null;
   completedAt: string | null;
 }
 
@@ -79,6 +74,22 @@ export function SetupDetailsTab() {
       .catch(() => setInstallJobs([]));
   }, []);
 
+  // Pre-fill form from latest install job when available
+  useEffect(() => {
+    if (installJobs.length > 0) {
+      const latest = installJobs[0];
+      setFormValues((prev) => ({
+        ...prev,
+        websiteUrls: (latest.websiteUrls || []).join("\n"),
+        platform: latest.platform || prev.platform,
+        installType: latest.installType || prev.installType,
+        preferredPlacement: (latest as { preferredPlacement?: string }).preferredPlacement ?? prev.preferredPlacement,
+        accessMethod: latest.accessMethod || prev.accessMethod,
+        notes: (latest as { notes?: string }).notes ?? prev.notes,
+      }));
+    }
+  }, [installJobs.length]);
+
   const fetchOnboarding = async () => {
     setLoading(true);
     try {
@@ -86,14 +97,6 @@ export function SetupDetailsTab() {
       const json = await res.json();
       if (json.onboarding) {
         setData(json.onboarding);
-        setFormValues({
-          websiteUrls: (json.onboarding.websiteUrls || []).join("\n"),
-          platform: json.onboarding.platform || "",
-          installType: json.onboarding.installType || "",
-          preferredPlacement: json.onboarding.preferredPlacement || "",
-          accessMethod: json.onboarding.accessMethod || "",
-          notes: json.onboarding.notes || "",
-        });
       } else {
         setData(null);
       }
@@ -123,12 +126,23 @@ export function SetupDetailsTab() {
           notes: formValues.notes || undefined,
         }),
       });
+      const json = await res.json();
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to save");
+        if (json.consentRequired) {
+          toast.error("Complete onboarding and SMS consent first to submit install requests.", {
+            action: { label: "Go to onboarding", onClick: () => (window.location.href = "/onboarding") },
+          });
+        } else {
+          toast.error(json.error || "Failed to save");
+        }
+        return;
       }
-      toast.success("Setup details updated");
+      toast.success("Install request submitted");
       fetchOnboarding();
+      fetch("/api/install-jobs")
+        .then((r) => r.json())
+        .then((d) => setInstallJobs(Array.isArray(d.jobs) ? d.jobs : []))
+        .catch(() => {});
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save");
     } finally {
@@ -144,41 +158,60 @@ export function SetupDetailsTab() {
     );
   }
 
-  if (!data) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Setup Details
-          </CardTitle>
-          <CardDescription>
-            Complete onboarding to add your website and install details here.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            You haven&apos;t completed onboarding yet. Go through the onboarding flow to set up your account.
-          </p>
-          <Button className="mt-4" onClick={() => (window.location.href = "/onboarding")}>
-            Complete onboarding
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      {/* Onboarding / Setup Details */}
+      {/* Plan & Add-on (from Onboarding table only) */}
+      {data ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Plan & Add-on
+            </CardTitle>
+            <CardDescription>
+              Your selected plan and install add-on (billing).
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm">
+              Plan: <span className="font-medium">{data.planId}</span>
+              {data.installAddonSku && (
+                <> · Install add-on: {data.installAddonSku} ({data.installAddonStatus ?? "pending"})</>
+              )}
+            </p>
+            <Button className="mt-2" variant="outline" size="sm" onClick={() => (window.location.href = "/onboarding")}>
+              Change plan
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Setup
+            </CardTitle>
+            <CardDescription>
+              Complete onboarding to choose your plan and optional install add-on.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => (window.location.href = "/onboarding")}>
+              Complete onboarding
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* New install request (creates Customer + InstallJob) */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Setup Details
+            New install request
           </CardTitle>
           <CardDescription>
-            View and update the website and install details you provided during onboarding.
+            Submit website and install details to create an install job. Our team will install the widget.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

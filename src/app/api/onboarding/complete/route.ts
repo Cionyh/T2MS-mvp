@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { INSTALL_JOB_STATUS, ACCESS_METHOD } from "@/lib/job-status";
 
+const REQUIRED_CONSENT_TEXT =
+  "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
+
+/**
+ * PATCH /api/onboarding/complete
+ * Complete onboarding. If install setup + SMS consent provided → create Customer + InstallJob and set consent.
+ * Always sets Onboarding.completedAt.
+ */
 export async function PATCH(req: NextRequest) {
   try {
     const session = await auth.api.getSession({
@@ -31,14 +39,12 @@ export async function PATCH(req: NextRequest) {
       installType?: string;
       preferredPlacement?: string;
       accessMethod?: string;
-      accessCredentials?: string;
+      accessCredentials?: unknown;
       notes?: string;
       smsConsentConfirmed?: boolean;
       smsConsentText?: string;
     };
 
-    const requiredConsentText =
-      "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
     if (!smsConsentConfirmed) {
       return NextResponse.json(
         { error: "SMS consent must be confirmed" },
@@ -47,7 +53,7 @@ export async function PATCH(req: NextRequest) {
     }
     if (
       typeof smsConsentText !== "string" ||
-      smsConsentText.trim().toLowerCase() !== requiredConsentText.toLowerCase()
+      smsConsentText.trim().toLowerCase() !== REQUIRED_CONSENT_TEXT.toLowerCase()
     ) {
       return NextResponse.json(
         { error: "SMS consent text must be typed exactly as shown" },
@@ -55,25 +61,96 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const urls: string[] = Array.isArray(websiteUrls)
-      ? (websiteUrls as string[]).filter((u) => typeof u === "string" && u.trim())
-      : [];
+    const now = new Date();
 
-    const updateData: Prisma.OnboardingUpdateInput = {
-      websiteUrls: { set: urls },
-      platform: platform ?? null,
-      installType: installType ?? null,
-      preferredPlacement: preferredPlacement ?? null,
-      accessMethod: accessMethod ?? null,
-      accessCredentials: accessCredentials ?? null,
-      notes: notes ?? null,
-      smsConsentConfirmedAt: new Date(),
-      completedAt: new Date(),
-    };
+    // If install setup fields provided → create Customer + InstallJob (install request flow)
+    const hasInstallSetup =
+      websiteUrls &&
+      Array.isArray(websiteUrls) &&
+      websiteUrls.length > 0 &&
+      platform &&
+      installType &&
+      ["script", "iframe"].includes(installType) &&
+      accessMethod;
 
-    await prisma.onboarding.update({
+    if (hasInstallSetup) {
+      // Validate access credentials only when provided (onboarding form may not send them yet)
+      if (accessCredentials && typeof accessCredentials === "object" && Object.keys(accessCredentials as object).length > 0) {
+        const creds = accessCredentials as Record<string, unknown>;
+        if (accessMethod === ACCESS_METHOD.TEMPORARY_LOGIN) {
+          if (!creds.adminUrl || !creds.username || !creds.password || !creds.expiry) {
+            return NextResponse.json(
+              { error: "All temporary login fields are required" },
+              { status: 400 }
+            );
+          }
+        } else if (accessMethod === ACCESS_METHOD.ADMIN_INVITE) {
+          if (!creds.email) {
+            return NextResponse.json(
+              { error: "Invite email is required" },
+              { status: 400 }
+            );
+          }
+        } else if (accessMethod === ACCESS_METHOD.INSTRUCTIONS_ONLY) {
+          if (!creds.steps || String(creds.steps).trim().length === 0) {
+            return NextResponse.json(
+              { error: "Instructions are required" },
+              { status: 400 }
+            );
+          }
+        }
+      }
+
+      let customer = await prisma.customer.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!customer) {
+        customer = await prisma.customer.create({
+          data: {
+            userId: session.user.id,
+            smsConsentConfirmedAt: now,
+            onboardingCompletedAt: now,
+          },
+        });
+      } else {
+        await prisma.customer.update({
+          where: { id: customer.id },
+          data: {
+            smsConsentConfirmedAt: now,
+            onboardingCompletedAt: now,
+          },
+        });
+      }
+
+      const urls = (websiteUrls as string[]).filter((u) => typeof u === "string" && u.trim());
+      await prisma.installJob.create({
+        data: {
+          customerId: customer.id,
+          platform,
+          installType,
+          websiteUrls: urls,
+          preferredPlacement: preferredPlacement || null,
+          accessMethod,
+          accessCredentials: JSON.stringify(accessCredentials || {}),
+          notes: notes || null,
+          status: INSTALL_JOB_STATUS.QUEUED,
+          priority: 0,
+          checklistCompleted: false,
+          proofUploaded: false,
+        },
+      });
+    }
+
+    // Mark onboarding complete (plan/add-on flow)
+    await prisma.onboarding.upsert({
       where: { userId: session.user.id },
-      data: updateData,
+      create: {
+        userId: session.user.id,
+        planId: "free",
+        completedAt: now,
+      },
+      update: { completedAt: now },
     });
 
     return NextResponse.json({ success: true });

@@ -271,32 +271,7 @@ function OnboardingContent() {
   const handleStep3Next = async () => {
     const valid = await setupForm.trigger();
     if (!valid) return;
-    setLoading(true);
-    try {
-      const values = setupForm.getValues();
-      const urls: string[] = values.websiteUrls
-        .split(/[\n,]/)
-        .map((u) => u.trim())
-        .filter(Boolean);
-      const setupBody: SetupOnboardingBody = {
-        websiteUrls: urls,
-        platform: values.platform,
-        installType: values.installType,
-        preferredPlacement: values.preferredPlacement || undefined,
-        accessMethod: values.accessMethod,
-        notes: values.notes || undefined,
-      };
-      await fetch("/api/onboarding/setup", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(setupBody),
-      });
-      setStep(4);
-    } catch {
-      toast.error("Failed to save setup details");
-    } finally {
-      setLoading(false);
-    }
+    setStep(4);
   };
 
   const handleStep4Submit = async () => {
