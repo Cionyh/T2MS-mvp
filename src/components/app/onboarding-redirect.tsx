@@ -29,10 +29,9 @@ export function OnboardingRedirect() {
         }
 
         const data = await response.json();
-        
-        // If onboarding is not completed, redirect to onboarding page
-        if (!data.onboardingCompleted) {
-          router.push("/app/onboarding");
+        // If onboarding (plan/add-on flow) is not completed, redirect to main onboarding flow
+        if (!data.onboarding?.completedAt) {
+          router.push("/onboarding");
           return;
         }
 

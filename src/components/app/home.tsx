@@ -85,7 +85,7 @@ export default function ClientDashboardPage({
               New Site
             </Button>
           </Link>
-          <Link href="/app/onboarding">
+          <Link href="/app/install-request">
             <Button className="text-foreground">
               <Plus className="mr-2 h-4 w-4" />
               Get Widget Installed
