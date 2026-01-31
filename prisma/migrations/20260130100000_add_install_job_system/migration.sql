@@ -1,5 +1,5 @@
--- CreateTable
-CREATE TABLE "customer" (
+-- CreateTable (idempotent: skip if table already exists)
+CREATE TABLE IF NOT EXISTS "customer" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "smsConsentConfirmedAt" TIMESTAMP(3),
@@ -10,8 +10,7 @@ CREATE TABLE "customer" (
     CONSTRAINT "customer_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "install_job" (
+CREATE TABLE IF NOT EXISTS "install_job" (
     "id" TEXT NOT NULL,
     "customerId" TEXT NOT NULL,
     "platform" TEXT NOT NULL,
@@ -32,8 +31,7 @@ CREATE TABLE "install_job" (
     CONSTRAINT "install_job_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "worker" (
+CREATE TABLE IF NOT EXISTS "worker" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "availability" TEXT NOT NULL DEFAULT 'OFF_SHIFT',
@@ -44,8 +42,7 @@ CREATE TABLE "worker" (
     CONSTRAINT "worker_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "proof" (
+CREATE TABLE IF NOT EXISTS "proof" (
     "id" TEXT NOT NULL,
     "jobId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
@@ -56,8 +53,7 @@ CREATE TABLE "proof" (
     CONSTRAINT "proof_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "worker_payout" (
+CREATE TABLE IF NOT EXISTS "worker_payout" (
     "id" TEXT NOT NULL,
     "workerId" TEXT NOT NULL,
     "jobId" TEXT NOT NULL,
@@ -69,41 +65,54 @@ CREATE TABLE "worker_payout" (
     CONSTRAINT "worker_payout_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "customer_userId_key" ON "customer"("userId");
+-- CreateIndex (idempotent)
+CREATE UNIQUE INDEX IF NOT EXISTS "customer_userId_key" ON "customer"("userId");
+CREATE INDEX IF NOT EXISTS "install_job_status_idx" ON "install_job"("status");
+CREATE INDEX IF NOT EXISTS "install_job_worker_idx" ON "install_job"("assignedWorkerId", "status");
+CREATE INDEX IF NOT EXISTS "install_job_customer_idx" ON "install_job"("customerId");
+CREATE UNIQUE INDEX IF NOT EXISTS "worker_userId_key" ON "worker"("userId");
+CREATE INDEX IF NOT EXISTS "worker_availability_idx" ON "worker"("availability");
 
--- CreateIndex
-CREATE INDEX "install_job_status_idx" ON "install_job"("status");
-
--- CreateIndex
-CREATE INDEX "install_job_worker_idx" ON "install_job"("assignedWorkerId", "status");
-
--- CreateIndex
-CREATE INDEX "install_job_customer_idx" ON "install_job"("customerId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "worker_userId_key" ON "worker"("userId");
-
--- CreateIndex
-CREATE INDEX "worker_availability_idx" ON "worker"("availability");
-
--- AddForeignKey
-ALTER TABLE "customer" ADD CONSTRAINT "customer_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "install_job" ADD CONSTRAINT "install_job_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "install_job" ADD CONSTRAINT "install_job_assignedWorkerId_fkey" FOREIGN KEY ("assignedWorkerId") REFERENCES "worker"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "worker" ADD CONSTRAINT "worker_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "proof" ADD CONSTRAINT "proof_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "install_job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "worker_payout" ADD CONSTRAINT "worker_payout_workerId_fkey" FOREIGN KEY ("workerId") REFERENCES "worker"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "worker_payout" ADD CONSTRAINT "worker_payout_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "install_job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- AddForeignKey (idempotent: ignore if constraint already exists)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'customer_userId_fkey') THEN
+        ALTER TABLE "customer" ADD CONSTRAINT "customer_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'install_job_customerId_fkey') THEN
+        ALTER TABLE "install_job" ADD CONSTRAINT "install_job_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'install_job_assignedWorkerId_fkey') THEN
+        ALTER TABLE "install_job" ADD CONSTRAINT "install_job_assignedWorkerId_fkey" FOREIGN KEY ("assignedWorkerId") REFERENCES "worker"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'worker_userId_fkey') THEN
+        ALTER TABLE "worker" ADD CONSTRAINT "worker_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'proof_jobId_fkey') THEN
+        ALTER TABLE "proof" ADD CONSTRAINT "proof_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "install_job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'worker_payout_workerId_fkey') THEN
+        ALTER TABLE "worker_payout" ADD CONSTRAINT "worker_payout_workerId_fkey" FOREIGN KEY ("workerId") REFERENCES "worker"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'worker_payout_jobId_fkey') THEN
+        ALTER TABLE "worker_payout" ADD CONSTRAINT "worker_payout_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "install_job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
