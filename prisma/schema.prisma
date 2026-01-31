@@ -29,9 +29,89 @@ model User {
   members     Member[]
   invitations Invitation[]
   onboarding  Onboarding?
+  customer    Customer?
+  worker      Worker?
 
   @@unique([email])
   @@map("user")
+}
+
+model Customer {
+  id                    String       @id @default(cuid())
+  userId                String       @unique
+  smsConsentConfirmedAt DateTime?
+  onboardingCompletedAt DateTime?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  installJobs           InstallJob[]
+
+  @@map("customer")
+}
+
+model InstallJob {
+  id                 String    @id @default(cuid())
+  customerId         String
+  platform           String
+  installType        String    // "script" | "iframe"
+  websiteUrls        String[]  @default([])
+  preferredPlacement String?
+  accessMethod       String
+  accessCredentials  String?
+  notes              String?
+  status             String    @default("QUEUED")
+  priority           Int       @default(0)
+  assignedWorkerId  String?
+  checklistCompleted Boolean   @default(false)
+  proofUploaded      Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  customer           Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  assignedWorker     Worker?   @relation(fields: [assignedWorkerId], references: [id], onDelete: SetNull)
+  proofs             Proof[]
+  payouts            WorkerPayout[]
+
+  @@map("install_job")
+}
+
+model Worker {
+  id             String       @id @default(cuid())
+  userId         String       @unique
+  availability   String       @default("OFF_SHIFT")
+  maxActiveJobs  Int          @default(2)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedJobs   InstallJob[]
+  payouts        WorkerPayout[]
+
+  @@map("worker")
+}
+
+model Proof {
+  id         String     @id @default(cuid())
+  jobId      String
+  type       String
+  fileUrl    String
+  fileSize   Int
+  uploadedAt DateTime  @default(now())
+  job        InstallJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@map("proof")
+}
+
+model WorkerPayout {
+  id        String     @id @default(cuid())
+  workerId  String
+  jobId     String
+  amount    Decimal
+  status    String     @default("EARNED")
+  createdAt DateTime   @default(now())
+  paidAt    DateTime?
+  worker    Worker     @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  job       InstallJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@map("worker_payout")
 }
 
 model Onboarding {

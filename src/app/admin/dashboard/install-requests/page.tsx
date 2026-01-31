@@ -21,29 +21,29 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface InstallRequest {
+interface InstallJobRow {
   id: string;
-  userId: string;
-  planId: string;
-  installAddonSku: string | null;
-  installAddonStatus: string | null;
+  customerId: string;
+  platform: string;
+  installType: string;
   websiteUrls: string[];
-  platform: string | null;
-  installType: string | null;
   preferredPlacement: string | null;
-  accessMethod: string | null;
+  accessMethod: string;
   notes: string | null;
-  completedAt: string | null;
+  status: string;
+  priority: number;
   createdAt: string;
-  user: {
-    id: string;
-    name: string | null;
-    email: string;
+  customer: {
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+    };
   };
 }
 
 interface ApiResponse {
-  data: InstallRequest[];
+  data: InstallJobRow[];
   pagination: {
     total: number;
     page: number;
@@ -51,6 +51,18 @@ interface ApiResponse {
     totalPages: number;
   };
 }
+
+const JOB_STATUSES = [
+  "QUEUED",
+  "ASSIGNED",
+  "IN_PROGRESS",
+  "BLOCKED_WAITING_CUSTOMER",
+  "SUBMITTED_FOR_QA",
+  "NEEDS_FIX",
+  "COMPLETED",
+  "CANCELLED",
+  "HOLD_FINANCE_REVIEW",
+];
 
 export default function AdminInstallRequestsPage() {
   const [page, setPage] = useState(1);
@@ -74,23 +86,23 @@ export default function AdminInstallRequestsPage() {
       .finally(() => setIsLoading(false));
   }, [page, statusFilter]);
 
-  const getStatusBadge = (status: string | null) => {
-    if (!status || status === "pending") {
-      return <Badge variant="outline">Pending</Badge>;
-    }
-    if (status === "paid") {
-      return <Badge className="bg-green-600">Paid</Badge>;
-    }
-    return <Badge variant="secondary">{status}</Badge>;
-  };
-
-  const getAddonLabel = (sku: string | null) => {
-    if (!sku) return "—";
-    return sku === "standard"
-      ? "Standard (script)"
-      : sku === "restricted"
-        ? "Restricted (iframe)"
-        : sku;
+  const getStatusBadge = (status: string) => {
+    const map: Record<string, string> = {
+      QUEUED: "outline",
+      ASSIGNED: "secondary",
+      IN_PROGRESS: "default",
+      BLOCKED_WAITING_CUSTOMER: "destructive",
+      SUBMITTED_FOR_QA: "secondary",
+      NEEDS_FIX: "destructive",
+      COMPLETED: "default",
+      CANCELLED: "outline",
+      HOLD_FINANCE_REVIEW: "secondary",
+    };
+    return (
+      <Badge variant={(map[status] as "outline" | "secondary" | "default" | "destructive") || "outline"}>
+        {status.replace(/_/g, " ")}
+      </Badge>
+    );
   };
 
   if (isLoading && !data) {
@@ -114,30 +126,33 @@ export default function AdminInstallRequestsPage() {
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Wrench className="h-6 w-6" />
-          Widget Install Requests
+          Install Requests (Install Jobs)
         </h1>
         <p className="text-muted-foreground mt-1">
-          Customers who purchased the widget install add-on. Reach out to complete installations.
+          Widget install jobs from the install_job table. Assign workers and track status.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Install Requests</CardTitle>
+          <CardTitle>Install Jobs</CardTitle>
           <CardDescription>
-            {data?.pagination.total ?? 0} total request{data?.pagination.total !== 1 ? "s" : ""}
+            {data?.pagination.total ?? 0} total job{data?.pagination.total !== 1 ? "s" : ""}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-4 items-center">
             <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1); }}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-48">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="all">All statuses</SelectItem>
+                {JOB_STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s.replace(/_/g, " ")}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -147,10 +162,10 @@ export default function AdminInstallRequestsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Add-on</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Website(s)</TableHead>
                   <TableHead>Platform</TableHead>
+                  <TableHead>Install type</TableHead>
+                  <TableHead>Website(s)</TableHead>
                   <TableHead>Access</TableHead>
                   <TableHead>Requested</TableHead>
                 </TableRow>
@@ -159,29 +174,29 @@ export default function AdminInstallRequestsPage() {
                 {data?.data.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No install requests found.
+                      No install jobs found. Run the migration if install_job table is new.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  data?.data.map((req) => (
-                    <TableRow key={req.id}>
+                  data?.data.map((job) => (
+                    <TableRow key={job.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{req.user.name || "—"}</div>
-                          <div className="text-sm text-muted-foreground">{req.user.email}</div>
+                          <div className="font-medium">{job.customer?.user?.name ?? "—"}</div>
+                          <div className="text-sm text-muted-foreground">{job.customer?.user?.email ?? "—"}</div>
                         </div>
                       </TableCell>
-                      <TableCell>{getAddonLabel(req.installAddonSku)}</TableCell>
-                      <TableCell>{getStatusBadge(req.installAddonStatus)}</TableCell>
+                      <TableCell>{getStatusBadge(job.status)}</TableCell>
+                      <TableCell>{job.platform || "—"}</TableCell>
+                      <TableCell>{job.installType || "—"}</TableCell>
                       <TableCell>
-                        <div className="max-w-[200px] truncate text-sm" title={req.websiteUrls?.join(", ")}>
-                          {req.websiteUrls?.length ? req.websiteUrls.join(", ") : "—"}
+                        <div className="max-w-[200px] truncate text-sm" title={job.websiteUrls?.join(", ")}>
+                          {job.websiteUrls?.length ? job.websiteUrls.join(", ") : "—"}
                         </div>
                       </TableCell>
-                      <TableCell>{req.platform || "—"}</TableCell>
-                      <TableCell className="text-sm">{req.accessMethod || "—"}</TableCell>
+                      <TableCell className="text-sm">{job.accessMethod || "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {new Date(req.createdAt).toLocaleDateString()}
+                        {new Date(job.createdAt).toLocaleDateString()}
                       </TableCell>
                     </TableRow>
                   ))

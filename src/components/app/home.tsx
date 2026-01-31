@@ -51,9 +51,9 @@ export default function ClientDashboardPage({
 
   const [hasInstallRequest, setHasInstallRequest] = useState<boolean | null>(null);
   useEffect(() => {
-    fetch("/api/onboarding/status")
+    fetch("/api/install-jobs")
       .then((r) => r.json())
-      .then((d) => setHasInstallRequest(!!d.installAddonSku))
+      .then((d) => setHasInstallRequest(Array.isArray(d.jobs) && d.jobs.length > 0))
       .catch(() => setHasInstallRequest(false));
   }, []);
 
