@@ -6,17 +6,20 @@ import { verifyClientAccess } from "@/lib/organization-helpers";
 //@ts-ignore
 import * as twilio from "twilio";
 
-const getEnvVar = (name: string): string => {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing environment variable: ${name}`);
-  return value;
-};
+function getTwilioClient() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (!accountSid || !authToken) {
+    throw new Error("TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN must be set");
+  }
+  return twilio.default(accountSid, authToken);
+}
 
-const twilioAccountSid = getEnvVar("TWILIO_ACCOUNT_SID");
-const twilioAuthToken = getEnvVar("TWILIO_AUTH_TOKEN");
-const twilioVerifyServiceSid = getEnvVar("TWILIO_VERIFY_SERVICE_SID");
-
-const twilioClient = twilio.default(twilioAccountSid, twilioAuthToken);
+function getTwilioVerifyServiceSid(): string {
+  const sid = process.env.TWILIO_VERIFY_SERVICE_SID;
+  if (!sid) throw new Error("Missing environment variable: TWILIO_VERIFY_SERVICE_SID");
+  return sid;
+}
 
 /**
  * POST /api/phone/confirm
@@ -69,6 +72,8 @@ export async function POST(req: NextRequest) {
     // Handle OTP verification using Twilio Verify API
     if (phoneNumber.verificationMethod === "OTP" && phoneNumber.twilioVerifySid) {
       try {
+        const twilioClient = getTwilioClient();
+        const twilioVerifyServiceSid = getTwilioVerifyServiceSid();
         // Verify the code using Twilio Verify API
         const verificationCheck = await twilioClient.verify.v2
           .services(twilioVerifyServiceSid)

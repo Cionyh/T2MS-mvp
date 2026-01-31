@@ -1,21 +1,50 @@
 import { auth } from "@/lib/auth";
 import { NextRequest } from "next/server";
+import crypto from "crypto";
+
+const SKIP_SIGNATURE_VERIFY =
+  process.env.STRIPE_WEBHOOK_SKIP_VERIFY === "true" ||
+  process.env.STRIPE_WEBHOOK_SKIP_VERIFY === "1";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
-    const signature = request.headers.get("stripe-signature");
+    let signature = request.headers.get("stripe-signature");
+
+    // For local/testing: auto-add signature so Postman can send without it (remove in production)
+    if (!signature && SKIP_SIGNATURE_VERIFY && process.env.STRIPE_WEBHOOK_SECRET) {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const signedPayload = `${timestamp}.${body}`;
+      const sig = crypto
+        .createHmac("sha256", process.env.STRIPE_WEBHOOK_SECRET)
+        .update(signedPayload)
+        .digest("hex");
+      signature = `t=${timestamp},v1=${sig}`;
+    }
 
     if (!signature) {
       return new Response("Missing stripe-signature header", { status: 400 });
     }
 
-    // The auth handler will process the webhook
-    const response = await auth.handler(request);
-    
+    // Reconstruct request with body (consumed above) and signature for auth.handler
+    const url = request.url;
+    const headers = new Headers(request.headers);
+    headers.set("stripe-signature", signature);
+
+    const requestWithSignature = new Request(url, {
+      method: "POST",
+      body,
+      headers,
+    });
+
+    const response = await auth.handler(requestWithSignature);
+
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Webhook error:", error);
-    return new Response(`Webhook Error: ${error.message}`, { status: 400 });
+    return new Response(
+      `Webhook Error: ${error instanceof Error ? error.message : "Unknown error"}`,
+      { status: 400 }
+    );
   }
 }

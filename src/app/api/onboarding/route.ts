@@ -6,11 +6,10 @@ import { INSTALL_JOB_STATUS, ACCESS_METHOD } from "@/lib/job-status";
 
 /**
  * POST /api/onboarding
- * Submit onboarding form and create install job
+ * Submit onboarding form and create install job (Phase 2)
  */
 export async function POST(req: NextRequest) {
   try {
-    // 1. Authenticate user
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -22,7 +21,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Parse request body
     const body = await req.json();
     const {
       websiteUrls,
@@ -34,7 +32,6 @@ export async function POST(req: NextRequest) {
       notes,
     } = body;
 
-    // 3. Validate required fields
     if (!websiteUrls || !Array.isArray(websiteUrls) || websiteUrls.length === 0) {
       return NextResponse.json(
         { error: "At least one website URL is required" },
@@ -63,7 +60,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Validate access credentials based on access method
     if (accessMethod === ACCESS_METHOD.TEMPORARY_LOGIN) {
       if (
         !accessCredentials?.adminUrl ||
@@ -92,22 +88,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 5. Get or create customer record
     let customer = await prisma.customer.findUnique({
       where: { userId: session.user.id },
     });
 
     if (!customer) {
-      // Create customer record
       customer = await prisma.customer.create({
         data: {
           userId: session.user.id,
-          smsConsentConfirmedAt: new Date(), // Set when onboarding is submitted
+          smsConsentConfirmedAt: new Date(),
           onboardingCompletedAt: new Date(),
         },
       });
     } else {
-      // Update existing customer record
       customer = await prisma.customer.update({
         where: { id: customer.id },
         data: {
@@ -117,10 +110,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 6. Encrypt access credentials (for now, store as JSON string - TODO: implement KMS encryption)
     const encryptedCredentials = JSON.stringify(accessCredentials);
 
-    // 7. Create install job
     const installJob = await prisma.installJob.create({
       data: {
         customerId: customer.id,
@@ -143,10 +134,10 @@ export async function POST(req: NextRequest) {
       jobId: installJob.id,
       message: "Onboarding completed and install job created",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[ONBOARDING_POST]", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
   }
@@ -154,45 +145,42 @@ export async function POST(req: NextRequest) {
 
 /**
  * GET /api/onboarding
- * Get onboarding status for current user
+ * Returns full onboarding details from Onboarding table (plan, add-on, setup) for dashboard
  */
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
     });
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const customer = await prisma.customer.findUnique({
+    const onboarding = await prisma.onboarding.findUnique({
       where: { userId: session.user.id },
-      include: {
-        installJobs: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
-      },
     });
 
-    if (!customer) {
-      return NextResponse.json({
-        onboardingCompleted: false,
-        smsConsentConfirmed: false,
-      });
+    if (!onboarding) {
+      return NextResponse.json({ onboarding: null });
     }
 
     return NextResponse.json({
-      onboardingCompleted: !!customer.onboardingCompletedAt,
-      smsConsentConfirmed: !!customer.smsConsentConfirmedAt,
-      latestJob: customer.installJobs[0] || null,
+      onboarding: {
+        planId: onboarding.planId,
+        installAddonSku: onboarding.installAddonSku,
+        installAddonStatus: onboarding.installAddonStatus,
+        websiteUrls: onboarding.websiteUrls,
+        platform: onboarding.platform,
+        installType: onboarding.installType,
+        preferredPlacement: onboarding.preferredPlacement,
+        accessMethod: onboarding.accessMethod,
+        notes: onboarding.notes,
+        completedAt: onboarding.completedAt,
+      },
     });
-  } catch (error: any) {
-    console.error("[ONBOARDING_GET]", error);
+  } catch (error) {
+    console.error("Onboarding GET error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

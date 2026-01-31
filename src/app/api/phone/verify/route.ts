@@ -7,18 +7,22 @@ import { verifyClientAccess } from "@/lib/organization-helpers";
 //@ts-ignore
 import * as twilio from "twilio";
 
-const getEnvVar = (name: string): string => {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing environment variable: ${name}`);
-  return value;
-};
+function getTwilioClient() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (!accountSid || !authToken) {
+    throw new Error("TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN must be set");
+  }
+  return twilio.default(accountSid, authToken);
+}
 
-const twilioAccountSid = getEnvVar("TWILIO_ACCOUNT_SID");
-const twilioAuthToken = getEnvVar("TWILIO_AUTH_TOKEN");
-const twilioPhoneNumber = getEnvVar("TWILIO_PHONE_NUMBER");
-const twilioVerifyServiceSid = getEnvVar("TWILIO_VERIFY_SERVICE_SID");
-
-const twilioClient = twilio.default(twilioAccountSid, twilioAuthToken);
+function getTwilioEnv() {
+  const phoneNumber = process.env.TWILIO_PHONE_NUMBER;
+  const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+  if (!phoneNumber) throw new Error("Missing environment variable: TWILIO_PHONE_NUMBER");
+  if (!verifyServiceSid) throw new Error("Missing environment variable: TWILIO_VERIFY_SERVICE_SID");
+  return { phoneNumber, verifyServiceSid };
+}
 
 /**
  * POST /api/phone/verify
@@ -74,6 +78,8 @@ export async function POST(req: NextRequest) {
     if (isFirstPhone) {
       // Use Twilio Verify API for owner's first phone
       try {
+        const twilioClient = getTwilioClient();
+        const { verifyServiceSid: twilioVerifyServiceSid } = getTwilioEnv();
         // Initiate Twilio Verify verification
         const verification = await twilioClient.verify.v2
           .services(twilioVerifyServiceSid)

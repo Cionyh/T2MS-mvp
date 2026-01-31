@@ -8,11 +8,84 @@ import { stripe } from "@better-auth/stripe"
 import Stripe from "stripe"
 
 const db = new PrismaClient();
+
+// Only create Stripe client when key is set (avoids build failure when env is missing)
 const stripeClient = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2025-08-27.basil",
-    })
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" })
   : null;
+
+const plugins: Parameters<typeof betterAuth>[0]["plugins"] = [
+    admin(),
+    organization({
+      async sendInvitationEmail(data) {
+        // TODO: Implement email sending for organization invitations
+        // You can use your email service here (e.g., Resend, SendGrid, etc.)
+        const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation/${data.id}`;
+        console.log(`Invitation email should be sent to ${data.email} with link: ${inviteLink}`);
+        // Example:
+        // await sendEmail({
+        //   to: data.email,
+        //   subject: `You've been invited to join ${data.organization.name}`,
+        //   html: `...`
+        // });
+      },
+    }),
+  ];
+
+if (stripeClient && process.env.STRIPE_WEBHOOK_SECRET) {
+  plugins.push(
+    stripe({
+      stripeClient,
+      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+      createCustomerOnSignUp: true,
+      subscription: {
+        enabled: true,
+        plans: [
+          {
+            name: "starter",
+            priceId: process.env.STRIPE_STARTER_PRICE_ID!,
+            limits: {
+              websites: 50,
+              messages: 10000,
+              storage: 50
+            },
+            freeTrial: {
+              days: 14
+            }
+          },
+          {
+            name: "pro",
+            priceId: process.env.STRIPE_PRO_PRICE_ID!,
+            limits: {
+              websites: 200,
+              messages: 50000,
+              storage: 200
+            },
+            freeTrial: {
+              days: 14
+            }
+          },
+          {
+            name: "enterprise",
+            priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID!,
+            limits: {
+              websites: -1,
+              messages: -1,
+              storage: 1000
+            }
+          }
+        ],
+        authorizeReference: async ({ user, session, referenceId, action }) => {
+          if (referenceId === user.id) {
+            return true;
+          }
+          return false;
+        },
+        requireEmailVerification: false
+      }
+    })
+  );
+}
 
 export const auth = betterAuth({
 	database: prismaAdapter(db, {
@@ -37,80 +110,5 @@ export const auth = betterAuth({
 		enabled: true,
     },
 
-    plugins: [
-    admin(),
-    organization({
-      async sendInvitationEmail(data) {
-        // TODO: Implement email sending for organization invitations
-        // You can use your email service here (e.g., Resend, SendGrid, etc.)
-        const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation/${data.id}`;
-        console.log(`Invitation email should be sent to ${data.email} with link: ${inviteLink}`);
-        // Example:
-        // await sendEmail({
-        //   to: data.email,
-        //   subject: `You've been invited to join ${data.organization.name}`,
-        //   html: `...`
-        // });
-      },
-    }),
-    ...(stripeClient && process.env.STRIPE_WEBHOOK_SECRET
-      ? [
-          stripe({
-            stripeClient,
-            stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-            createCustomerOnSignUp: true,
-            subscription: {
-              enabled: true,
-              plans: [
-                {
-                  name: "starter",
-                  priceId: process.env.STRIPE_STARTER_PRICE_ID!,
-                  limits: {
-                    websites: 50,
-                    messages: 10000,
-                    storage: 50
-                  },
-                  freeTrial: {
-                    days: 14
-                  }
-                },
-                {
-                  name: "pro",
-                  priceId: process.env.STRIPE_PRO_PRICE_ID!,
-                  limits: {
-                    websites: 200,
-                    messages: 50000,
-                    storage: 200
-                  },
-                  freeTrial: {
-                    days: 14
-                  }
-                },
-                {
-                  name: "enterprise",
-                  priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID!,
-                  limits: {
-                    websites: -1, 
-                    messages: -1, 
-                    storage: 1000
-                  }
-                }
-              ],
-              authorizeReference: async ({ user, session, referenceId, action }) => {
-                // Allow users to manage their own subscriptions
-                // For now, we'll allow any authenticated user to manage subscriptions with their own user ID
-                if (referenceId === user.id) {
-                  return true;
-                }
-                
-                // You can add more complex authorization logic here
-                // For example, check if the user is an admin or has permission to manage the organization
-                return false;
-              },
-              requireEmailVerification: false
-            }
-          })
-        ]
-      : []),
-  ],
+    plugins,
 });

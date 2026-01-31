@@ -207,19 +207,19 @@ export async function getActiveOrganization(): Promise<string | null> {
  * Uses Better Auth's permission system
  */
 export async function hasOrganizationPermission(
-  organizationId: string,
+  _organizationId: string,
   permissions: Record<string, string[]>
 ): Promise<boolean> {
   try {
-    const result = await auth.api.hasPermission({
+    const api = auth.api as { hasPermission?: (args: { headers: Headers; body: { permissions: Record<string, string[]> } }) => Promise<{ data?: boolean; success?: boolean }> };
+    if (typeof api.hasPermission !== "function") {
+      return false;
+    }
+    const result = await api.hasPermission({
       headers: await headers(),
-      body: {
-        permissions,
-      },
+      body: { permissions },
     });
-
-    // Better Auth hasPermission returns { success: boolean } or boolean directly
-    return (result as any)?.data ?? (result as any)?.success ?? false;
+    return result?.data ?? result?.success ?? false;
   } catch (error) {
     console.error("Error checking organization permission:", error);
     return false;

@@ -5,18 +5,20 @@ import { checkMessageLimit } from "@/lib/plan-limits";
 //@ts-ignore
 import * as twilio from "twilio";
 
-// Load environment variables safely
-const getEnvVar = (name: string): string => {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing environment variable: ${name}`);
-  return value;
-};
-
-const twilioAccountSid = getEnvVar("TWILIO_ACCOUNT_SID");
-const twilioAuthToken = getEnvVar("TWILIO_AUTH_TOKEN");
-const twilioPhoneNumber = getEnvVar("TWILIO_PHONE_NUMBER");
-
-const twilioClient = twilio.default(twilioAccountSid, twilioAuthToken);
+function getTwilioEnv() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const phoneNumber = process.env.TWILIO_PHONE_NUMBER;
+  if (!accountSid) throw new Error("Missing environment variable: TWILIO_ACCOUNT_SID");
+  if (!authToken) throw new Error("Missing environment variable: TWILIO_AUTH_TOKEN");
+  if (!phoneNumber) throw new Error("Missing environment variable: TWILIO_PHONE_NUMBER");
+  return {
+    accountSid,
+    authToken,
+    phoneNumber,
+    client: twilio.default(accountSid, authToken),
+  };
+}
 
 async function readRawBody(stream: ReadableStream<Uint8Array>): Promise<string> {
   const reader = stream.getReader();
@@ -41,6 +43,9 @@ export async function POST(req: NextRequest) {
   console.log("=== Twilio Webhook Debug Start ===");
 
   try {
+    const twilioEnv = getTwilioEnv();
+    const { client: twilioClient, authToken: twilioAuthToken, phoneNumber: twilioPhoneNumber, accountSid: twilioAccountSid } = twilioEnv;
+
     const rawBody = await readRawBody(req.body!);
     const twilioSignature = req.headers.get("x-twilio-signature");
     const webhookUrl = getWebhookUrl(req);

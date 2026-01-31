@@ -1,0 +1,20 @@
+{
+  "id": "evt_test_webhook_trigger",
+  "object": "event",
+  "api_version": "2025-04-28.basil",
+  "created": 1700000000,
+  "type": "checkout.session.completed",
+  "data": {
+    "object": {
+      "id": "cs_test_xxx",
+      "object": "checkout.session",
+      "client_reference_id": "REPLACE_WITH_YOUR_USER_ID",
+      "customer": "cus_xxx",
+      "customer_email": "user@example.com",
+      "mode": "subscription",
+      "payment_status": "paid",
+      "status": "complete",
+      "subscription": "sub_xxx"
+    }
+  }
+}

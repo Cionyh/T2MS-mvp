@@ -3,7 +3,7 @@
 
 import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Menu,
   LayoutDashboard,
@@ -63,10 +63,31 @@ export default function ClientDashboardLayout({
   session,
 }: ClientDashboardLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSignOutDialog, setOpenSignOutDialog] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<string>("free");
   const [planStatus, setPlanStatus] = useState<string>("");
+
+  useEffect(() => {
+    // Skip onboarding for admins — onboarding is for customers only
+    if (session?.user?.role === "admin") return;
+
+    const checkOnboarding = async () => {
+      try {
+        const res = await fetch("/api/onboarding/status");
+        const data = await res.json();
+        if (data.completed === false) {
+          router.replace("/onboarding");
+        }
+      } catch {
+        // Ignore; user may not have started onboarding
+      }
+    };
+    if (session?.user?.id) {
+      checkOnboarding();
+    }
+  }, [session?.user?.id, session?.user?.role, router]);
 
   useEffect(() => {
     const fetchSubscription = async () => {

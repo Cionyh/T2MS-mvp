@@ -1,0 +1,1100 @@
+# T2MS Phase 2 - Complete Requirements Specification
+
+**Status:** FINAL – Approved for Implementation  
+**Audience:** Developer (Waqas)  
+**Scope Control:** No unapproved features or expansions  
+**Date:** Phase 2 Implementation
+
+---
+
+## Document Overview
+
+This document consolidates three complementary Phase 2 specifications that together define the complete system:
+
+1. **Paid Installation + Philippines Worker System** - Jobs, onboarding, PH workers, payouts, SOP
+2. **Multi-Texter / Multi-Phone Channel Routing** - Owner vs team vs worker permissions, page isolation, thread routing
+3. **Multi-User Architecture & Routing System** - Channel-centric routing, message integrity, database structures
+
+**Important Alignment Notes:**
+- "Team Page" in the routing spec is equivalent to "Channel"
+- Routing is page/channel-centric, not phone- or user-centric
+- Multiple texters and multiple phone numbers must work per page/channel with no message mixing
+- Philippines workers are restricted users and must respect page isolation and routing rules
+
+---
+
+## Table of Contents
+
+1. [Core Principles](#1-core-principles-non-negotiable)
+2. [Customer Signup + Billing Flow](#2-customer-signup--billing-flow)
+3. [Customer Onboarding + SMS Consent Gate](#3-customer-onboarding--sms-consent-gate)
+4. [Access Method Rules](#4-access-method-rules-worker-guardrails)
+5. [Reminder Email Automation](#5-reminder-email-automation)
+6. [Install Job Creation](#6-install-job-creation)
+7. [Worker System (Philippines)](#7-worker-system-philippines)
+8. [Queue & Assignment Logic](#8-queue--assignment-logic-fair--fast)
+9. [Installation & QA Requirements](#9-installation--qa-requirements)
+10. [Completion & QA Validation](#10-completion--qa-validation)
+11. [Worker Payout Ledger](#11-worker-payout-ledger)
+12. [Multi-User Architecture](#12-multi-user-architecture)
+13. [Channel Routing System](#13-channel-routing-system)
+14. [Security Requirements](#14-security-requirements)
+15. [Phase 2 Exclusions](#15-explicit-phase-2-exclusions)
+16. [Build Order](#16-phase-2-build-order-required)
+
+---
+
+## 1. Core Principles (Non-Negotiable)
+
+### 1.1 Worker Restrictions
+- **Workers do NOT initiate conversations**
+- Workers only:
+  - Install widgets
+  - Build Google Sites only when explicitly assigned
+  - Test installations
+  - Reply to inbound messages (when assigned)
+- **No outbound texting by workers in Phase 2**
+
+### 1.2 Payment Model
+- Workers are paid per completed job, not hourly
+- No job is payable without checklist + proof
+
+### 1.3 Scalability
+- System must scale from 1 to 10+ workers without redesign
+
+### 1.4 Channel-Centric Architecture
+- **Channels — not phone numbers — are the core routing unit**
+- No customer is ever "hostage" to a single phone number
+- A site/widget is connected to a channel
+- A channel can have:
+  - Multiple texters
+  - Multiple phone numbers
+- Phone numbers are replaceable resources
+- Texters are assignable participants
+
+### 1.5 Message Integrity
+- Every inbound customer message belongs to exactly ONE team page/channel at a time
+- Messages are never shared across pages
+- Team members see only their assigned pages
+- Owner sees everything
+- Message routing is page-centric, not user-centric
+
+---
+
+## 2. Customer Signup + Billing Flow
+
+### 2.1 Plan + Install Add-On
+
+During signup or immediately after checkout, customer selects:
+
+- Monthly subscription
+- **Optional install add-on**
+
+#### Install Pricing Tiers:
+- **Standard website install** (script embed): $19.99 one-time
+- **Restricted platform install** (Google Sites / iframe): $39.99 one-time
+- **Website creation / branding / multi-page build**: EXCLUDED from Phase 2 (separate future module)
+
+### 2.2 Billing Data Model (Stripe-Driven)
+
+Store:
+- `subscription_id`
+- `payment_intent_id`
+- `install_addon_sku`
+- `install_addon_status` (paid | refunded | disputed)
+
+#### Rules:
+- "Paid" is derived from Stripe state
+- On refund or chargeback:
+  - Associated job auto-moves to `HOLD_FINANCE_REVIEW` or `CANCELLED`
+
+### 2.3 Confirmation Email (Immediate)
+
+Sent on successful payment:
+- Receipt
+- "Complete Setup" CTA linking to onboarding
+
+---
+
+## 3. Customer Onboarding + SMS Consent Gate
+
+### 3.1 Required Onboarding Fields
+
+Customer must provide:
+- Website URL(s)
+- Platform (WordPress, Squarespace, Google Sites, Custom, etc.)
+- Install type:
+  - Script embed
+  - iFrame embed (restricted)
+- Preferred placement
+- Access method (rules below)
+- Notes / constraints
+
+### 3.2 SMS Consent Confirmation (Hard Gate)
+
+**This is NOT A2P registration.**
+
+Customer must confirm:
+> "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA)."
+
+#### Requirements:
+- Checkbox + typed confirmation
+- Store: `sms_consent_confirmed_at`
+- Platform-level A2P approval (if required) is handled separately and does NOT block installs.
+
+---
+
+## 4. Access Method Rules (Worker Guardrails)
+
+To prevent blocked jobs, access methods are validated:
+
+### 4.1 Temporary Login
+- Admin URL required
+- Username
+- Password
+- Expiry date/time (required)
+
+### 4.2 Admin Invite
+- Email address to invite
+- Invite sender defined (internal admin or installer alias)
+
+### 4.3 Instructions Only
+- Explicit steps required
+
+**Jobs missing required access fields cannot enter the queue.**
+
+---
+
+## 5. Reminder Email Automation
+
+If install add-on is paid but onboarding incomplete:
+
+- Send reminder every 24 hours
+- Stop when:
+  - Onboarding complete
+  - Subscription cancelled
+  - Customer pauses install
+- Cap reminders (e.g., 7), then switch to weekly
+
+---
+
+## 6. Install Job Creation
+
+When onboarding + SMS consent are complete:
+- Create Install Job record.
+
+### 6.1 Job Fields
+
+- `job_id`
+- `customer_id`
+- `platform`
+- `install_type`
+- `website_url(s)`
+- `access_method`
+- `status`
+- `priority`
+- `created_at`
+
+### 6.2 Job Statuses (Source of Truth)
+
+- `QUEUED`
+- `ASSIGNED`
+- `IN_PROGRESS`
+- `BLOCKED_WAITING_CUSTOMER`
+- `SUBMITTED_FOR_QA`
+- `NEEDS_FIX`
+- `COMPLETED`
+- `CANCELLED`
+- `HOLD_FINANCE_REVIEW`
+
+**Customer status is derived from job status (mirror only).**
+
+---
+
+## 7. Worker System (Philippines)
+
+### 7.1 Worker Roles
+
+#### Worker
+- Claim jobs
+- Install & test
+- Upload proof
+- Cannot access billing or Stripe
+
+#### Admin/Lead (optional later)
+- Reassign jobs
+- Review QA
+
+### 7.2 Worker Availability States
+
+- `OFF_SHIFT`
+- `ON_SHIFT`
+- `PAUSED`
+
+**Only ON_SHIFT workers may claim jobs**
+
+### 7.3 Worker Permissions Matrix
+
+| Role | View Threads | Reply | Reassign | Billing | Install Jobs |
+|------|--------------|-------|----------|---------|--------------|
+| Owner | All pages | Yes | Yes | Yes | No |
+| Team Member | Assigned only | Yes | No | No | No |
+| Worker | Assigned only | Yes (inbound only) | No | No | Yes |
+
+---
+
+## 8. Queue & Assignment Logic (Fair + Fast)
+
+### 8.1 Assignment Model (Required)
+
+**Claim-based queue**
+- Jobs start as `QUEUED`
+- Workers manually claim jobs
+
+### 8.2 Active Job Cap
+
+- Each worker has **Max Active Jobs = 2**
+- Prevents hoarding
+- Allows fast workers to continue immediately
+
+### 8.3 Inactivity Safeguard (Phase 2.1 optional)
+
+- If job is claimed but no action for X hours → eligible for release
+
+---
+
+## 9. Installation & QA Requirements
+
+### 9.1 Installation
+
+- Script embed for normal sites
+- iFrame embed for restricted platforms (Google Sites, etc.)
+
+### 9.2 Required QA Checklist
+
+Worker must confirm:
+- ✅ Widget loads on desktop
+- ✅ Widget loads on mobile
+- ✅ Messaging UI opens
+- ✅ Test message sends
+- ✅ Incoming message reaches correct channel
+- ✅ Reply reaches test phone
+- ✅ No layout or console errors
+
+### 9.3 Required Proof Uploads
+
+- Desktop screenshot
+- Mobile / responsive screenshot
+- Message send + receive proof (or log reference)
+
+#### Upload Constraints:
+- Max file size: 10MB
+- Types: PNG, JPG, PDF
+- Storage: secure object storage (e.g., S3)
+- Retention: 90 days
+
+**System blocks submission if proof missing.**
+
+---
+
+## 10. Completion & QA Validation
+
+### 10.1 Submission
+
+- Worker submits → `SUBMITTED_FOR_QA`
+
+### 10.2 Auto-Completion Rules (Phase 2)
+
+Job auto-completes only if:
+- Checklist complete
+- Proof present
+- Site URL returns HTTP 200
+- Widget container detected (basic check)
+- Proof timestamps recorded
+
+### 10.3 Fixes
+
+- QA failure → `NEEDS_FIX` (returns to same worker)
+
+---
+
+## 11. Worker Payout Ledger
+
+Create `worker_payouts` table:
+
+### 11.1 Fields
+
+- `worker_id`
+- `job_id`
+- `payout_amount`
+- `status`:
+  - `EARNED`
+  - `APPROVED`
+  - `PAID`
+
+**Manual payouts acceptable initially; ledger required.**
+
+---
+
+## 12. Multi-User Architecture
+
+### 12.1 Actor Definitions
+
+#### Owner (Creator)
+- Business owner account
+- Full visibility across:
+  - All team pages
+  - All threads
+  - All workers
+- Can:
+  - Create/edit team pages
+  - Assign team members
+  - Override routing
+  - Escalate threads
+
+#### Team Member
+- Assigned to one or more team pages
+- Can:
+  - View inbox for assigned page(s)
+  - Reply to assigned threads
+- Cannot:
+  - See other pages
+  - See billing
+  - Modify routing logic
+
+#### Worker (Philippines Installer)
+- Special restricted role
+- Can:
+  - Reply only to threads explicitly assigned
+  - Install widgets
+- Cannot:
+  - Initiate conversations
+  - See other team pages
+  - See owner/team billing or settings
+
+### 12.2 Core Entities (Conceptual Model)
+
+#### Business (Workspace)
+- `business_id`
+- Owner account
+- One or more team pages
+- One or more Twilio numbers / messaging services
+
+#### Team Page (Routing Destination)
+A Team Page is the primary routing destination.
+
+**Fields:**
+- `team_page_id`
+- `business_id`
+- `name` (e.g., "Sales – Kim", "Support", "Installs")
+- `assigned_user_ids[]`
+- `is_active`
+- `created_at`
+
+**Rules:**
+- Pages are independent inboxes
+- Pages never share threads
+- Pages can have multiple users
+- Users can belong to multiple pages
+
+#### Customer
+- `customer_id`
+- `phone_number`
+- `business_id`
+- `assigned_team_page_id`
+- `created_at`
+
+**Rules:**
+- A customer is assigned to one page at a time
+- Assignment persists until changed by Owner logic
+
+#### Message Thread
+Represents a single conversation between a customer and the business.
+
+**Fields:**
+- `thread_id`
+- `customer_id`
+- `team_page_id`
+- `status` (open / closed / escalated)
+- `last_message_at`
+
+**Rules:**
+- Threads are page-bound
+- A thread cannot exist without a `team_page_id`
+- Thread visibility is determined only by page assignment
+
+#### Message
+- `message_id`
+- `thread_id`
+- `direction` (inbound / outbound)
+- `body`
+- `twilio_sid`
+- `delivery_status`
+- `created_at`
+
+---
+
+## 13. Channel Routing System
+
+### 13.1 Core Principle (Most Important Rule)
+
+**Channels — not phone numbers — are the system of record.**
+
+- A site/widget is connected to a channel
+- A channel can have:
+  - Multiple texters
+  - Multiple phone numbers
+- Phone numbers are replaceable resources
+- Texters are assignable participants
+- No customer is ever bound to a single phone
+
+This prevents outages, staff turnover issues, and scaling limits.
+
+### 13.2 Key Entities & Relationships
+
+#### Entities
+- Site (website or Google Site)
+- Channel
+- Conversation
+- Texter (User / Worker)
+- Phone Number (Twilio)
+
+#### Relationships
+- Site → Channel → Conversations
+- Channel → Many Texters
+- Channel → Many Phone Numbers
+
+### 13.3 Message Flow (Inbound)
+
+**Step-by-Step:**
+1. Visitor sends a message from the widget
+2. Message enters the Channel
+3. Routing engine selects:
+   - An available texter assigned to that channel
+4. Message appears in that texter's dashboard
+5. Texter replies
+6. Reply is sent using:
+   - Any available phone number attached to the channel
+
+**Key Rule:**
+The sender never sees or cares which phone number responded — only the business identity.
+
+### 13.4 Message Flow (Outbound Replies)
+
+- Replies are sent from the channel
+- The system selects:
+  - An available phone number (round-robin or least-recently-used)
+- Phone numbers are interchangeable
+- If one number fails:
+  - System automatically uses another
+
+### 13.5 Routing Logic (Inbound SMS)
+
+#### Inbound Flow (Required)
+Customer → Twilio → Webhook → T2MS Routing Engine
+
+**Routing Engine must:**
+1. Identify `business_id`
+2. Match or create `customer_id`
+3. Determine `team_page_id`:
+   - If customer already assigned → reuse page
+   - Else → default page OR rule-based page
+4. Attach message to:
+   - Correct `team_page_id`
+   - Correct `thread_id`
+
+**At no point may messages be broadcast to multiple pages.**
+
+#### Routing Modes (Phase 2)
+
+**Mode A – Identity-Based (Default)**
+- First message assigns customer to a page
+- All future messages follow same page
+
+**Mode B – Manual Reassignment (Owner Only)**
+- Owner may move customer/thread to another page
+- System must:
+  - Close old thread
+  - Open new thread on target page
+  - Preserve full history
+
+**Keyword routing is optional and not required in Phase 2.**
+
+### 13.6 Texter Assignment Rules
+
+#### Texter Roles
+- Owner / Admin
+- Team Member
+- Philippines Worker (Support / Install)
+
+#### Assignment
+- Texters are assigned to channels, not phones
+- One texter may belong to multiple channels
+- One channel may have many texters
+
+#### Availability States
+- `OFFLINE`
+- `ONLINE`
+- `BUSY`
+
+**Routing preference:**
+- `ONLINE` texters
+- Least active texter
+- Fallback to another available texter
+
+### 13.7 Phone Number Pooling Rules
+
+- Each channel can have:
+  - 1 phone number (minimum)
+  - Many phone numbers (recommended for scale)
+- Phone numbers are stored as a pool
+- Routing uses:
+  - Round-robin
+  - Or least-recently-used
+
+#### Failure Handling
+- If a phone number errors or rate-limits:
+  - Mark as `TEMP_UNAVAILABLE`
+  - Skip until healthy
+- No message loss
+
+### 13.8 Outbound Messaging Rules
+
+Replies must be sent:
+- From the same Twilio number (or any available number in channel pool)
+- Through the same thread
+- Under the same `team_page_id`
+
+Team members can only reply to:
+- Threads belonging to their page(s)
+
+### 13.9 UI Behavior Requirements
+
+#### Inbox Views
+- Inbox must be filtered by `team_page_id`
+- No global inbox for team members
+- Owner may toggle between pages or view all
+
+#### Thread Lists
+- Show only threads tied to visible page(s)
+- Never show cross-page messages
+
+### 13.10 Escalation Logic (Owner-Only)
+
+When escalated:
+- Thread moves to new page
+- Original page no longer sees it
+- Customer continues seamlessly
+
+**Escalation must:**
+- Log who escalated
+- Timestamp the action
+- Preserve message history
+
+### 13.11 Data Integrity Rules (Critical)
+
+Messages must not exist without:
+- `customer_id`
+- `team_page_id`
+- `thread_id`
+
+**Foreign keys required**
+
+- No soft guessing of page ownership
+- No UI-level filtering hacks (must be DB-enforced)
+
+### 13.12 Worker Interaction (Install Context)
+
+Worker access limited to:
+- Assigned install jobs
+- Assigned message threads (if any)
+
+Worker replies must:
+- Go through the same routing engine
+- Respect page isolation
+
+### 13.13 Admin Controls (Required)
+
+Admins must be able to:
+- Assign/remove texters from channels
+- Add/remove phone numbers from channels
+- View channel activity
+- See which texter replied (internal only)
+
+**End users never see:**
+- Individual phone numbers
+- Internal routing decisions
+
+---
+
+## 14. Security Requirements
+
+### 14.1 Credential Encryption
+
+- Credentials encrypted at rest using KMS-managed encryption
+- Only assigned worker + admins can decrypt
+- Passwords masked after initial entry
+
+### 14.2 API Security
+
+- No Stripe or Twilio master keys exposed to workers
+- Rate limiting on all endpoints
+- Input validation on all user inputs
+- CORS properly configured
+
+---
+
+## 15. Explicit Phase 2 Exclusions
+
+**Phase 2 does NOT include:**
+
+- ❌ Automated website creation workflows
+- ❌ Google Sites template generation
+- ❌ Branding, page design, or hosting logic
+- ❌ Sales or outbound texting tools
+- ❌ Cross-page shared inbox
+- ❌ Auto keyword routing beyond default
+- ❌ AI reply generation
+- ❌ CRM-style reassignment rules
+- ❌ Full audit analytics dashboards
+- ❌ Manual phone-to-texter binding
+- ❌ One-phone-per-site architecture
+- ❌ Outbound campaign texting by workers
+- ❌ Texters choosing phone numbers manually
+
+**These are separate future modules.**
+
+---
+
+## 16. Phase 2 Build Order (Required)
+
+**No deviations without approval.**
+
+1. **Install Job table + statuses**
+   - Create database schema for install jobs
+   - Implement all job statuses
+   - Set up job creation workflow
+
+2. **Onboarding + SMS consent gate**
+   - Build onboarding form with all required fields
+   - Implement SMS consent confirmation (hard gate)
+   - Store consent timestamp
+
+3. **Reminder automation**
+   - Set up email reminder system
+   - Implement 24-hour reminder logic
+   - Add reminder cap (7 daily, then weekly)
+
+4. **Job queue + claim logic**
+   - Build job queue interface
+   - Implement claim-based assignment
+   - Add active job cap (max 2 per worker)
+   - Create job status transitions
+
+5. **Worker portal (queue, claim, checklist, proof)**
+   - Build worker dashboard
+   - Create job queue view
+   - Implement claim functionality
+   - Build QA checklist interface
+   - Add proof upload system
+
+6. **Completion validation**
+   - Implement auto-completion rules
+   - Add QA validation logic
+   - Create fix workflow (NEEDS_FIX status)
+
+7. **Payout ledger**
+   - Create worker_payouts table
+   - Implement payout status tracking
+   - Build payout calculation logic
+
+8. **Multi-User Architecture**
+   - Create database schema for:
+     - Business/Workspace
+     - Team Page/Channel
+     - Customer
+     - Message Thread
+     - Message
+   - Implement foreign key relationships
+   - Add data integrity constraints
+
+9. **Channel Routing System**
+   - Build routing engine
+   - Implement channel-to-texter assignment
+   - Create phone number pooling
+   - Add round-robin/least-recently-used logic
+   - Implement failure handling
+
+10. **Permission System**
+    - Build role-based access control
+    - Implement page/channel filtering
+    - Create owner/team/worker permission matrix
+    - Add UI-level access restrictions
+
+11. **Message Threading**
+    - Implement thread creation logic
+    - Add thread-to-page binding
+    - Create thread view in UI
+    - Implement thread reassignment (owner only)
+
+12. **Escalation Logic**
+    - Build escalation workflow
+    - Implement thread movement between pages
+    - Add escalation logging
+    - Preserve message history
+
+---
+
+## 17. Acceptance Criteria (Dev Sign-Off)
+
+**Implementation is NOT accepted unless:**
+
+### 17.1 Worker System
+- ✅ Workers can claim jobs from queue
+- ✅ Workers can only claim when ON_SHIFT
+- ✅ Max 2 active jobs per worker enforced
+- ✅ QA checklist blocks submission if incomplete
+- ✅ Proof upload required before submission
+- ✅ Jobs auto-complete only when all criteria met
+- ✅ Payout ledger tracks all completed jobs
+
+### 17.2 Multi-User Architecture
+- ✅ Two team members cannot see each other's threads
+- ✅ Owner can see all threads
+- ✅ One customer cannot appear in two pages simultaneously
+- ✅ Message routing remains stable across:
+  - Refresh
+  - Logout/login
+  - Multiple workers
+- ✅ Reassignment preserves history without duplication
+
+### 17.3 Channel Routing
+- ✅ A channel supports multiple texters
+- ✅ A channel supports multiple phone numbers
+- ✅ Messages route to available texters
+- ✅ Replies send from pooled numbers
+- ✅ No site depends on a single phone
+- ✅ Failure of a phone or texter does not break messaging
+
+### 17.4 Data Integrity
+- ✅ All messages have required foreign keys
+- ✅ No messages exist without team_page_id
+- ✅ Threads are page-bound
+- ✅ Customers assigned to one page at a time
+- ✅ Database constraints enforce integrity
+
+### 17.5 Security
+- ✅ Credentials encrypted at rest
+- ✅ Workers cannot access billing/Stripe
+- ✅ Only assigned workers can decrypt job credentials
+- ✅ No master keys exposed to workers
+
+---
+
+## 18. Database Schema Requirements
+
+### 18.1 Core Tables
+
+#### InstallJob
+```prisma
+model InstallJob {
+  id                    String   @id @default(cuid())
+  customerId            String
+  platform              String
+  installType           String   // "script" | "iframe"
+  websiteUrls           String[] // Array of URLs
+  accessMethod          String   // "temporary_login" | "admin_invite" | "instructions"
+  accessCredentials     String?  // Encrypted JSON
+  status                String   // Job status enum
+  priority              Int      @default(0)
+  assignedWorkerId      String?
+  checklistCompleted    Boolean  @default(false)
+  proofUploaded         Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  // Relations
+  customer              Customer @relation(fields: [customerId], references: [id])
+  assignedWorker        Worker?  @relation(fields: [assignedWorkerId], references: [id])
+  proofs                Proof[]
+  payouts               WorkerPayout[]
+}
+```
+
+#### Worker
+```prisma
+model Worker {
+  id              String       @id @default(cuid())
+  userId          String       @unique
+  availability    String       @default("OFF_SHIFT") // "OFF_SHIFT" | "ON_SHIFT" | "PAUSED"
+  maxActiveJobs   Int          @default(2)
+  createdAt       DateTime     @default(now())
+  // Relations
+  user            User         @relation(fields: [userId], references: [id])
+  assignedJobs    InstallJob[]
+  payouts         WorkerPayout[]
+  channelAssignments ChannelAssignment[]
+}
+```
+
+#### WorkerPayout
+```prisma
+model WorkerPayout {
+  id          String     @id @default(cuid())
+  workerId    String
+  jobId       String
+  amount      Decimal
+  status      String     // "EARNED" | "APPROVED" | "PAID"
+  createdAt   DateTime   @default(now())
+  paidAt      DateTime?
+  // Relations
+  worker      Worker     @relation(fields: [workerId], references: [id])
+  job         InstallJob @relation(fields: [jobId], references: [id])
+}
+```
+
+#### Proof
+```prisma
+model Proof {
+  id          String     @id @default(cuid())
+  jobId       String
+  type        String     // "desktop" | "mobile" | "message"
+  fileUrl     String
+  fileSize    Int
+  uploadedAt  DateTime   @default(now())
+  // Relations
+  job         InstallJob @relation(fields: [jobId], references: [id])
+}
+```
+
+#### Business (Workspace)
+```prisma
+model Business {
+  id              String      @id @default(cuid())
+  ownerId         String
+  name            String
+  createdAt       DateTime    @default(now())
+  // Relations
+  owner           User        @relation(fields: [ownerId], references: [id])
+  teamPages       TeamPage[]
+  customers       Customer[]
+  phoneNumbers    PhoneNumber[]
+}
+```
+
+#### TeamPage (Channel)
+```prisma
+model TeamPage {
+  id              String      @id @default(cuid())
+  businessId      String
+  name            String
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  // Relations
+  business        Business    @relation(fields: [businessId], references: [id])
+  assignedUsers   ChannelAssignment[]
+  customers       Customer[]
+  threads         Thread[]
+  phoneNumbers    ChannelPhoneNumber[]
+}
+```
+
+#### Customer
+```prisma
+model Customer {
+  id                  String      @id @default(cuid())
+  businessId          String
+  phoneNumber         String
+  assignedTeamPageId  String
+  smsConsentConfirmedAt DateTime?
+  createdAt           DateTime    @default(now())
+  // Relations
+  business            Business    @relation(fields: [businessId], references: [id])
+  assignedTeamPage    TeamPage    @relation(fields: [assignedTeamPageId], references: [id])
+  threads             Thread[]
+  installJobs         InstallJob[]
+}
+```
+
+#### Thread
+```prisma
+model Thread {
+  id              String      @id @default(cuid())
+  customerId      String
+  teamPageId      String
+  status          String      @default("open") // "open" | "closed" | "escalated"
+  lastMessageAt   DateTime    @default(now())
+  createdAt       DateTime    @default(now())
+  // Relations
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  teamPage        TeamPage    @relation(fields: [teamPageId], references: [id])
+  messages        Message[]
+}
+```
+
+#### Message
+```prisma
+model Message {
+  id              String      @id @default(cuid())
+  threadId        String
+  direction       String      // "inbound" | "outbound"
+  body            String
+  twilioSid       String?
+  deliveryStatus  String?
+  createdAt       DateTime    @default(now())
+  // Relations
+  thread          Thread      @relation(fields: [threadId], references: [id])
+}
+```
+
+#### ChannelAssignment
+```prisma
+model ChannelAssignment {
+  id          String      @id @default(cuid())
+  teamPageId  String
+  userId      String
+  role        String      // "owner" | "team_member" | "worker"
+  createdAt   DateTime    @default(now())
+  // Relations
+  teamPage    TeamPage    @relation(fields: [teamPageId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+  worker      Worker?     @relation(fields: [userId], references: [userId])
+}
+```
+
+#### ChannelPhoneNumber
+```prisma
+model ChannelPhoneNumber {
+  id              String      @id @default(cuid())
+  teamPageId      String
+  phoneNumberId   String
+  isActive        Boolean     @default(true)
+  lastUsedAt      DateTime?
+  createdAt       DateTime    @default(now())
+  // Relations
+  teamPage        TeamPage    @relation(fields: [teamPageId], references: [id])
+  phoneNumber     PhoneNumber @relation(fields: [phoneNumberId], references: [id])
+}
+```
+
+### 18.2 Required Indexes
+
+```sql
+-- InstallJob indexes
+CREATE INDEX idx_install_job_status ON "InstallJob"(status);
+CREATE INDEX idx_install_job_worker ON "InstallJob"("assignedWorkerId", status);
+CREATE INDEX idx_install_job_customer ON "InstallJob"("customerId");
+
+-- Worker indexes
+CREATE INDEX idx_worker_availability ON "Worker"(availability);
+
+-- Thread indexes
+CREATE INDEX idx_thread_team_page ON "Thread"("teamPageId", "lastMessageAt" DESC);
+CREATE INDEX idx_thread_customer ON "Thread"("customerId");
+CREATE INDEX idx_thread_status ON "Thread"(status);
+
+-- Message indexes
+CREATE INDEX idx_message_thread ON "Message"("threadId", "createdAt" DESC);
+CREATE INDEX idx_message_twilio_sid ON "Message"("twilioSid");
+
+-- Customer indexes
+CREATE INDEX idx_customer_phone ON "Customer"("phoneNumber");
+CREATE INDEX idx_customer_team_page ON "Customer"("assignedTeamPageId");
+
+-- ChannelAssignment indexes
+CREATE INDEX idx_channel_assignment_user ON "ChannelAssignment"("userId");
+CREATE INDEX idx_channel_assignment_team_page ON "ChannelAssignment"("teamPageId");
+```
+
+---
+
+## 19. API Endpoints Required
+
+### 19.1 Install Job Endpoints
+- `POST /api/jobs` - Create install job
+- `GET /api/jobs` - List jobs (filtered by worker/status)
+- `GET /api/jobs/:id` - Get job details
+- `PATCH /api/jobs/:id/claim` - Worker claims job
+- `PATCH /api/jobs/:id/status` - Update job status
+- `POST /api/jobs/:id/checklist` - Submit checklist
+- `POST /api/jobs/:id/proof` - Upload proof
+- `POST /api/jobs/:id/submit` - Submit for QA
+
+### 19.2 Worker Endpoints
+- `GET /api/workers/me` - Get current worker profile
+- `PATCH /api/workers/me/availability` - Update availability
+- `GET /api/workers/me/jobs` - Get assigned jobs
+- `GET /api/workers/me/payouts` - Get payout history
+
+### 19.3 Channel/Team Page Endpoints
+- `GET /api/channels` - List channels (filtered by user)
+- `POST /api/channels` - Create channel (owner only)
+- `GET /api/channels/:id` - Get channel details
+- `POST /api/channels/:id/assign` - Assign user to channel
+- `DELETE /api/channels/:id/assign/:userId` - Remove user from channel
+- `POST /api/channels/:id/phone-numbers` - Add phone number to channel
+- `DELETE /api/channels/:id/phone-numbers/:phoneId` - Remove phone number
+
+### 19.4 Thread Endpoints
+- `GET /api/threads` - List threads (filtered by channel)
+- `GET /api/threads/:id` - Get thread with messages
+- `POST /api/threads/:id/messages` - Send reply
+- `PATCH /api/threads/:id/reassign` - Reassign thread (owner only)
+- `PATCH /api/threads/:id/escalate` - Escalate thread (owner only)
+
+### 19.5 Message Endpoints
+- `POST /api/messages/inbound` - Twilio webhook (inbound SMS)
+- `POST /api/messages/status` - Twilio status webhook
+- `GET /api/messages` - List messages (filtered by thread/channel)
+
+---
+
+## 20. Testing Requirements
+
+### 20.1 Unit Tests
+- Job status transitions
+- Routing logic
+- Permission checks
+- Data validation
+
+### 20.2 Integration Tests
+- End-to-end job workflow
+- Message routing
+- Channel assignment
+- Thread creation and reassignment
+
+### 20.3 Manual Testing Checklist
+- ✅ Worker can claim and complete job
+- ✅ QA checklist blocks incomplete submissions
+- ✅ Proof upload required
+- ✅ Team members see only assigned channels
+- ✅ Owner sees all channels
+- ✅ Messages route to correct channel
+- ✅ Replies use pooled phone numbers
+- ✅ Phone number failure doesn't break messaging
+- ✅ Thread reassignment preserves history
+
+---
+
+## 21. Documentation Requirements
+
+### 21.1 Developer Documentation
+- Database schema documentation
+- API endpoint documentation
+- Routing logic documentation
+- Permission system documentation
+
+### 21.2 User Documentation
+- Worker dashboard guide
+- Admin channel management guide
+- Customer onboarding guide
+
+### 21.3 Deployment Notes
+- Environment variables required
+- Database migration order
+- External service setup (Stripe, Twilio, S3)
+
+---
+
+## End of Requirements Document
+
+**This document is the authoritative source for Phase 2 implementation. All features must align with these requirements. Any deviations require written approval.**
