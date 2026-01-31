@@ -81,20 +81,17 @@ const setupSchema = z
     }),
     smsConsentText: z.string().optional(),
   })
-  .refine(
-    (data) => {
-      if (data.accessMethod === ACCESS_METHOD.TEMPORARY_LOGIN) {
-        return (
-          data.tempLoginUrl?.length &&
-          data.tempLoginUsername?.length &&
-          data.tempLoginPassword?.length &&
-          data.tempLoginExpiry?.length
-        );
-      }
-      return true;
-    },
-    { message: "All temporary login fields are required.", path: ["tempLoginUrl"] }
-  )
+  .superRefine((data, ctx) => {
+    if (data.accessMethod !== ACCESS_METHOD.TEMPORARY_LOGIN) return;
+    const url = data.tempLoginUrl?.trim() ?? "";
+    const username = data.tempLoginUsername?.trim() ?? "";
+    const password = data.tempLoginPassword?.trim() ?? "";
+    const expiry = data.tempLoginExpiry?.trim() ?? "";
+    if (!url) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Admin URL is required.", path: ["tempLoginUrl"] });
+    if (!username) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Username is required.", path: ["tempLoginUsername"] });
+    if (!password) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Password is required.", path: ["tempLoginPassword"] });
+    if (!expiry) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Expiry date/time is required.", path: ["tempLoginExpiry"] });
+  })
   .refine(
     (data) => {
       if (data.accessMethod === ACCESS_METHOD.ADMIN_INVITE) {
