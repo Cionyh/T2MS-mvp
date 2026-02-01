@@ -59,7 +59,7 @@ export default function ClientDashboardPage({
   const fullName = session?.user?.name?.trim() || "Guest";
   const firstName = fullName.split(" ")[0];
 
-  const [hasInstallRequest, setHasInstallRequest] = useState<boolean | null>(null);
+  const [installJobCount, setInstallJobCount] = useState<number | null>(null);
   const [registerFirstSiteOpen, setRegisterFirstSiteOpen] = useState(false);
 
   useEffect(() => {
@@ -71,8 +71,8 @@ export default function ClientDashboardPage({
   useEffect(() => {
     fetch("/api/install-jobs")
       .then((r) => r.json())
-      .then((d) => setHasInstallRequest(Array.isArray(d.jobs) && d.jobs.length > 0))
-      .catch(() => setHasInstallRequest(false));
+      .then((d) => setInstallJobCount(Array.isArray(d.jobs) ? d.jobs.length : 0))
+      .catch(() => setInstallJobCount(0));
   }, []);
 
   // 3. The `useMessages` hook and all its related logic are GONE.
@@ -187,22 +187,23 @@ export default function ClientDashboardPage({
           </Card>
         </Link>
 
-        {/* Widget Install Request Card - shown when user has paid/pending install add-on */}
-        {hasInstallRequest && (
+        {/* Active Widget install requests - count and link to list with status */}
+        {installJobCount !== null && (
           <Link href="/app/settings?tab=setup">
             <Card className="hover:bg-background bg-muted transition-colors border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wrench className="h-5 w-5" />
-                  Widget Install Request
+                  Active Widget install requests
                 </CardTitle>
                 <CardDescription>
-                  View your install request status and details
+                  View your install requests and their status
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                <p className="text-3xl font-bold">{installJobCount}</p>
                 <p className="text-muted-foreground text-sm mt-1">
-                  Our team will reach out to complete the installation
+                  {installJobCount === 1 ? "Active request" : "Active requests"}
                 </p>
               </CardContent>
             </Card>
