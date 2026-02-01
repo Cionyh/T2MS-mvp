@@ -108,6 +108,7 @@ function OnboardingContent() {
   const searchParams = useSearchParams();
   const stepParam = searchParams.get("step");
   const sessionId = searchParams.get("session_id");
+  const changePlan = searchParams.get("changePlan") === "1";
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{
@@ -138,7 +139,7 @@ function OnboardingContent() {
       try {
         const res = await fetch("/api/onboarding/status");
         const data = await res.json();
-        if (data.completed) {
+        if (data.completed && !changePlan) {
           router.replace("/app");
           return;
         }
@@ -150,7 +151,7 @@ function OnboardingContent() {
       }
     };
     fetchStatus();
-  }, [router]);
+  }, [router, changePlan]);
 
   useEffect(() => {
     const s = stepParam ? parseInt(stepParam, 10) : 1;
@@ -168,13 +169,13 @@ function OnboardingContent() {
         .then((r) => r.json())
         .then((data) => {
           if (!data.error) {
-            toast.success("Onboarding complete!");
-            router.replace("/app");
+            toast.success(changePlan ? "Plan updated." : "Onboarding complete!");
+            router.replace(changePlan ? "/app/settings?tab=setup" : "/app");
           }
         })
         .catch(() => {});
     }
-  }, [step, installAddonSku, status, router]);
+  }, [step, installAddonSku, status, router, changePlan]);
 
   useEffect(() => {
     if (sessionId && step === 3) {
@@ -187,7 +188,7 @@ function OnboardingContent() {
         .then((data) => {
           if (data.success) {
             setStatus((prev) => ({ ...prev, installAddonStatus: "paid" }));
-            window.history.replaceState({}, "", "/onboarding?step=3");
+            window.history.replaceState({}, "", changePlan ? "/onboarding?step=3&changePlan=1" : "/onboarding?step=3");
           }
         })
         .catch(() => {});
@@ -205,6 +206,7 @@ function OnboardingContent() {
       const needsSubscription = planId !== "free";
       const needsAddonPayment = installAddonSku && installAddonSku !== "";
 
+      const changePlanQ = changePlan ? "&changePlan=1" : "";
       if (needsSubscription) {
         const session = await client.getSession();
         const userId = session?.data?.user?.id;
@@ -214,13 +216,13 @@ function OnboardingContent() {
           return;
         }
         const successUrl = needsAddonPayment
-          ? `${window.location.origin}/onboarding?step=2b`
-          : `${window.location.origin}/onboarding?step=3`;
+          ? `${window.location.origin}/onboarding?step=2b${changePlanQ}`
+          : `${window.location.origin}/onboarding?step=3${changePlanQ}`;
         const { data, error } = await client.subscription.upgrade({
           plan: planId,
           referenceId: userId,
           successUrl,
-          cancelUrl: `${window.location.origin}/onboarding?step=1`,
+          cancelUrl: `${window.location.origin}/onboarding?step=1${changePlanQ}`,
         });
         if (error) {
           toast.error(error.message || "Failed to start checkout");
@@ -239,8 +241,8 @@ function OnboardingContent() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             installAddonSku,
-            successUrl: `${window.location.origin}/onboarding?step=3`,
-            cancelUrl: `${window.location.origin}/onboarding?step=1`,
+            successUrl: `${window.location.origin}/onboarding?step=3${changePlanQ}`,
+            cancelUrl: `${window.location.origin}/onboarding?step=1${changePlanQ}`,
           }),
         });
         const data = await res.json();
@@ -264,8 +266,8 @@ function OnboardingContent() {
         });
         const data = await res.json();
         if (res.ok && !data.error) {
-          toast.success("Onboarding complete!");
-          router.replace("/app");
+          toast.success(changePlan ? "Plan updated." : "Onboarding complete!");
+          router.replace(changePlan ? "/app/settings?tab=setup" : "/app");
           return;
         }
         toast.error(data.error || "Failed to complete onboarding");
@@ -281,6 +283,7 @@ function OnboardingContent() {
     }
   };
 
+  const changePlanQ = changePlan ? "&changePlan=1" : "";
   useEffect(() => {
     if (step === 2 && searchParams.get("step") === "2b") {
       if (installAddonSku && status?.installAddonStatus !== "paid") {
@@ -289,8 +292,8 @@ function OnboardingContent() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             installAddonSku,
-            successUrl: `${window.location.origin}/onboarding?step=3`,
-            cancelUrl: `${window.location.origin}/onboarding?step=3`,
+            successUrl: `${window.location.origin}/onboarding?step=3${changePlanQ}`,
+            cancelUrl: `${window.location.origin}/onboarding?step=3${changePlanQ}`,
           }),
         })
           .then((r) => r.json())
@@ -303,7 +306,7 @@ function OnboardingContent() {
         setStep(3);
       }
     }
-  }, [step, installAddonSku, status?.installAddonStatus, searchParams]);
+  }, [step, installAddonSku, status?.installAddonStatus, searchParams, changePlanQ]);
 
   const handleStep3Next = async () => {
     const valid = await setupForm.trigger();
@@ -348,8 +351,8 @@ function OnboardingContent() {
         setLoading(false);
         return;
       }
-      toast.success("Onboarding complete!");
-      router.replace("/app");
+      toast.success(changePlan ? "Plan updated." : "Onboarding complete!");
+      router.replace(changePlan ? "/app/settings?tab=setup" : "/app");
     } catch {
       toast.error("Something went wrong");
       setLoading(false);

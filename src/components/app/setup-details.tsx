@@ -23,7 +23,6 @@ interface OnboardingData {
 
 export function SetupDetailsTab() {
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [data, setData] = useState<OnboardingData | null>(null);
   const [installJobs, setInstallJobs] = useState<Array<{
     id: string;
@@ -92,8 +91,8 @@ export function SetupDetailsTab() {
                 <> · Install add-on: {data.installAddonSku} ({data.installAddonStatus ?? "pending"})</>
               )}
             </p>
-            <Button className="mt-2" variant="outline" size="sm" onClick={() => (window.location.href = "/onboarding")}>
-              Change plan
+            <Button className="mt-2" variant="outline" size="sm" asChild>
+              <Link href="/onboarding?changePlan=1">Change plan</Link>
             </Button>
           </CardContent>
         </Card>
