@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
       clients.map(async (client) => {
         let owner = null;
         if (client.organizationId) {
-          const ownerResult = await prisma.$queryRaw<Array<{ id: string; name: string; email: string; role: string | null }>>`
+          const ownerResult   = await prisma.$queryRaw<Array<{ id: string; name: string; email: string; role: string | null }>>`
             SELECT u.id, u.name, u.email, u.role
             FROM "user" u
             INNER JOIN member m ON u.id = m."userId"

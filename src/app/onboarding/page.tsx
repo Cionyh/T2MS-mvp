@@ -281,7 +281,6 @@ function OnboardingContent() {
     }
   };
 
-  const changePlanQ = changePlan ? "&changePlan=1" : "";
   useEffect(() => {
     if (step === 2 && searchParams.get("step") === "2b") {
       if (installAddonSku && status?.installAddonStatus !== "paid") {
@@ -290,8 +289,8 @@ function OnboardingContent() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             installAddonSku,
-            successUrl: `${window.location.origin}/onboarding?step=3${changePlanQ}`,
-            cancelUrl: `${window.location.origin}/onboarding?step=3${changePlanQ}`,
+            successUrl: `${window.location.origin}/onboarding?step=3`,
+            cancelUrl: `${window.location.origin}/onboarding?step=3`,
           }),
         })
           .then((r) => r.json())
@@ -304,7 +303,7 @@ function OnboardingContent() {
         setStep(3);
       }
     }
-  }, [step, installAddonSku, status?.installAddonStatus, searchParams, changePlanQ]);
+  }, [step, installAddonSku, status?.installAddonStatus, searchParams]);
 
   const handleStep3Next = async () => {
     const valid = await setupForm.trigger();
