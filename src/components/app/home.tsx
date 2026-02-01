@@ -189,7 +189,7 @@ export default function ClientDashboardPage({
 
         {/* Active Widget install requests - count and link to list with status */}
         {installJobCount !== null && (
-          <Link href="/app/settings?tab=setup">
+          <Link href="/app/install-requests">
             <Card className="hover:bg-background bg-muted transition-colors border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
