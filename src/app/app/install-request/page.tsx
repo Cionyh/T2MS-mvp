@@ -134,7 +134,7 @@ function InstallRequestContent() {
   const sessionId = searchParams.get("session_id");
 
   const jobIdFromUrl = searchParams.get("jobId");
-  const [step, setStep] = useState<"setup" | "pay">("setup");
+  const [step, setStep] = useState<"choose" | "setup" | "pay">("choose");
   const [jobId, setJobId] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -338,7 +338,58 @@ function InstallRequestContent() {
     );
   }
 
-  // Step 2: Payment (after setup form saved; or arrived via ?jobId=xxx)
+  // Step 1: Choose install option (first screen — matches the "Get Widget Installed" modal)
+  if (step === "choose" && !jobIdFromUrl) {
+    return (
+      <div className="container mx-auto py-8 max-w-2xl">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5" />
+              Get Widget Installed
+            </CardTitle>
+            <CardDescription>
+              Choose an install option and pay. After payment you'll provide website and access details.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <Label className="mb-2 block">Install option</Label>
+              <div className="grid gap-3">
+                {INSTALL_ADDON_OPTIONS.map((opt) => (
+                  <label
+                    key={opt.id}
+                    className="flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+                  >
+                    <input
+                      type="radio"
+                      name="tier"
+                      value={opt.id}
+                      checked={installAddonSku === opt.id}
+                      onChange={() => setInstallAddonSku(opt.id)}
+                      className="mt-1"
+                    />
+                    <div>
+                      <p className="font-medium">{opt.name}</p>
+                      <p className="text-sm text-muted-foreground">{opt.price}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <Button onClick={() => setStep("setup")} className="w-full">
+              Continue
+            </Button>
+            <Button variant="ghost" className="w-full" onClick={() => router.push("/app")}>
+              Cancel
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Step 3: Payment (after setup form saved; or arrived via ?jobId=xxx)
   if (step === "pay" && jobId) {
     return (
       <div className="container mx-auto py-8 max-w-2xl">
@@ -411,17 +462,17 @@ function InstallRequestContent() {
     );
   }
 
-  // Step 1: Setup form (first screen)
+  // Step 2: Setup form
   return (
     <div className="container mx-auto py-8 max-w-4xl">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wrench className="h-5 w-5" />
-            Get Widget Installed
+            Install setup
           </CardTitle>
           <CardDescription>
-            Provide website and access details first. You will complete payment on the next step. If you leave before paying, your request is saved with payment pending and you can complete payment later from the install requests list.
+            Provide website and access details. You will complete payment on the next step. If you leave before paying, your request is saved with payment pending and you can complete payment later from the install requests list.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -680,14 +731,17 @@ function InstallRequestContent() {
               </div>
 
               <div className="flex gap-4">
+                <Button type="button" variant="outline" onClick={() => setStep("choose")} disabled={submitting}>
+                  Back
+                </Button>
                 <Button type="submit" disabled={submitting} className="flex-1">
                   {submitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting…
+                      Saving…
                     </>
                   ) : (
-                    "Submit install request"
+                    "Continue"
                   )}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => router.push("/app")} disabled={submitting}>
