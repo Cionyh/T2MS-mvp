@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -40,11 +41,13 @@ const clientSchema = z.object({
 type ClientSchemaType = z.infer<typeof clientSchema>;
 
 export default function ClientWidgetBuilder() {
+  const router = useRouter();
   const { data: session } = useSession();
   const userId = session?.user?.id;
 
   const [clientId, setClientId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [installChoiceOpen, setInstallChoiceOpen] = useState(false);
 
   const form = useForm<ClientSchemaType>({
     resolver: zodResolver(clientSchema),
@@ -101,7 +104,7 @@ export default function ClientWidgetBuilder() {
       if (!res.ok) throw new Error(data.error || "Failed to register site");
 
       setClientId(data.id);
-      setIsDialogOpen(true); // Open dialog immediately
+      setInstallChoiceOpen(true); // Show "How would you like to install?" first
       toast.success("Site registered successfully!");
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
@@ -187,7 +190,40 @@ export default function ClientWidgetBuilder() {
         </CardContent>
       </Card>
 
-      {/* Embed Code Dialog */}
+      {/* Install choice: Self install vs T2MS install */}
+      <Dialog open={installChoiceOpen} onOpenChange={setInstallChoiceOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>How would you like to install the widget?</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Choose to copy the embed code yourself or have our team install it for you.
+            </p>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button
+              variant="outline"
+              className="w-full justify-start text-foreground"
+              onClick={() => {
+                setInstallChoiceOpen(false);
+                setIsDialogOpen(true);
+              }}
+            >
+              Self install
+            </Button>
+            <Button
+              className="w-full justify-start text-foreground"
+              onClick={() => {
+                setInstallChoiceOpen(false);
+                router.push("/app/install-request");
+              }}
+            >
+              T2MS install
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Embed Code Dialog (Self install) */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

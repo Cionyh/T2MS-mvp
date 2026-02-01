@@ -10,8 +10,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Plus, BarChart3, Wrench } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { Skeleton } from "../ui/skeleton";
 
@@ -43,6 +52,7 @@ export default function ClientDashboardPage({
 }: Readonly<Props>) {
   // 2. The useState and useEffect for siteCount can be removed.
   //    We can calculate it directly from the props.
+  const router = useRouter();
   const siteCount = websites ? websites.length : 0;
 
   const { data: session, isPending } = useSession();
@@ -50,6 +60,14 @@ export default function ClientDashboardPage({
   const firstName = fullName.split(" ")[0];
 
   const [hasInstallRequest, setHasInstallRequest] = useState<boolean | null>(null);
+  const [registerFirstSiteOpen, setRegisterFirstSiteOpen] = useState(false);
+
+  useEffect(() => {
+    if (siteCount === 0 && websites !== undefined) {
+      setRegisterFirstSiteOpen(true);
+    }
+  }, [siteCount, websites]);
+
   useEffect(() => {
     fetch("/api/install-jobs")
       .then((r) => r.json())
@@ -62,6 +80,29 @@ export default function ClientDashboardPage({
 
   return (
     <div className="space-y-6">
+      {/* Popup when user has no sites: Register Your first Site */}
+      <Dialog open={registerFirstSiteOpen} onOpenChange={setRegisterFirstSiteOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Register Your first Site</DialogTitle>
+            <DialogDescription>
+              Get started by registering your first website to add the T2MS widget.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              className="text-foreground"
+              onClick={() => {
+                setRegisterFirstSiteOpen(false);
+                router.push("/app/build");
+              }}
+            >
+              Register Your first Site
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold tracking-tight">
