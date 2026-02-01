@@ -259,13 +259,28 @@ function InstallRequestContent() {
       if (!res.ok) {
         throw new Error(data.error || "Failed to save install request");
       }
-      if (data.jobId) {
-        setJobId(data.jobId);
-        setStep("pay");
-        toast.success("Install request saved. Complete payment to queue it.");
-      } else {
+      const newJobId = data.jobId;
+      if (!newJobId) {
         toast.error("Missing job ID");
+        return;
       }
+      // Redirect directly to Stripe (no intermediate payment screen)
+      const checkoutRes = await fetch("/api/install-request/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          installAddonSku,
+          jobId: newJobId,
+          successUrl: `${window.location.origin}/app/install-request`,
+          cancelUrl: `${window.location.origin}/app/install-request?jobId=${encodeURIComponent(newJobId)}`,
+        }),
+      });
+      const checkoutData = await checkoutRes.json();
+      if (checkoutData.url) {
+        window.location.href = checkoutData.url;
+        return;
+      }
+      toast.error(checkoutData.error || "Failed to start checkout");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -389,8 +404,8 @@ function InstallRequestContent() {
     );
   }
 
-  // Step 3: Payment (after setup form saved; or arrived via ?jobId=xxx)
-  if (step === "pay" && jobId) {
+  // Payment screen only when arrived via ?jobId=xxx (Complete payment from list, or cancelled Stripe)
+  if (jobIdFromUrl && jobId) {
     return (
       <div className="container mx-auto py-8 max-w-2xl">
         <Card>
@@ -441,18 +456,6 @@ function InstallRequestContent() {
                 </>
               )}
             </Button>
-            {!jobIdFromUrl && (
-              <Button
-                variant="ghost"
-                className="w-full"
-                onClick={() => {
-                  setStep("setup");
-                  setJobId(null);
-                }}
-              >
-                Back to edit details
-              </Button>
-            )}
             <Button variant="ghost" className="w-full" onClick={() => router.push("/app/install-requests")}>
               Cancel
             </Button>
@@ -741,7 +744,7 @@ function InstallRequestContent() {
                       Saving…
                     </>
                   ) : (
-                    "Continue"
+                    "Continue to payment"
                   )}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => router.push("/app")} disabled={submitting}>
