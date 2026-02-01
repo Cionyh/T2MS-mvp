@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,6 +25,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, Variants } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -107,9 +114,12 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ userId }: DashboardClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [websites, setWebsites] = useState<Website[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingWebsiteId, setEditingWebsiteId] = useState<string | null>(null);
+  const [installChoiceDialogOpen, setInstallChoiceDialogOpen] = useState(false);
+  const [installChoiceClientId, setInstallChoiceClientId] = useState<string | null>(null);
 
   // Editable fields
   const [editedName, setEditedName] = useState("");
@@ -147,19 +157,30 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
 
     const fetchWebsites = async () => {
       setLoading(true);
-      // API now returns organization's clients (no userId param needed)
       const res = await fetch(`/api/client`);
       if (!res.ok) {
         setLoading(false);
         return;
       }
       const data = await res.json();
-      setWebsites(data); 
+      setWebsites(data);
       setLoading(false);
     };
 
     fetchWebsites();
   }, [userId]);
+
+  // After redirect from build page: show "Site Registered Successfully" and install choice popup
+  useEffect(() => {
+    const installChoice = searchParams.get("installChoice");
+    const clientId = searchParams.get("clientId");
+    if (installChoice === "1" && clientId) {
+      toast.success("Site Registered Successfully");
+      setInstallChoiceClientId(clientId);
+      setInstallChoiceDialogOpen(true);
+      window.history.replaceState({}, "", "/app/sites");
+    }
+  }, [searchParams]);
 
   const handleNewSiteClick = () => {
     router.push("/app/build");
@@ -554,6 +575,42 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           ))}
         </div>
       )}
+
+      {/* Install choice: Self install vs T2MS install (after registering from build page) */}
+      <Dialog open={installChoiceDialogOpen} onOpenChange={setInstallChoiceDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>How would you like to install the widget?</DialogTitle>
+            <DialogDescription>
+              Choose to copy the embed code yourself or have our team install it for you.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button
+              variant="outline"
+              className="w-full justify-start text-foreground"
+              onClick={() => {
+                if (installChoiceClientId) {
+                  setSelectedWebsiteId(installChoiceClientId);
+                  setEmbedDialogOpen(true);
+                }
+                setInstallChoiceDialogOpen(false);
+              }}
+            >
+              Self install
+            </Button>
+            <Button
+              className="w-full justify-start text-foreground"
+              onClick={() => {
+                setInstallChoiceDialogOpen(false);
+                router.push("/app/install-request");
+              }}
+            >
+              T2MS install
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Reusable Embed Dialog */}
       <EmbedDialog

@@ -11,22 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Copy, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Form, FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DotPattern } from "../magicui/dot-pattern";
 import { cn } from "@/lib/utils";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 // Client validation schema
 // Note: Phone is removed - phone numbers are added separately after client creation
@@ -45,10 +37,6 @@ export default function ClientWidgetBuilder() {
   const { data: session } = useSession();
   const userId = session?.user?.id;
 
-  const [clientId, setClientId] = useState<string | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [installChoiceOpen, setInstallChoiceOpen] = useState(false);
-
   const form = useForm<ClientSchemaType>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
@@ -60,15 +48,6 @@ export default function ClientWidgetBuilder() {
 
   const { handleSubmit, formState } = form;
   const { isSubmitting } = formState;
-
-  const embedCode = clientId
-    ? `<script
-  src="https://www.t2ms.biz/widget"
-  data-client-id="${clientId}"
-  data-api="https://www.t2ms.biz"
-  defer
-></script>`
-    : "";
 
   const handleCreateClient = async (values: ClientSchemaType) => {
     if (!userId) {
@@ -103,18 +82,11 @@ export default function ClientWidgetBuilder() {
 
       if (!res.ok) throw new Error(data.error || "Failed to register site");
 
-      setClientId(data.id);
-      setInstallChoiceOpen(true); // Show "How would you like to install?" first
-      toast.success("Site registered successfully!");
+      toast.success("Site Registered Successfully");
+      router.push(`/app/sites?installChoice=1&clientId=${data.id}`);
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
     }
-  };
-
-  const handleCopy = async () => {
-    if (!embedCode) return;
-    await navigator.clipboard.writeText(embedCode);
-    toast.success("Embed script copied to clipboard!");
   };
 
   return (
@@ -189,67 +161,6 @@ export default function ClientWidgetBuilder() {
           </Form>
         </CardContent>
       </Card>
-
-      {/* Install choice: Self install vs T2MS install */}
-      <Dialog open={installChoiceOpen} onOpenChange={setInstallChoiceOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>How would you like to install the widget?</DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              Choose to copy the embed code yourself or have our team install it for you.
-            </p>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 mt-4">
-            <Button
-              variant="outline"
-              className="w-full justify-start text-foreground"
-              onClick={() => {
-                setInstallChoiceOpen(false);
-                setIsDialogOpen(true);
-              }}
-            >
-              Self install
-            </Button>
-            <Button
-              className="w-full justify-start text-foreground"
-              onClick={() => {
-                setInstallChoiceOpen(false);
-                router.push("/app/install-request");
-              }}
-            >
-              T2MS install
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Embed Code Dialog (Self install) */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Embed Your Widget</DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              Copy the following script to embed your widget on your site.
-            </p>
-          </DialogHeader>
-          <div className="flex items-center space-x-2">
-            <Textarea
-              value={embedCode}
-              readOnly
-              className="font-mono text-sm h-40"
-              placeholder="Embed code will appear here..."
-            />
-          </div>
-          <div className="flex justify-between mt-4">
-            <Button variant="outline" size="sm" onClick={handleCopy}>
-              <Copy className="w-4 h-4 mr-2" /> Copy
-            </Button>
-            <Button className="text-foreground" size="sm" onClick={() => (window.location.href = "/app/sites")}>
-              Go to Configuration
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
