@@ -133,13 +133,14 @@ function InstallRequestContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
 
-  const [step, setStep] = useState<"pay" | "setup">("pay");
+  const jobIdFromUrl = searchParams.get("jobId");
+  const [step, setStep] = useState<"setup" | "pay">("setup");
+  const [jobId, setJobId] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [paymentVerified, setPaymentVerified] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [loadingJob, setLoadingJob] = useState(false);
   const [installAddonSku, setInstallAddonSku] = useState<string>("standard");
-  const [stripeSessionId, setStripeSessionId] = useState<string | null>(null);
   const [smsConsentText, setSmsConsentText] = useState("");
 
   const form = useForm<SetupFormValues>({
@@ -166,25 +167,41 @@ function InstallRequestContent() {
   const accessMethod = form.watch("accessMethod");
   const smsConsentChecked = form.watch("smsConsentChecked");
 
-  // If we have session_id, we're returning from Stripe — verify and show setup form
+  // If we have session_id, we're returning from Stripe — verify and redirect to install-requests
   useEffect(() => {
     if (!sessionId || !session?.user?.id) return;
-    setStripeSessionId(sessionId);
     setVerifying(true);
     fetch(`/api/install-request/confirm?session_id=${encodeURIComponent(sessionId)}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.success) {
-          setPaymentVerified(true);
-          setStep("setup");
-          if (data.installAddonSku) setInstallAddonSku(data.installAddonSku);
+          toast.success("Payment complete. Your install request is queued.");
+          router.replace("/app/install-requests");
         } else {
           toast.error(data.error || "Payment verification failed");
         }
       })
       .catch(() => toast.error("Failed to verify payment"))
       .finally(() => setVerifying(false));
-  }, [sessionId, session?.user?.id]);
+  }, [sessionId, session?.user?.id, router]);
+
+  // If we have jobId in URL (e.g. "Complete payment" from install-requests), load job and show payment step
+  useEffect(() => {
+    if (!jobIdFromUrl || !session?.user?.id) return;
+    setLoadingJob(true);
+    fetch(`/api/install-request/job/${encodeURIComponent(jobIdFromUrl)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.id) {
+          setJobId(data.id);
+          setStep("pay");
+        } else {
+          toast.error(data.error || "Job not found");
+        }
+      })
+      .catch(() => toast.error("Failed to load install request"))
+      .finally(() => setLoadingJob(false));
+  }, [jobIdFromUrl, session?.user?.id]);
 
   const addWebsiteUrl = () => {
     const current = form.getValues("websiteUrls");
@@ -200,38 +217,9 @@ function InstallRequestContent() {
     }
   };
 
-  const handlePay = async () => {
+  const handleContinue = async (values: SetupFormValues) => {
     if (!session?.user?.id) {
       toast.error("You must be logged in.");
-      return;
-    }
-    setPaying(true);
-    try {
-      const res = await fetch("/api/install-request/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          installAddonSku,
-          successUrl: `${window.location.origin}/app/install-request`,
-          cancelUrl: `${window.location.origin}/app/install-request`,
-        }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-        return;
-      }
-      toast.error(data.error || "Failed to start checkout");
-    } catch {
-      toast.error("Something went wrong");
-    } finally {
-      setPaying(false);
-    }
-  };
-
-  const onSubmit = async (values: SetupFormValues) => {
-    if (!stripeSessionId) {
-      toast.error("Payment session missing. Please start over from the dashboard.");
       return;
     }
     setSubmitting(true);
@@ -253,11 +241,10 @@ function InstallRequestContent() {
         accessCredentials = { steps: values.instructions };
       }
 
-      const res = await fetch("/api/install-request/complete", {
-        method: "PATCH",
+      const res = await fetch("/api/install-request/setup", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sessionId: stripeSessionId,
           websiteUrls: values.websiteUrls.filter((u) => u.trim()),
           platform: values.platform,
           installType: values.installType,
@@ -265,20 +252,54 @@ function InstallRequestContent() {
           accessMethod: values.accessMethod,
           accessCredentials,
           notes: values.notes || null,
-          smsConsentConfirmed: true,
           smsConsentText: values.smsConsentText,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to submit install request");
+        throw new Error(data.error || "Failed to save install request");
       }
-      toast.success("Install request submitted. Our team will install your widget.");
-      router.push("/app/install-requests");
+      if (data.jobId) {
+        setJobId(data.jobId);
+        setStep("pay");
+        toast.success("Install request saved. Complete payment to queue it.");
+      } else {
+        toast.error("Missing job ID");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handlePay = async () => {
+    if (!session?.user?.id || !jobId) {
+      toast.error("You must be logged in and have an install request.");
+      return;
+    }
+    setPaying(true);
+    try {
+      const res = await fetch("/api/install-request/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          installAddonSku,
+          jobId,
+          successUrl: `${window.location.origin}/app/install-request`,
+          cancelUrl: `${window.location.origin}/app/install-request?jobId=${encodeURIComponent(jobId)}`,
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      toast.error(data.error || "Failed to start checkout");
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setPaying(false);
     }
   };
 
@@ -308,18 +329,27 @@ function InstallRequestContent() {
     );
   }
 
-  // Step 1: Choose tier and pay (first screen)
-  if (step === "pay" && !paymentVerified) {
+  // Loading job from URL (Complete payment from install-requests list)
+  if (jobIdFromUrl && loadingJob) {
+    return (
+      <div className="container mx-auto py-8 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Step 2: Payment (after setup form saved; or arrived via ?jobId=xxx)
+  if (step === "pay" && jobId) {
     return (
       <div className="container mx-auto py-8 max-w-2xl">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Wrench className="h-5 w-5" />
-              Get Widget Installed
+              <CreditCard className="h-5 w-5" />
+              Complete payment
             </CardTitle>
             <CardDescription>
-              Choose an install option and pay. After payment you'll provide website and access details.
+              Choose an install option and pay. Your install request is saved with payment pending.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -356,11 +386,23 @@ function InstallRequestContent() {
               ) : (
                 <>
                   <CreditCard className="mr-2 h-4 w-4" />
-                  Pay and continue
+                  Pay now
                 </>
               )}
             </Button>
-            <Button variant="ghost" className="w-full" onClick={() => router.push("/app")}>
+            {!jobIdFromUrl && (
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setStep("setup");
+                  setJobId(null);
+                }}
+              >
+                Back to edit details
+              </Button>
+            )}
+            <Button variant="ghost" className="w-full" onClick={() => router.push("/app/install-requests")}>
               Cancel
             </Button>
           </CardContent>
@@ -369,19 +411,22 @@ function InstallRequestContent() {
     );
   }
 
-  // Step 2: Setup form + SMS consent (after payment verified)
+  // Step 1: Setup form (first screen)
   return (
     <div className="container mx-auto py-8 max-w-4xl">
       <Card>
         <CardHeader>
-          <CardTitle>Install setup</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Wrench className="h-5 w-5" />
+            Get Widget Installed
+          </CardTitle>
           <CardDescription>
-            Provide website and access details so we can install your widget.
+            Provide website and access details first. You will complete payment on the next step. If you leave before paying, your request is saved with payment pending and you can complete payment later from the install requests list.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(handleContinue)} className="space-y-6">
               <FormField
                 control={form.control}
                 name="websiteUrls"

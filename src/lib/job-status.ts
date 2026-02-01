@@ -4,6 +4,7 @@
  */
 
 export const INSTALL_JOB_STATUS = {
+  PENDING_PAYMENT: "PENDING_PAYMENT",
   QUEUED: "QUEUED",
   ASSIGNED: "ASSIGNED",
   IN_PROGRESS: "IN_PROGRESS",
@@ -21,6 +22,10 @@ export type InstallJobStatus = typeof INSTALL_JOB_STATUS[keyof typeof INSTALL_JO
  * Valid status transitions
  */
 export const VALID_STATUS_TRANSITIONS: Record<InstallJobStatus, InstallJobStatus[]> = {
+  [INSTALL_JOB_STATUS.PENDING_PAYMENT]: [
+    INSTALL_JOB_STATUS.QUEUED,
+    INSTALL_JOB_STATUS.CANCELLED,
+  ],
   [INSTALL_JOB_STATUS.QUEUED]: [
     INSTALL_JOB_STATUS.ASSIGNED,
     INSTALL_JOB_STATUS.CANCELLED,

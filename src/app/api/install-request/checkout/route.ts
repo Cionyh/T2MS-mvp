@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { prisma } from "@/lib/prisma";
+import { INSTALL_JOB_STATUS } from "@/lib/job-status";
 import Stripe from "stripe";
 
 function getStripe(): Stripe {
@@ -18,8 +20,7 @@ const INSTALL_ADDON_AMOUNTS: Record<string, { amount: number; name: string }> = 
 
 /**
  * POST /api/install-request/checkout
- * Create Stripe checkout for a new widget install job (from dashboard "Get Widget Installed").
- * Does not require onboarding record — this is a standalone install job with payment.
+ * Create Stripe checkout for an install job. Requires jobId (InstallJob with PENDING_PAYMENT).
  */
 export async function POST(req: NextRequest) {
   try {
@@ -32,11 +33,35 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { installAddonSku, successUrl, cancelUrl } = body as {
+    const { installAddonSku, successUrl, cancelUrl, jobId } = body as {
       installAddonSku: string;
       successUrl?: string;
       cancelUrl?: string;
+      jobId?: string;
     };
+
+    if (!jobId || typeof jobId !== "string") {
+      return NextResponse.json(
+        { error: "jobId is required (submit the setup form first)" },
+        { status: 400 }
+      );
+    }
+
+    const customer = await prisma.customer.findUnique({
+      where: { userId: session.user.id },
+      include: {
+        installJobs: {
+          where: { id: jobId, status: INSTALL_JOB_STATUS.PENDING_PAYMENT },
+        },
+      },
+    });
+    const job = customer?.installJobs?.[0];
+    if (!job) {
+      return NextResponse.json(
+        { error: "Job not found or payment already completed. Please submit the setup form again." },
+        { status: 400 }
+      );
+    }
 
     const addon = INSTALL_ADDON_AMOUNTS[installAddonSku];
     if (!addon) {
@@ -59,6 +84,7 @@ export async function POST(req: NextRequest) {
         userId: session.user.id,
         type: "install_job_request",
         installAddonSku,
+        jobId,
       },
       line_items: [
         {

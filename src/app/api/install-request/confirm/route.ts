@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { prisma } from "@/lib/prisma";
+import { INSTALL_JOB_STATUS } from "@/lib/job-status";
 import Stripe from "stripe";
 
 function getStripe(): Stripe {
@@ -13,8 +15,8 @@ function getStripe(): Stripe {
 
 /**
  * GET /api/install-request/confirm?session_id=xxx
- * Verify Stripe checkout session for a new install job payment.
- * Returns { success, installAddonSku } so the client can show the setup form.
+ * Verify Stripe checkout session. If metadata.jobId present, update that InstallJob to QUEUED.
+ * Returns { success: true }; client redirects to install-requests.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -56,8 +58,26 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const installAddonSku = stripeSession.metadata?.installAddonSku ?? "standard";
-    return NextResponse.json({ success: true, installAddonSku });
+    const jobId = stripeSession.metadata?.jobId;
+    if (jobId) {
+      const customer = await prisma.customer.findUnique({
+        where: { userId: session.user.id },
+        include: {
+          installJobs: {
+            where: { id: jobId, status: INSTALL_JOB_STATUS.PENDING_PAYMENT },
+          },
+        },
+      });
+      const job = customer?.installJobs?.[0];
+      if (job) {
+        await prisma.installJob.update({
+          where: { id: job.id },
+          data: { status: INSTALL_JOB_STATUS.QUEUED },
+        });
+      }
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Install request confirm error:", error);
     return NextResponse.json(

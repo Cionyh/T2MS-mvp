@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Wrench, Loader2, Plus } from "lucide-react";
+import { Wrench, Loader2, Plus, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -97,12 +97,22 @@ export default function WidgetInstallRequestsPage() {
                           ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                           : job.status === "CANCELLED"
                             ? "bg-muted text-muted-foreground"
-                            : "bg-primary/10 text-primary"
+                            : job.status === "PENDING_PAYMENT"
+                              ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                              : "bg-primary/10 text-primary"
                       }`}
                     >
                       {job.status.replace(/_/g, " ")}
                     </span>
                   </div>
+                  {job.status === "PENDING_PAYMENT" && (
+                    <Link href={`/app/install-request?jobId=${encodeURIComponent(job.id)}`}>
+                      <Button size="sm" className="mt-2">
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Complete payment
+                      </Button>
+                    </Link>
+                  )}
                   <p className="text-sm text-muted-foreground">
                     Access: {job.accessMethod.replace(/_/g, " ")}
                   </p>
