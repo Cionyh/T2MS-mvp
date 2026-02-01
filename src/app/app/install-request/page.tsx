@@ -274,7 +274,7 @@ function InstallRequestContent() {
         throw new Error(data.error || "Failed to submit install request");
       }
       toast.success("Install request submitted. Our team will install your widget.");
-      router.push("/app/settings?tab=setup");
+      router.push("/app/install-requests");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -308,7 +308,7 @@ function InstallRequestContent() {
     );
   }
 
-  // Step 1: Choose tier and pay
+  // Step 1: Choose tier and pay (first screen)
   if (step === "pay" && !paymentVerified) {
     return (
       <div className="container mx-auto py-8 max-w-2xl">
@@ -319,7 +319,7 @@ function InstallRequestContent() {
               Get Widget Installed
             </CardTitle>
             <CardDescription>
-              Choose an install option and pay. After payment you’ll provide website and access details.
+              Choose an install option and pay. After payment you'll provide website and access details.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
