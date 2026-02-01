@@ -247,7 +247,7 @@ function InstallRequestContent() {
         body: JSON.stringify({
           websiteUrls: values.websiteUrls.filter((u) => u.trim()),
           platform: values.platform,
-          installType: values.installType,
+          installType: installAddonSku === "standard" ? INSTALL_TYPE.SCRIPT : INSTALL_TYPE.IFRAME,
           preferredPlacement: values.preferredPlacement || null,
           accessMethod: values.accessMethod,
           accessCredentials,
@@ -392,7 +392,17 @@ function InstallRequestContent() {
                 ))}
               </div>
             </div>
-            <Button onClick={() => setStep("setup")} className="w-full">
+            <Button
+              onClick={() => {
+                // Remember choice: standard → script, restricted → iframe
+                form.setValue(
+                  "installType",
+                  installAddonSku === "standard" ? INSTALL_TYPE.SCRIPT : INSTALL_TYPE.IFRAME
+                );
+                setStep("setup");
+              }}
+              className="w-full"
+            >
               Continue
             </Button>
             <Button variant="ghost" className="w-full" onClick={() => router.push("/app")}>
@@ -544,21 +554,19 @@ function InstallRequestContent() {
               <FormField
                 control={form.control}
                 name="installType"
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
                     <FormLabel>Install type *</FormLabel>
                     <FormControl>
-                      <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col gap-2">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value={INSTALL_TYPE.SCRIPT} id="script" />
-                          <Label htmlFor="script">Script embed (standard)</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value={INSTALL_TYPE.IFRAME} id="iframe" />
-                          <Label htmlFor="iframe">iFrame embed (restricted)</Label>
-                        </div>
-                      </RadioGroup>
+                      <div className="rounded-md border bg-muted/50 px-3 py-2 text-sm">
+                        {installAddonSku === "standard"
+                          ? "Script embed (standard)"
+                          : "iFrame embed (restricted)"}
+                      </div>
                     </FormControl>
+                    <FormDescription>
+                      Selected from the previous step. To change it, go back.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
