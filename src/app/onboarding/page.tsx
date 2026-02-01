@@ -36,10 +36,10 @@ import { toast } from "sonner";
 import { Loader2, CreditCard, Globe, ShieldCheck, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Pro plan disabled for now
 const PLAN_OPTIONS = [
   { id: "free", name: "Free", price: "$0", description: "Get started with limited features" },
   { id: "starter", name: "Starter", price: "$9.99/mo", description: "Up to 3 websites, 100 messages/month, 14-day free trial" },
-  { id: "pro", name: "Pro", price: "Contact for pricing", description: "For growing businesses" },
 ];
 
 const INSTALL_ADDON_OPTIONS = [

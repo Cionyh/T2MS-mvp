@@ -16,10 +16,10 @@ import { Loader2, CreditCard, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
+// Pro plan disabled for now
 const PLAN_OPTIONS = [
   { id: "free", name: "Free", price: "$0", description: "Get started with limited features" },
   { id: "starter", name: "Starter", price: "$9.99/mo", description: "Up to 3 websites, 100 messages/month, 14-day free trial" },
-  { id: "pro", name: "Pro", price: "Contact for pricing", description: "For growing businesses" },
 ];
 
 interface Subscription {
@@ -96,21 +96,21 @@ export default function ChangePlanPage() {
         return;
       }
 
-      await fetch("/api/onboarding/plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          planId: selectedPlanId,
-          installAddonSku: installAddonSku ?? undefined,
-        }),
-      });
-
       if (selectedPlanId === "free") {
+        await fetch("/api/onboarding/plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            planId: "free",
+            installAddonSku: installAddonSku ?? undefined,
+          }),
+        });
         toast.success("Plan updated to Free.");
         router.replace("/app/settings?tab=setup");
         return;
       }
 
+      // Paid plan: only redirect to Stripe. Do NOT update onboarding/plan until payment is finalized.
       const { data, error } = await client.subscription.upgrade({
         plan: selectedPlanId,
         referenceId: session.data.user.id,
@@ -142,7 +142,11 @@ export default function ChangePlanPage() {
     );
   }
 
-  const currentPlan = PLAN_OPTIONS.find((p) => p.id === currentPlanId) ?? PLAN_OPTIONS[0];
+  const currentPlan =
+    PLAN_OPTIONS.find((p) => p.id === currentPlanId) ??
+    (currentPlanId === "pro"
+      ? { id: "pro", name: "Pro", price: "Contact for pricing", description: "For growing businesses" }
+      : PLAN_OPTIONS[0]);
 
   return (
     <div className="container mx-auto py-8 max-w-2xl">
