@@ -92,7 +92,7 @@ export function SetupDetailsTab() {
               )}
             </p>
             <Button className="mt-2" variant="outline" size="sm" asChild>
-              <Link href="/onboarding?changePlan=1">Change plan</Link>
+              <Link href="/app/change-plan">Change plan</Link>
             </Button>
           </CardContent>
         </Card>
