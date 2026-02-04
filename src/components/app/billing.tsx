@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,11 +43,36 @@ export function BillingSection() {
   const [onboardingPlanId, setOnboardingPlanId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const syncAttempted = useRef(false);
 
   useEffect(() => {
     fetchSubscriptions();
     fetchOnboardingPlan();
   }, []);
+
+  // When payment pending, try syncing from Stripe once (webhook may have succeeded but DB wasn't updated)
+  useEffect(() => {
+    if (loading || !onboardingPlanId || onboardingPlanId === "free") return;
+    const hasActive = subscriptions.some(
+      (s) => s.status === "active" || s.status === "trialing"
+    );
+    if (hasActive || syncAttempted.current) return;
+
+    syncAttempted.current = true;
+    const sync = async () => {
+      try {
+        const res = await fetch("/api/subscription/sync", { method: "POST" });
+        const data = await res.json();
+        if (res.ok && data.synced > 0) {
+          await fetchSubscriptions();
+          toast.success("Subscription synced successfully");
+        }
+      } catch {
+        // Ignore
+      }
+    };
+    sync();
+  }, [loading, onboardingPlanId, subscriptions.length]);
 
   const fetchSubscriptions = async () => {
     try {
@@ -86,6 +111,26 @@ export function BillingSection() {
       }
     } catch {
       // Ignore
+    }
+  };
+
+  const syncSubscriptionFromStripe = async () => {
+    setActionLoading("sync");
+    try {
+      const res = await fetch("/api/subscription/sync", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.synced > 0) {
+        await fetchSubscriptions();
+        toast.success("Subscription synced successfully");
+      } else if (res.ok) {
+        toast.info("No subscription found to sync");
+      } else {
+        toast.error(data.error || "Sync failed");
+      }
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Sync failed");
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -392,12 +437,21 @@ export function BillingSection() {
               You selected the <strong className="capitalize">{onboardingPlanId}</strong> plan during onboarding.
               Complete payment to activate your subscription and unlock plan limits.
             </p>
-            <Button
-              onClick={handleCompletePayment}
-              disabled={actionLoading === "complete-payment"}
-            >
-              {actionLoading === "complete-payment" ? "Loading..." : "Complete payment"}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={handleCompletePayment}
+                disabled={actionLoading === "complete-payment"}
+              >
+                {actionLoading === "complete-payment" ? "Loading..." : "Complete payment"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={syncSubscriptionFromStripe}
+                disabled={actionLoading === "sync"}
+              >
+                {actionLoading === "sync" ? "Syncing..." : "Refresh status"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

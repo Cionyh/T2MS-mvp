@@ -1,0 +1,152 @@
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { prisma } from "@/lib/prisma";
+import Stripe from "stripe";
+
+function getStripe(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
+  return new Stripe(key, { apiVersion: "2025-08-27.basil" });
+}
+
+const PLAN_PRICE_IDS = [
+  process.env.STRIPE_STARTER_PRICE_ID,
+  process.env.STRIPE_PRO_PRICE_ID,
+  process.env.STRIPE_ENTERPRISE_PRICE_ID,
+].filter(Boolean) as string[];
+
+const PRICE_TO_PLAN: Record<string, string> = {
+  [process.env.STRIPE_STARTER_PRICE_ID || ""]: "starter",
+  [process.env.STRIPE_PRO_PRICE_ID || ""]: "pro",
+  [process.env.STRIPE_ENTERPRISE_PRICE_ID || ""]: "enterprise",
+};
+
+function getPlanFromPriceId(priceId: string): string {
+  return PRICE_TO_PLAN[priceId] || "starter";
+}
+
+/**
+ * Sync subscriptions from Stripe to the database.
+ * Fixes "Payment pending" when webhooks succeeded but the DB wasn't updated.
+ */
+export async function POST() {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const stripe = getStripe();
+    const userId = session.user.id;
+
+    let stripeCustomerId: string | null = null;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeCustomerId: true, email: true },
+    });
+
+    if (user?.stripeCustomerId) {
+      stripeCustomerId = user.stripeCustomerId;
+    } else if (user?.email) {
+      const customers = await stripe.customers.search({
+        query: `email:"${user.email.replace(/"/g, '\\"')}" AND -metadata["customerType"]:"organization"`,
+        limit: 1,
+      });
+      const customer = customers.data[0];
+      if (customer) {
+        stripeCustomerId = customer.id;
+        await prisma.user.update({
+          where: { id: userId },
+          data: { stripeCustomerId: customer.id },
+        });
+      }
+    }
+
+    if (!stripeCustomerId) {
+      return NextResponse.json(
+        { synced: 0, message: "No Stripe customer found" },
+        { status: 200 }
+      );
+    }
+
+    const stripeSubscriptions = await stripe.subscriptions.list({
+      customer: stripeCustomerId,
+      status: "all",
+      limit: 10,
+    });
+
+    let synced = 0;
+
+    for (const sub of stripeSubscriptions.data) {
+      if (sub.status !== "active" && sub.status !== "trialing") continue;
+
+      const item = sub.items.data[0];
+      if (!item) continue;
+
+      const priceId = item.price.id;
+      if (!PLAN_PRICE_IDS.includes(priceId)) continue;
+
+      const plan = getPlanFromPriceId(priceId);
+      const periodStart = new Date(item.current_period_start * 1000);
+      const periodEnd = new Date(item.current_period_end * 1000);
+      const trialStart = sub.trial_start
+        ? new Date(sub.trial_start * 1000)
+        : null;
+      const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000) : null;
+
+      const subscriptionData = {
+        plan,
+        status: sub.status,
+        referenceId: userId,
+        stripeCustomerId,
+        stripeSubscriptionId: sub.id,
+        periodStart,
+        periodEnd,
+        trialStart,
+        trialEnd,
+        cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
+        seats: item.quantity ?? 1,
+      };
+
+      const existing = await prisma.subscription.findFirst({
+        where: {
+          OR: [
+            { stripeSubscriptionId: sub.id },
+            { referenceId: userId, plan, status: { in: ["active", "trialing"] } },
+          ],
+        },
+      });
+
+      if (existing) {
+        await prisma.subscription.update({
+          where: { id: existing.id },
+          data: subscriptionData,
+        });
+      } else {
+        await prisma.subscription.create({
+          data: {
+            id: sub.id,
+            ...subscriptionData,
+          },
+        });
+      }
+      synced++;
+    }
+
+    return NextResponse.json({
+      synced,
+      message: synced > 0 ? "Subscription synced successfully" : "No active subscriptions to sync",
+    });
+  } catch (error) {
+    console.error("Subscription sync error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Sync failed" },
+      { status: 500 }
+    );
+  }
+}
