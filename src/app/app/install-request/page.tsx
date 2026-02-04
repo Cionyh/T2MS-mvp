@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSession } from "@/lib/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -142,6 +143,9 @@ function InstallRequestContent() {
   const [loadingJob, setLoadingJob] = useState(false);
   const [installAddonSku, setInstallAddonSku] = useState<string>("standard");
   const [smsConsentText, setSmsConsentText] = useState("");
+  const [websiteSource, setWebsiteSource] = useState<"manual" | "sites">("manual");
+  const [sites, setSites] = useState<Array<{ id: string; name: string; domain: string }>>([]);
+  const [loadingSites, setLoadingSites] = useState(false);
 
   const form = useForm<SetupFormValues>({
     resolver: zodResolver(setupSchema),
@@ -202,6 +206,17 @@ function InstallRequestContent() {
       .catch(() => toast.error("Failed to load install request"))
       .finally(() => setLoadingJob(false));
   }, [jobIdFromUrl, session?.user?.id]);
+
+  // Fetch user's sites when on setup step
+  useEffect(() => {
+    if (step !== "setup" || !session?.user?.id) return;
+    setLoadingSites(true);
+    fetch("/api/client")
+      .then((r) => r.json())
+      .then((data) => setSites(Array.isArray(data) ? data : []))
+      .catch(() => setSites([]))
+      .finally(() => setLoadingSites(false));
+  }, [step, session?.user?.id]);
 
   const addWebsiteUrl = () => {
     const current = form.getValues("websiteUrls");
@@ -497,30 +512,106 @@ function InstallRequestContent() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Website URL(s) *</FormLabel>
-                    <FormDescription>Enter the URL(s) where you want the widget installed.</FormDescription>
-                    {field.value.map((url, index) => (
-                      <div key={index} className="flex gap-2 mb-2">
-                        <FormControl>
-                          <Input
-                            placeholder="https://example.com"
-                            value={url}
-                            onChange={(e) => {
-                              const next = [...field.value];
-                              next[index] = e.target.value;
-                              field.onChange(next);
-                            }}
-                          />
-                        </FormControl>
-                        {field.value.length > 1 && (
-                          <Button type="button" variant="outline" onClick={() => removeWebsiteUrl(index)}>
-                            Remove
+                    <FormDescription>
+                      Select an existing site or enter the URL(s) where you want the widget installed.
+                    </FormDescription>
+                    <div className="space-y-4">
+                      <RadioGroup
+                        value={websiteSource}
+                        onValueChange={(v) => {
+                          setWebsiteSource(v as "manual" | "sites");
+                          if (v === "sites" && sites.length > 0) {
+                            const first = sites[0];
+                            const url = first.domain.startsWith("http") ? first.domain : `https://${first.domain}`;
+                            field.onChange([url]);
+                          } else if (v === "manual") {
+                            field.onChange(field.value.length > 0 ? field.value : [""]);
+                          }
+                        }}
+                        className="flex flex-col gap-2"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="sites" id="website-sites" disabled={sites.length === 0} />
+                          <Label htmlFor="website-sites" className={sites.length === 0 ? "text-muted-foreground" : ""}>
+                            Select from my sites
+                            {sites.length > 0 && ` (${sites.length} site${sites.length === 1 ? "" : "s"})`}
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="manual" id="website-manual" />
+                          <Label htmlFor="website-manual">Enter URL manually</Label>
+                        </div>
+                      </RadioGroup>
+
+                      {websiteSource === "sites" && (
+                        <div className="space-y-2">
+                          {loadingSites ? (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Loading your sites…
+                            </div>
+                          ) : sites.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                              No sites yet.{" "}
+                              <Link href="/app/build" className="font-medium text-primary underline underline-offset-4">
+                                Register a site
+                              </Link>{" "}
+                              first, or switch to manual URL entry.
+                            </p>
+                          ) : (
+                            <Select
+                              value={field.value[0] || ""}
+                              onValueChange={(val) => {
+                                const url = val.startsWith("http") ? val : `https://${val}`;
+                                field.onChange([url]);
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a site" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {sites.map((site) => {
+                                  const url = site.domain.startsWith("http") ? site.domain : `https://${site.domain}`;
+                                  return (
+                                    <SelectItem key={site.id} value={url}>
+                                      {site.name} ({site.domain})
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      )}
+
+                      {websiteSource === "manual" && (
+                        <div className="space-y-2">
+                          {field.value.map((url, index) => (
+                            <div key={index} className="flex gap-2">
+                              <FormControl>
+                                <Input
+                                  placeholder="https://example.com"
+                                  value={url}
+                                  onChange={(e) => {
+                                    const next = [...field.value];
+                                    next[index] = e.target.value;
+                                    field.onChange(next);
+                                  }}
+                                />
+                              </FormControl>
+                              {field.value.length > 1 && (
+                                <Button type="button" variant="outline" onClick={() => removeWebsiteUrl(index)}>
+                                  Remove
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                          <Button type="button" variant="outline" onClick={addWebsiteUrl}>
+                            Add another URL
                           </Button>
-                        )}
-                      </div>
-                    ))}
-                    <Button type="button" variant="outline" onClick={addWebsiteUrl} className="mt-2">
-                      Add another URL
-                    </Button>
+                        </div>
+                      )}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
