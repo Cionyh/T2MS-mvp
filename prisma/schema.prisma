@@ -221,7 +221,11 @@ model Subscription {
   trialStart           DateTime?
   trialEnd             DateTime?
   cancelAtPeriodEnd    Boolean?  @default(false)
+  cancelAt             DateTime?
+  canceledAt           DateTime?
+  endedAt             DateTime?
   seats                Int?
+  updatedAt            DateTime?
 
   @@map("subscription")
 }
