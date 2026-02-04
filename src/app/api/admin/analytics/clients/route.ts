@@ -73,6 +73,7 @@ export async function GET(req: NextRequest) {
       count: item._count.id
     }));
 
+
     // Extract domain patterns
     const domainPatterns = domainDistribution.map(client => {
       const domain = client.domain;
