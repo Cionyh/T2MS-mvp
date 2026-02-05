@@ -198,7 +198,7 @@ export default function AdminWorkersPage() {
         throw new Error(error.error || "Failed to create worker");
       }
 
-      toast.success("Worker created successfully");
+      toast.success("Teammember created successfully");
       setNewWorker({
         userId: "",
         email: "",
@@ -271,7 +271,7 @@ export default function AdminWorkersPage() {
         throw new Error(error.error || "Failed to delete worker");
       }
 
-      toast.success("Worker deleted successfully");
+      toast.success("Teammember deleted successfully");
       setIsDeleteDialogOpen(false);
       setSelectedWorker(null);
       queryClient.invalidateQueries({ queryKey: ["admin-workers"] });
@@ -301,23 +301,23 @@ export default function AdminWorkersPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Worker Management</h1>
+          <h1 className="text-2xl font-bold">Teammember Management</h1>
           <p className="text-muted-foreground">
-            Manage Philippines workers and their availability
+            Manage team members and their availability
           </p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Create Worker
+              Create Teammember
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Create New Worker</DialogTitle>
+              <DialogTitle>Create New Teammember</DialogTitle>
               <DialogDescription>
-                Create a new worker account or convert an existing user
+                Create a new team member account or convert an existing user
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateWorker}>
@@ -373,7 +373,7 @@ export default function AdminWorkersPage() {
                     </Select>
                     {availableUsers.length === 0 && (
                       <p className="text-sm text-muted-foreground">
-                        All users are already workers, or no users available
+                        All users are already team members, or no users available
                       </p>
                     )}
                   </div>
@@ -400,7 +400,7 @@ export default function AdminWorkersPage() {
                         onChange={(e) =>
                           setNewWorker({ ...newWorker, email: e.target.value })
                         }
-                        placeholder="worker@example.com"
+                        placeholder="teammember@example.com"
                         required={createMode === "new"}
                       />
                     </div>
@@ -418,7 +418,7 @@ export default function AdminWorkersPage() {
                         minLength={8}
                       />
                       <p className="text-sm text-muted-foreground">
-                        Worker will use this to log in to the worker portal
+                        Teammember will use this to log in to the team portal
                       </p>
                     </div>
                   </>
@@ -466,7 +466,7 @@ export default function AdminWorkersPage() {
                     required
                   />
                   <p className="text-sm text-muted-foreground">
-                    Maximum number of active jobs this worker can have (1-10)
+                    Maximum number of active jobs this team member can have (1-10)
                   </p>
                 </div>
               </div>
@@ -498,7 +498,7 @@ export default function AdminWorkersPage() {
                   ) : (
                     <>
                       <Plus className="mr-2 h-4 w-4" />
-                      Create Worker
+                      Create Teammember
                     </>
                   )}
                 </Button>
@@ -513,7 +513,7 @@ export default function AdminWorkersPage() {
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search workers by name or email..."
+            placeholder="Search team members by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
@@ -542,13 +542,13 @@ export default function AdminWorkersPage() {
         ) : !workers || workers.length === 0 ? (
           <div className="text-center py-12">
             <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No workers found</p>
+            <p className="text-muted-foreground">No team members found</p>
           </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Worker</TableHead>
+                <TableHead>Teammember</TableHead>
                 <TableHead>Availability</TableHead>
                 <TableHead>Active Jobs</TableHead>
                 <TableHead>Completed</TableHead>
@@ -625,16 +625,16 @@ export default function AdminWorkersPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Worker</DialogTitle>
+            <DialogTitle>Edit Teammember</DialogTitle>
             <DialogDescription>
-              Update worker availability and job capacity
+              Update team member availability and job capacity
             </DialogDescription>
           </DialogHeader>
           {selectedWorker && (
             <form onSubmit={handleUpdateWorker}>
               <div className="space-y-4 py-4">
                 <div>
-                  <Label>Worker</Label>
+                  <Label>Teammember</Label>
                   <p className="text-sm font-medium mt-1">
                     {selectedWorker.user.name} ({selectedWorker.user.email})
                   </p>
@@ -701,7 +701,7 @@ export default function AdminWorkersPage() {
                       Updating...
                     </>
                   ) : (
-                    "Update Worker"
+                    "Update Teammember"
                   )}
                 </Button>
               </DialogFooter>
@@ -714,13 +714,13 @@ export default function AdminWorkersPage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Worker</AlertDialogTitle>
+            <AlertDialogTitle>Delete Teammember</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this worker? This action cannot be
+              Are you sure you want to delete this team member? This action cannot be
               undone.
               {selectedWorker && selectedWorker.activeJobCount > 0 && (
                 <span className="block mt-2 text-destructive font-medium">
-                  Warning: This worker has {selectedWorker.activeJobCount} active
+                  Warning: This team member has {selectedWorker.activeJobCount} active
                   job(s). Please reassign or complete jobs first.
                 </span>
               )}

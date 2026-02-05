@@ -129,7 +129,7 @@ export default function AdminInstallRequestsPage() {
           Install Requests (Install Jobs)
         </h1>
         <p className="text-muted-foreground mt-1">
-          Widget install jobs from the install_job table. Assign workers and track status.
+          Widget install jobs from the install_job table. Assign team members and track status.
         </p>
       </div>
 

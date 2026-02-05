@@ -106,7 +106,7 @@ export default function ClientDashboardPage({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold tracking-tight">
-            Welcome back,{" "}
+            Welcome{" "}
             <span className="font-bold">
               {isPending ? (
                 <Skeleton className="inline-block h-6 w-24 rounded" />

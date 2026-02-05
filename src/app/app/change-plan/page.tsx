@@ -16,9 +16,8 @@ import { Loader2, CreditCard, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-// Pro plan disabled for now
+// Pro plan disabled for now. Free plan hidden from selection.
 const PLAN_OPTIONS = [
-  { id: "free", name: "Free", price: "$0", description: "Get started with limited features" },
   { id: "starter", name: "Starter", price: "$9.99/mo", description: "Up to 3 websites, 100 messages/month, 14-day free trial" },
 ];
 
@@ -71,7 +70,7 @@ export default function ChangePlanPage() {
         setInstallAddonSku(addon);
         const current = planFromSub || planFromOnboarding || "free";
         setCurrentPlanId(current);
-        setSelectedPlanId(current);
+        setSelectedPlanId(current === "free" ? "starter" : current);
       } catch {
         toast.error("Failed to load plan info");
       } finally {
@@ -96,21 +95,7 @@ export default function ChangePlanPage() {
         return;
       }
 
-      if (selectedPlanId === "free") {
-        await fetch("/api/onboarding/plan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            planId: "free",
-            installAddonSku: installAddonSku ?? undefined,
-          }),
-        });
-        toast.success("Plan updated to Free.");
-        router.replace("/app/settings?tab=setup");
-        return;
-      }
-
-      // Paid plan: only redirect to Stripe. Do NOT update onboarding/plan until payment is finalized.
+      // Paid plan: redirect to Stripe. Do NOT update onboarding/plan until payment is finalized.
       const { data, error } = await client.subscription.upgrade({
         plan: selectedPlanId,
         referenceId: session.data.user.id,
@@ -146,6 +131,8 @@ export default function ChangePlanPage() {
     PLAN_OPTIONS.find((p) => p.id === currentPlanId) ??
     (currentPlanId === "pro"
       ? { id: "pro", name: "Pro", price: "Contact for pricing", description: "For growing businesses" }
+      : currentPlanId === "free"
+      ? { id: "free", name: "Free", price: "$0", description: "Get started with limited features" }
       : PLAN_OPTIONS[0]);
 
   return (

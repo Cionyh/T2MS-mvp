@@ -29,10 +29,36 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import Link from "next/link";
+
+const BUSINESS_CATEGORIES = [
+  "Apparel",
+  "Beauty",
+  "Health",
+  "Food",
+  "Bus Consulting",
+  "Entertainment",
+  "Hospitality",
+  "Travel",
+  "Real Estate",
+  "Legal",
+  "Staffing",
+  "Construction",
+  "Photography",
+  "Education",
+  "Church",
+  "Mobile Business",
+] as const;
 
 const signUpSchema = z.object({
   firstName: z.string().min(2, { message: "First name must be at least 2 characters." }),
@@ -40,9 +66,12 @@ const signUpSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
   password: z.string().min(8, { message: "Password must be at least 8 characters." }),
   passwordConfirmation: z.string(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  businessCategory: z.string().optional(),
 }).refine((data) => data.password === data.passwordConfirmation, {
   message: "Passwords do not match",
-  path: ["passwordConfirmation"], // path of error
+  path: ["passwordConfirmation"],
 });
 
 export function SignUp() {
@@ -61,6 +90,9 @@ export function SignUp() {
       email: "",
       password: "",
       passwordConfirmation: "",
+      state: "",
+      country: "",
+      businessCategory: "",
     },
   });
 
@@ -81,6 +113,9 @@ export function SignUp() {
         email: values.email,
         password: values.password,
         name: `${values.firstName} ${values.lastName}`,
+        state: values.state || undefined,
+        country: values.country || undefined,
+        businessCategory: values.businessCategory || undefined,
         callbackURL: "/onboarding",
         fetchOptions: {
           onResponse: () => {
@@ -172,6 +207,75 @@ export function SignUp() {
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label htmlFor="state">State</Label>
+                      <FormControl>
+                        <Input
+                          id="state"
+                          placeholder="e.g. California"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid gap-2">
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label htmlFor="country">Country</Label>
+                      <FormControl>
+                        <Input
+                          id="country"
+                          placeholder="e.g. United States"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <FormField
+                control={form.control}
+                name="businessCategory"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label htmlFor="businessCategory">Business Category</Label>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || undefined}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {BUSINESS_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

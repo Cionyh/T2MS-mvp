@@ -100,6 +100,21 @@ export const auth = betterAuth({
         defaultValue: "user",
         input: false,
       },
+      state: {
+        type: "string",
+        required: false,
+        input: true,
+      },
+      country: {
+        type: "string",
+        required: false,
+        input: true,
+      },
+      businessCategory: {
+        type: "string",
+        required: false,
+        input: true,
+      },
     },
     changeEmail: {
       enabled: true,

@@ -387,16 +387,6 @@ export function BillingSection() {
                 {actionLoading === "billing-portal" ? "Loading..." : "Manage Billing"}
               </Button>
 
-              {/* Upgrade Button - only show for non-enterprise plans */}
-              {activeSubscription.plan !== "enterprise" && (
-                <Button
-                  onClick={() => window.location.href = "/pricing"}
-                  variant="default"
-                >
-                  Upgrade Plan
-                </Button>
-              )}
-
               {activeSubscription.cancelAtPeriodEnd ? (
                 <Button
                   onClick={() => handleRestoreSubscription(activeSubscription.id)}

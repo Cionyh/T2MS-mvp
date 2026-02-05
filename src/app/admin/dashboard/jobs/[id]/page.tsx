@@ -452,12 +452,12 @@ export default function AdminJobDetailPage() {
           {/* Worker Assignment */}
           <Card>
             <CardHeader>
-              <CardTitle>Worker Assignment</CardTitle>
+              <CardTitle>Teammember Assignment</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {job.assignedWorker ? (
                 <div>
-                  <Label className="text-muted-foreground">Assigned Worker</Label>
+                  <Label className="text-muted-foreground">Assigned Teammember</Label>
                   <p className="font-medium">{job.assignedWorker.user.name}</p>
                   <p className="text-sm text-muted-foreground">
                     {job.assignedWorker.user.email}
@@ -581,15 +581,15 @@ export default function AdminJobDetailPage() {
           <DialogHeader>
             <DialogTitle>Reassign Job</DialogTitle>
             <DialogDescription>
-              Assign this job to a different worker or release it back to the queue.
+              Assign this job to a different team member or release it back to the queue.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label>Worker</Label>
+              <Label>Teammember</Label>
               <Select value={selectedWorkerId} onValueChange={setSelectedWorkerId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a worker or unassign" />
+                  <SelectValue placeholder="Select a team member or unassign" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassign">Unassign (Release to Queue)</SelectItem>
@@ -632,8 +632,8 @@ export default function AdminJobDetailPage() {
             </DialogTitle>
             <DialogDescription>
               {reviewAction === "approve"
-                ? "Approve this job and mark it as completed. A payout will be created for the worker."
-                : "Reject this job and mark it as needs fix. The worker will need to address the issues."}
+                ? "Approve this job and mark it as completed. A payout will be created for the team member."
+                : "Reject this job and mark it as needs fix. The team member will need to address the issues."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">

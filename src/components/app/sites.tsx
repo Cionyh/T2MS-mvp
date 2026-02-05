@@ -390,7 +390,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   <div className="flex items-center space-x-3">
     <CardTitle className="text-lg font-medium">{website.name}</CardTitle>
     
-    {/* Pinned switch with badge */}
+    {/* Published switch with badge */}
     <div className="flex items-center space-x-2">
       <Switch
         checked={website.pinned ?? false}
@@ -404,7 +404,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
 
             if (!res.ok) {
               const errorData = await res.json();
-              throw new Error(errorData.error || "Failed to update pinned state");
+              throw new Error(errorData.error || "Failed to update published state");
             }
 
             // Update state locally
@@ -414,10 +414,10 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               )
             );
 
-            toast.success(`Pinned state updated: ${checked ? "ON" : "OFF"}`);
+            toast.success(`Site ${checked ? "published" : "unpublished"}`);
           } catch (error: any) {
-            console.error("Error updating pinned state:", error);
-            toast.error(error.message || "Failed to update pinned state");
+            console.error("Error updating published state:", error);
+            toast.error(error.message || "Failed to update published state");
           }
         }}
       />
@@ -428,7 +428,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             : "bg-muted text-foreground"
         }`}
       >
-        {website.pinned ? "Pinned" : "Unpinned"}
+        {website.pinned ? "Published" : "Unpublished"}
       </span>
     </div>
   </div>

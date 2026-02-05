@@ -257,10 +257,10 @@ export default function AdminJobsPage() {
         </Select>
         <Select value={workerFilter} onValueChange={setWorkerFilter}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by worker" />
+            <SelectValue placeholder="Filter by team member" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Workers</SelectItem>
+            <SelectItem value="all">All Teammembers</SelectItem>
             {workersData?.map((worker: any) => (
               <SelectItem key={worker.id} value={worker.id}>
                 {worker.user.name}
@@ -285,7 +285,7 @@ export default function AdminJobsPage() {
                 <TableHead>Customer</TableHead>
                 <TableHead>Platform</TableHead>
                 <TableHead>Website URLs</TableHead>
-                <TableHead>Worker</TableHead>
+                <TableHead>Teammember</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Proofs</TableHead>
                 <TableHead>Created</TableHead>

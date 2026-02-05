@@ -25,6 +25,9 @@ model User {
   banExpires DateTime?
 
   stripeCustomerId String?
+  state            String?
+  country          String?
+  businessCategory String?
 
   members     Member[]
   invitations Invitation[]
