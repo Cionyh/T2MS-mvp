@@ -46,7 +46,6 @@ const BUSINESS_CATEGORIES = [
   "Beauty",
   "Health",
   "Food",
-  "Bus Consulting",
   "Entertainment",
   "Hospitality",
   "Travel",
@@ -56,7 +55,8 @@ const BUSINESS_CATEGORIES = [
   "Construction",
   "Photography",
   "Education",
-  "Church",
+  "Non-Profit / Faith-Based",
+  "Professional Services",
   "Mobile Business",
 ] as const;
 

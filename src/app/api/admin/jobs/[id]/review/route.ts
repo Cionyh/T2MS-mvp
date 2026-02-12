@@ -119,7 +119,7 @@ export async function POST(
 
       if (!existingPayout) {
         // Calculate payout amount based on install type
-        const payoutAmount = updatedJob.installType === "iframe" ? 39.99 : 19.99;
+        const payoutAmount = 9.99;
 
         await prisma.workerPayout.create({
           data: {

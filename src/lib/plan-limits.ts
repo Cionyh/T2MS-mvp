@@ -8,8 +8,8 @@ export interface PlanLimits {
 
 export const PLAN_LIMITS: Record<string, PlanLimits> = {
   free: { websites: 10, messages: 1000, storage: 10 },
-  starter: { websites: 50, messages: 10000, storage: 50 },
-  pro: { websites: 200, messages: 50000, storage: 200 },
+  starter: { websites: 1, messages: 100, storage: 10 },
+  pro: { websites: 3, messages: 220, storage: 50 },
   enterprise: { websites: -1, messages: -1, storage: 1000 }
 };
 

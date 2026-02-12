@@ -45,9 +45,9 @@ if (stripeClient && process.env.STRIPE_WEBHOOK_SECRET) {
             name: "starter",
             priceId: process.env.STRIPE_STARTER_PRICE_ID!,
             limits: {
-              websites: 50,
-              messages: 10000,
-              storage: 50
+              websites: 1,
+              messages: 100,
+              storage: 10
             },
             freeTrial: {
               days: 14
@@ -57,9 +57,9 @@ if (stripeClient && process.env.STRIPE_WEBHOOK_SECRET) {
             name: "pro",
             priceId: process.env.STRIPE_PRO_PRICE_ID!,
             limits: {
-              websites: 200,
-              messages: 50000,
-              storage: 200
+              websites: 3,
+              messages: 220,
+              storage: 50
             },
             freeTrial: {
               days: 14

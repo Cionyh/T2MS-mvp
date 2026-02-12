@@ -16,9 +16,9 @@ import { Loader2, CreditCard, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-// Pro plan disabled for now. Free plan hidden from selection.
 const PLAN_OPTIONS = [
-  { id: "starter", name: "Starter", price: "$9.99/mo", description: "Up to 3 websites, 100 messages/month, 14-day free trial" },
+  { id: "starter", name: "Limited Offer Early Bird Special", price: "$9.99/mo", description: "1 website, 100 messages/month, 14-day free trial" },
+  { id: "pro", name: "Limited Offer Standard Price", price: "$19.95/mo", description: "Up to 3 websites, 220 messages/month, 14-day free trial" },
 ];
 
 interface Subscription {
@@ -70,7 +70,7 @@ export default function ChangePlanPage() {
         setInstallAddonSku(addon);
         const current = planFromSub || planFromOnboarding || "free";
         setCurrentPlanId(current);
-        setSelectedPlanId(current === "free" ? "starter" : current);
+        setSelectedPlanId(current === "free" || current === "enterprise" ? "starter" : current);
       } catch {
         toast.error("Failed to load plan info");
       } finally {
@@ -95,7 +95,6 @@ export default function ChangePlanPage() {
         return;
       }
 
-      // Paid plan: redirect to Stripe. Do NOT update onboarding/plan until payment is finalized.
       const { data, error } = await client.subscription.upgrade({
         plan: selectedPlanId,
         referenceId: session.data.user.id,
@@ -129,8 +128,8 @@ export default function ChangePlanPage() {
 
   const currentPlan =
     PLAN_OPTIONS.find((p) => p.id === currentPlanId) ??
-    (currentPlanId === "pro"
-      ? { id: "pro", name: "Pro", price: "Contact for pricing", description: "For growing businesses" }
+    (currentPlanId === "enterprise"
+      ? { id: "enterprise", name: "Enterprise / Teams", price: "Contact us", description: "For large enterprises and teams" }
       : currentPlanId === "free"
       ? { id: "free", name: "Free", price: "$0", description: "Get started with limited features" }
       : PLAN_OPTIONS[0]);

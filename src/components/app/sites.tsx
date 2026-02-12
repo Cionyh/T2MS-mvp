@@ -22,6 +22,7 @@ import {
   Copy,
   Target,
   Loader2,
+  MessageCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, Variants } from "framer-motion";
@@ -81,6 +82,27 @@ const widgetTypeInstructions = {
   modal: "Displays a centered dialog box that requires user interaction. Best for confirmations and detailed information.",
   ticker: "Creates a scrolling text banner that moves across the screen. Great for news updates and live information."
 };
+
+// Font options for widget (T2MS font styles list)
+const FONT_OPTIONS = [
+  { name: "Helvetica", value: "Helvetica, sans-serif" },
+  { name: "Times New Roman", value: "'Times New Roman', serif" },
+  { name: "Georgia", value: "Georgia, serif" },
+  { name: "Courier New", value: "'Courier New', monospace" },
+  { name: "Verdana", value: "Verdana, sans-serif" },
+  { name: "Trebuchet MS", value: "'Trebuchet MS', sans-serif" },
+  { name: "Impact", value: "Impact, sans-serif" },
+  { name: "Comic Sans MS", value: "'Comic Sans MS', cursive" },
+  { name: "Lucida Console", value: "'Lucida Console', monospace" },
+  { name: "Palatino Linotype", value: "'Palatino Linotype', serif" },
+  { name: "Tahoma", value: "Tahoma, sans-serif" },
+  { name: "MS Sans", value: "'MS Sans Serif', sans-serif" },
+  { name: "MS Serif", value: "'MS Serif', serif" },
+  { name: "New York", value: "'New York', serif" },
+  { name: "Book Antiqua", value: "'Book Antiqua', serif" },
+  { name: "Garamond", value: "'Garamond', serif" },
+  { name: "Century Gothic", value: "'Century Gothic', sans-serif" },
+] as const;
 
 // Match the Prisma Client model exactly
 interface Website {
@@ -149,6 +171,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [iframeDialogOpen, setIframeDialogOpen] = useState(false);
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null);
   const [configureDialogOpen, setConfigureDialogOpen] = useState(false);
+  const [fontStylesDialogOpen, setFontStylesDialogOpen] = useState(false);
   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -193,7 +216,10 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     setEditedDefaultType(website.defaultType || "banner");
     setEditedDefaultBgColor(website.defaultBgColor || "#222");
     setEditedDefaultTextColor(website.defaultTextColor || "#fff");
-    setEditedDefaultFont(website.defaultFont || "sans-serif");
+    const savedFont = website.defaultFont || "sans-serif";
+    setEditedDefaultFont(
+      FONT_OPTIONS.some((f) => f.value === savedFont) ? savedFont : FONT_OPTIONS[0].value
+    );
     setEditedDefaultDismissAfter(website.defaultDismissAfter ?? 5000);
     
     // Load widget configuration from JSON
@@ -365,11 +391,17 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         )}
       />
       
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-2">
         <h2 className="text-2xl font-semibold">Registered Sites</h2>
         <Button onClick={handleNewSiteClick} className="text-foreground">
           <Plus className="mr-2 h-4 w-4" /> Add New Site
         </Button>
+      </div>
+      <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-600/40 bg-amber-50/80 dark:bg-amber-950/30 dark:border-amber-500/40 px-4 py-3">
+        <MessageCircle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" />
+        <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+          Send text messages to <span className="font-semibold">1 (424) 484-8267</span> from the verified number to post on the widget.
+        </p>
       </div>
 
       {websites.length === 0 ? (
@@ -759,34 +791,70 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             )}
             
             <div>
-              <Label className="mb-2 text-sm font-medium">Font Family</Label>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <Label className="text-sm font-medium">Font Family</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto py-1 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setFontStylesDialogOpen(true)}
+                >
+                  View font styles
+                </Button>
+              </div>
               <select
-                value={editedDefaultFont}
+                value={FONT_OPTIONS.some((f) => f.value === editedDefaultFont) ? editedDefaultFont : FONT_OPTIONS[0].value}
                 onChange={(e) => setEditedDefaultFont(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="Arial, sans-serif">Arial</option>
-                <option value="Helvetica, sans-serif">Helvetica</option>
-                <option value="'Times New Roman', serif">Times New Roman</option>
-                <option value="Georgia, serif">Georgia</option>
-                <option value="'Courier New', monospace">Courier New</option>
-                <option value="Verdana, sans-serif">Verdana</option>
-                <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-                <option value="'Arial Black', sans-serif">Arial Black</option>
-                <option value="Impact, sans-serif">Impact</option>
-                <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
-                <option value="'Lucida Console', monospace">Lucida Console</option>
-                <option value="'Palatino Linotype', serif">Palatino Linotype</option>
-                <option value="Tahoma, sans-serif">Tahoma</option>
-                <option value="'Lucida Sans Unicode', sans-serif">Lucida Sans Unicode</option>
-                <option value="'MS Sans Serif', sans-serif">MS Sans Serif</option>
-                <option value="'MS Serif', serif">MS Serif</option>
-                <option value="'New York', serif">New York</option>
-                <option value="'Book Antiqua', serif">Book Antiqua</option>
-                <option value="'Garamond', serif">Garamond</option>
-                <option value="'Century Gothic', sans-serif">Century Gothic</option>
+                {FONT_OPTIONS.map((font) => (
+                  <option key={font.value} value={font.value}>
+                    {font.name}
+                  </option>
+                ))}
               </select>
             </div>
+
+            {/* T2MS Font Styles pop-up */}
+            <Dialog open={fontStylesDialogOpen} onOpenChange={setFontStylesDialogOpen}>
+              <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+                <DialogHeader>
+                  <DialogTitle className="text-lg">T2MS Font Styles</DialogTitle>
+                  <DialogDescription>
+                    Preview how each font will look in your widget.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 overflow-auto rounded-xl border-2 border-amber-800/40 bg-background p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-lg border-2 border-amber-800/40 p-3">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-800/80">Name of Font</p>
+                      <div className="flex flex-col gap-2 text-sm">
+                        {FONT_OPTIONS.map((font) => (
+                          <div key={font.value} className="py-1">
+                            {font.name}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="rounded-lg border-2 border-amber-800/40 p-3">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-800/80">Font Display</p>
+                      <div className="flex flex-col gap-2 text-sm">
+                        {FONT_OPTIONS.map((font) => (
+                          <div
+                            key={font.value}
+                            className="py-1"
+                            style={{ fontFamily: font.value }}
+                          >
+                            {font.name}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
             
             <div>
               <Label className="mb-2 text-sm font-medium">Font Size (px)</Label>

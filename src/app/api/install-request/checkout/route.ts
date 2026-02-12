@@ -14,8 +14,8 @@ function getStripe(): Stripe {
 }
 
 const INSTALL_ADDON_AMOUNTS: Record<string, { amount: number; name: string }> = {
-  standard: { amount: 1999, name: "Standard website install (script embed)" },
-  restricted: { amount: 3999, name: "Restricted platform install (Google Sites / iframe)" },
+  standard: { amount: 999, name: "Standard website install (script embed)" },
+  restricted: { amount: 999, name: "Restricted platform install (Google Sites / iframe)" },
 };
 
 /**

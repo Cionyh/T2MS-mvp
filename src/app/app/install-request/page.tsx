@@ -52,8 +52,8 @@ const PLATFORMS = [
 ] as const;
 
 const INSTALL_ADDON_OPTIONS = [
-  { id: "standard", name: "Standard website install (script embed)", price: "$19.99 one-time" },
-  { id: "restricted", name: "Restricted platform (Google Sites / iframe)", price: "$39.99 one-time" },
+  { id: "standard", name: "Standard website install (script embed)", price: "$9.99 one-time" },
+  { id: "restricted", name: "Restricted platform (Google Sites / iframe)", price: "$9.99 one-time" },
 ];
 
 const setupSchema = z
