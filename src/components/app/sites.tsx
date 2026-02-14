@@ -568,6 +568,23 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         </Button>
       </p>
 
+      {/* T2MS Install offer */}
+      <div className="pt-2 flex items-center gap-3">
+        <p className="text-sm font-semibold text-foreground tracking-tight">
+          Have T2MS Install for <span className="text-amber-700 dark:text-amber-500">£9.99</span>
+        </p>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-8 shrink-0 text-xs font-medium rounded-md"
+          asChild
+        >
+          <a href="/app/install-request">
+            Get T2MS Install
+          </a>
+        </Button>
+      </div>
+
       {/* Configure button */}
       <div className="pt-2">
         <Button

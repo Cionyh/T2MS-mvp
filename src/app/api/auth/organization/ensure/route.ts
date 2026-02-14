@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      organizationId,
+      organizationId, 
     });
   } catch (error) {
     console.error("Error ensuring organization:", error);

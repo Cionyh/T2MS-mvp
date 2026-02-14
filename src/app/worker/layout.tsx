@@ -1,6 +1,11 @@
 import { ReactNode } from "react";
 import { WorkerGuard } from "@/components/auth/worker-guard";
+import { WorkerLayoutShell } from "@/components/app/worker-layout-shell";
 
 export default function WorkerLayout({ children }: { children: ReactNode }) {
-  return <WorkerGuard>{children}</WorkerGuard>;
+  return (
+    <WorkerGuard>
+      <WorkerLayoutShell>{children}</WorkerLayoutShell>
+    </WorkerGuard>
+  );
 }

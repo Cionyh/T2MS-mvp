@@ -73,8 +73,15 @@ export default function ClientDashboardLayout({
     // Skip onboarding for admins — onboarding is for customers only
     if (session?.user?.role === "admin") return;
 
-    const checkOnboarding = async () => {
+    const runRedirectCheck = async () => {
+      if (!session?.user?.id) return;
       try {
+        // Workers should go to worker dashboard, not customer app or onboarding
+        const workerRes = await fetch("/api/workers/me");
+        if (workerRes.ok) {
+          router.replace("/worker/dashboard");
+          return;
+        }
         const res = await fetch("/api/onboarding/status");
         const data = await res.json();
         if (data.completed === false) {
@@ -85,7 +92,7 @@ export default function ClientDashboardLayout({
       }
     };
     if (session?.user?.id) {
-      checkOnboarding();
+      runRedirectCheck();
     }
   }, [session?.user?.id, session?.user?.role, router]);
 

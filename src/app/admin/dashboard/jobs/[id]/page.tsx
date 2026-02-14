@@ -134,7 +134,7 @@ export default function AdminJobDetailPage() {
       const response = await fetch("/api/admin/workers");
       if (!response.ok) throw new Error("Failed to fetch workers");
       const data = await response.json();
-      return data.workers || [];
+      return Array.isArray(data) ? data : (data.workers || []);
     },
   });
 
@@ -296,9 +296,8 @@ export default function AdminJobDetailPage() {
   }
 
   const canReviewQA = job.status === INSTALL_JOB_STATUS.SUBMITTED_FOR_QA;
-  const availableWorkers = workersData?.filter(
-    (w) => w.availability === "ON_SHIFT" || w.id === job.assignedWorker?.id
-  ) || [];
+  // Show all team members in Reassign dropdown (admin can assign to anyone)
+  const allWorkersForReassign = workersData || [];
 
   return (
     <div className="container mx-auto py-8">
@@ -593,7 +592,7 @@ export default function AdminJobDetailPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassign">Unassign (Release to Queue)</SelectItem>
-                  {availableWorkers.map((worker) => (
+                  {allWorkersForReassign.map((worker) => (
                     <SelectItem key={worker.id} value={worker.id}>
                       {worker.user.name} ({worker.user.email})
                       {worker.activeJobCount >= worker.maxActiveJobs && (
