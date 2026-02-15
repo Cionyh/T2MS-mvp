@@ -124,7 +124,7 @@ export default function WorkerPayoutsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  ${summary.totalAmount.toFixed(2)}
+                  ${Number(summary.totalAmount ?? 0).toFixed(2)}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {summary.totalCount} payout{summary.totalCount !== 1 ? "s" : ""}
@@ -148,7 +148,7 @@ export default function WorkerPayoutsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    ${data.amount.toFixed(2)}
+                    ${Number(data.amount ?? 0).toFixed(2)}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {data.count} payout{data.count !== 1 ? "s" : ""}
@@ -183,7 +183,7 @@ export default function WorkerPayoutsPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold">
-                          ${payout.amount.toFixed(2)}
+                          ${Number(payout.amount ?? 0).toFixed(2)}
                         </span>
                         {getStatusBadge(payout.status)}
                       </div>

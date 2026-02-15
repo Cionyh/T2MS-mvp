@@ -97,7 +97,7 @@ export async function GET(req: NextRequest) {
           ...worker,
           activeJobCount,
           completedJobCount,
-          totalEarnings: totalEarnings._sum.amount || 0,
+          totalEarnings: Number(totalEarnings._sum.amount ?? 0),
         };
       })
     );

@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
         maxActiveJobs: worker.maxActiveJobs,
         activeJobCount,
         completedJobsCount,
-        totalEarnings: totalEarnings._sum.amount || 0,
+        totalEarnings: Number(totalEarnings._sum.amount ?? 0),
         user: worker.user,
       },
     });

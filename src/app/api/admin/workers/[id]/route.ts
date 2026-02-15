@@ -108,7 +108,7 @@ export async function GET(
       ...worker,
       activeJobCount,
       completedJobCount,
-      totalEarnings: totalEarnings._sum.amount || 0,
+      totalEarnings: Number(totalEarnings._sum.amount ?? 0),
     });
   } catch (error: any) {
     console.error("[ADMIN_WORKERS_GET_ID]", error);
