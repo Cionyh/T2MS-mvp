@@ -116,6 +116,7 @@ interface Website {
     phone: string;
     verified: boolean;
   }>;
+  installJob?: { id: string; status: string } | null;
   defaultType?: string;
   defaultBgColor?: string;
   defaultTextColor?: string;
@@ -520,6 +521,33 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       <p>
         <span className="font-semibold">Domain:</span> {website.domain}
       </p>
+      {website.installJob && (
+        <p className="flex items-center gap-2">
+          <span className="font-semibold">Install request:</span>
+          <Badge
+            variant={website.installJob.status === "COMPLETED" ? "default" : "secondary"}
+            className={
+              website.installJob.status === "PENDING_PAYMENT"
+                ? "bg-amber-500/20 text-amber-700 dark:text-amber-400"
+                : website.installJob.status === "QUEUED" || website.installJob.status === "IN_PROGRESS"
+                  ? "bg-blue-500/20 text-blue-700 dark:text-blue-400"
+                  : ""
+            }
+          >
+            {website.installJob.status.replace(/_/g, " ")}
+          </Badge>
+          {website.installJob.status === "PENDING_PAYMENT" && (
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto p-0 text-primary"
+              onClick={() => router.push(`/app/install-request?jobId=${website.installJob!.id}`)}
+            >
+              Complete payment
+            </Button>
+          )}
+        </p>
+      )}
       <div>
         <span className="font-semibold">Phone Numbers:</span>
         {website.phoneNumbers && website.phoneNumbers.length > 0 ? (

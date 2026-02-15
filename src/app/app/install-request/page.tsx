@@ -58,9 +58,7 @@ const INSTALL_ADDON_OPTIONS = [
 
 const setupSchema = z
   .object({
-    websiteUrls: z
-      .array(z.string().url({ message: "Invalid URL format. Include https:// or http://." }))
-      .min(1, { message: "At least one website URL is required." }),
+    websiteUrl: z.string().url({ message: "Invalid URL format. Include https:// or http://." }),
     platform: z.string().min(1, { message: "Platform selection is required." }),
     installType: z.enum([INSTALL_TYPE.SCRIPT, INSTALL_TYPE.IFRAME]),
     preferredPlacement: z.string().optional(),
@@ -144,13 +142,14 @@ function InstallRequestContent() {
   const [installAddonSku, setInstallAddonSku] = useState<string>("standard");
   const [smsConsentText, setSmsConsentText] = useState("");
   const [websiteSource, setWebsiteSource] = useState<"manual" | "sites">("manual");
+  const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [sites, setSites] = useState<Array<{ id: string; name: string; domain: string }>>([]);
   const [loadingSites, setLoadingSites] = useState(false);
 
   const form = useForm<SetupFormValues>({
     resolver: zodResolver(setupSchema),
     defaultValues: {
-      websiteUrls: [""],
+      websiteUrl: "",
       platform: "",
       installType: INSTALL_TYPE.SCRIPT,
       preferredPlacement: "",
@@ -218,20 +217,6 @@ function InstallRequestContent() {
       .finally(() => setLoadingSites(false));
   }, [step, session?.user?.id]);
 
-  const addWebsiteUrl = () => {
-    const current = form.getValues("websiteUrls");
-    form.setValue("websiteUrls", [...current, ""]);
-  };
-  const removeWebsiteUrl = (index: number) => {
-    const current = form.getValues("websiteUrls");
-    if (current.length > 1) {
-      form.setValue(
-        "websiteUrls",
-        current.filter((_, i) => i !== index)
-      );
-    }
-  };
-
   const handleContinue = async (values: SetupFormValues) => {
     if (!session?.user?.id) {
       toast.error("You must be logged in.");
@@ -256,11 +241,17 @@ function InstallRequestContent() {
         accessCredentials = { steps: values.instructions };
       }
 
+      const websiteUrl = values.websiteUrl?.trim() || "";
+      if (!websiteUrl) {
+        toast.error("Website URL is required.");
+        return;
+      }
       const res = await fetch("/api/install-request/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          websiteUrls: values.websiteUrls.filter((u) => u.trim()),
+          websiteUrls: [websiteUrl],
+          clientId: websiteSource === "sites" ? selectedSiteId : undefined,
           platform: values.platform,
           installType: installAddonSku === "standard" ? INSTALL_TYPE.SCRIPT : INSTALL_TYPE.IFRAME,
           preferredPlacement: values.preferredPlacement || null,
@@ -508,24 +499,26 @@ function InstallRequestContent() {
             <form onSubmit={form.handleSubmit(handleContinue)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="websiteUrls"
+                name="websiteUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website URL(s) *</FormLabel>
+                    <FormLabel>Website URL *</FormLabel>
                     <FormDescription>
-                      Select an existing site or enter the URL(s) where you want the widget installed.
+                      Select an existing site or enter the URL where you want the widget installed.
                     </FormDescription>
                     <div className="space-y-4">
                       <RadioGroup
                         value={websiteSource}
                         onValueChange={(v) => {
                           setWebsiteSource(v as "manual" | "sites");
+                          setSelectedSiteId(null);
                           if (v === "sites" && sites.length > 0) {
                             const first = sites[0];
                             const url = first.domain.startsWith("http") ? first.domain : `https://${first.domain}`;
-                            field.onChange([url]);
+                            field.onChange(url);
+                            setSelectedSiteId(first.id);
                           } else if (v === "manual") {
-                            field.onChange(field.value.length > 0 ? field.value : [""]);
+                            field.onChange("");
                           }
                         }}
                         className="flex flex-col gap-2"
@@ -560,10 +553,15 @@ function InstallRequestContent() {
                             </p>
                           ) : (
                             <Select
-                              value={field.value[0] || ""}
+                              value={field.value || ""}
                               onValueChange={(val) => {
+                                const site = sites.find((s) => {
+                                  const u = s.domain.startsWith("http") ? s.domain : `https://${s.domain}`;
+                                  return u === val;
+                                });
+                                if (site) setSelectedSiteId(site.id);
                                 const url = val.startsWith("http") ? val : `https://${val}`;
-                                field.onChange([url]);
+                                field.onChange(url);
                               }}
                             >
                               <SelectTrigger>
@@ -585,31 +583,13 @@ function InstallRequestContent() {
                       )}
 
                       {websiteSource === "manual" && (
-                        <div className="space-y-2">
-                          {field.value.map((url, index) => (
-                            <div key={index} className="flex gap-2">
-                              <FormControl>
-                                <Input
-                                  placeholder="https://example.com"
-                                  value={url}
-                                  onChange={(e) => {
-                                    const next = [...field.value];
-                                    next[index] = e.target.value;
-                                    field.onChange(next);
-                                  }}
-                                />
-                              </FormControl>
-                              {field.value.length > 1 && (
-                                <Button type="button" variant="outline" onClick={() => removeWebsiteUrl(index)}>
-                                  Remove
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-                          <Button type="button" variant="outline" onClick={addWebsiteUrl}>
-                            Add another URL
-                          </Button>
-                        </div>
+                        <FormControl>
+                          <Input
+                            placeholder="https://example.com"
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
                       )}
                     </div>
                     <FormMessage />

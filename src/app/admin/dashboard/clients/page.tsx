@@ -55,6 +55,7 @@ type User = {
   email: string;
   name: string;
   role: "admin" | "user";
+  banned?: boolean;
 };
 
 export default function AdminDashboard() {
@@ -75,24 +76,15 @@ export default function AdminDashboard() {
     expirationDate: undefined as Date | undefined,
   });
 
-  const { data: users, isLoading: isUsersLoading } = useQuery({
-    queryKey: ["users"],
+  const { data, isLoading: isUsersLoading } = useQuery({
+    queryKey: ["admin-users-clients"],
     queryFn: async () => {
-      const data = await client.admin.listUsers(
-        {
-          query: {
-            limit: 10,
-            sortBy: "createdAt",
-            sortDirection: "desc",
-          },
-        },
-        {
-          throw: true,
-        }
-      );
-      return data?.users || [];
+      const res = await fetch("/api/admin/users?page=1&limit=100");
+      if (!res.ok) throw new Error("Failed to fetch users");
+      return res.json() as Promise<{ users: User[] }>;
     },
   });
+  const users = data?.users ?? [];
 
 	const handleCreateUser = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -108,7 +100,7 @@ export default function AdminDashboard() {
 			setNewUser({ email: "", password: "", name: "", role: "user" });
 			setIsDialogOpen(false);
 			queryClient.invalidateQueries({
-				queryKey: ["users"],
+				queryKey: ["admin-users-clients"],
 			});
 		} catch (error: any) {
 			toast.error(error.message || "Failed to create user");
@@ -123,7 +115,7 @@ export default function AdminDashboard() {
 			await client.admin.removeUser({ userId: id });
 			toast.success("User deleted successfully");
 			queryClient.invalidateQueries({
-				queryKey: ["users"],
+				queryKey: ["admin-users-clients"],
 			});
 		} catch (error: any) {
 			toast.error(error.message || "Failed to delete user");
@@ -172,7 +164,7 @@ export default function AdminDashboard() {
 			toast.success("User banned successfully");
 			setIsBanDialogOpen(false);
 			queryClient.invalidateQueries({
-				queryKey: ["users"],
+				queryKey: ["admin-users-clients"],
 			});
 		} catch (error: any) {
 			toast.error(error.message || "Failed to ban user");
@@ -424,14 +416,14 @@ export default function AdminDashboard() {
                                     },
                                     onSuccess() {
                                       queryClient.invalidateQueries({
-                                        queryKey: ["users"],
+                                        queryKey: ["admin-users-clients"],
                                       });
                                       toast.success("User unbanned successfully");
                                     },
                                   }
                                 );
                                 queryClient.invalidateQueries({
-                                  queryKey: ["users"],
+                                  queryKey: ["admin-users-clients"],
                                 });
                               } else {
                                 setIsBanDialogOpen(true);

@@ -55,6 +55,7 @@ model Customer {
 model InstallJob {
   id                 String    @id @default(cuid())
   customerId         String
+  clientId           String?   // site (Client) this install request is for
   platform           String
   installType        String    // "script" | "iframe"
   websiteUrls        String[]  @default([])
@@ -70,6 +71,7 @@ model InstallJob {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   customer           Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  client             Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
   assignedWorker     Worker?   @relation(fields: [assignedWorkerId], references: [id], onDelete: SetNull)
   proofs             Proof[]
   payouts            WorkerPayout[]
@@ -202,6 +204,7 @@ model Client {
   updatedAt    DateTime      @updatedAt
   messages     Message[]
   phoneNumbers PhoneNumber[]
+  installJobs  InstallJob[]
 }
 
 model Message {

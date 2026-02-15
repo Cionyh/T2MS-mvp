@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { INSTALL_JOB_STATUS, ACCESS_METHOD } from "@/lib/job-status";
+import { getActiveOrganization } from "@/lib/organization-helpers";
+import { checkSiteLimit } from "@/lib/plan-limits";
 
 const REQUIRED_CONSENT_TEXT =
   "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
@@ -25,6 +27,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       websiteUrls,
+      clientId: requestClientId,
       platform,
       installType,
       preferredPlacement,
@@ -34,6 +37,7 @@ export async function POST(req: NextRequest) {
       smsConsentText,
     } = body as {
       websiteUrls?: string[];
+      clientId?: string;
       platform?: string;
       installType?: string;
       preferredPlacement?: string;
@@ -74,6 +78,77 @@ export async function POST(req: NextRequest) {
         { error: "At least one valid website URL is required" },
         { status: 400 }
       );
+    }
+
+    let clientId: string | null = requestClientId && typeof requestClientId === "string" ? requestClientId : null;
+
+    if (clientId) {
+      const client = await prisma.client.findFirst({
+        where: { id: clientId },
+        select: { id: true, organizationId: true },
+      });
+      if (!client?.organizationId) {
+        return NextResponse.json({ error: "Site not found or not in your organization" }, { status: 400 });
+      }
+      const { verifyOrganizationAccess } = await import("@/lib/organization-helpers");
+      const access = await verifyOrganizationAccess(session.user.id, client.organizationId);
+      if (!access.hasAccess) {
+        return NextResponse.json({ error: "You do not have access to this site" }, { status: 403 });
+      }
+    } else {
+      const organizationId = await getActiveOrganization();
+      if (!organizationId) {
+        return NextResponse.json(
+          { error: "No active organization. Please complete onboarding first." },
+          { status: 400 }
+        );
+      }
+      const siteLimit = await checkSiteLimit(organizationId);
+      if (!siteLimit.allowed) {
+        return NextResponse.json(
+          { error: `Site limit reached (${siteLimit.current}/${siteLimit.limit}). Upgrade to add more sites.` },
+          { status: 403 }
+        );
+      }
+      const rawUrl = urls[0];
+      let normalizedDomain: string;
+      try {
+        const url = new URL(
+          rawUrl.startsWith("http://") || rawUrl.startsWith("https://") ? rawUrl : `https://${rawUrl}`
+        );
+        normalizedDomain = url.hostname.replace(/^www\./, "");
+      } catch {
+        return NextResponse.json({ error: "Invalid URL format" }, { status: 400 });
+      }
+      const existing = await prisma.client.findUnique({
+        where: { domain: normalizedDomain },
+        select: { id: true, organizationId: true },
+      });
+      if (existing) {
+        if (existing.organizationId !== organizationId) {
+          return NextResponse.json(
+            { error: "This domain is already registered to another account." },
+            { status: 400 }
+          );
+        }
+        clientId = existing.id;
+      } else {
+        const name = normalizedDomain.replace(/\.[a-z]+$/i, "").replace(/\./g, " ") || normalizedDomain;
+        const newClient = await prisma.client.create({
+          data: {
+            name,
+            domain: normalizedDomain,
+            organizationId,
+            defaultType: "banner",
+            defaultBgColor: "#222",
+            defaultTextColor: "#fff",
+            defaultFont: "sans-serif",
+            defaultDismissAfter: 5000,
+            pinned: false,
+          },
+        });
+        clientId = newClient.id;
+      }
     }
 
     if (accessCredentials && typeof accessCredentials === "object" && Object.keys(accessCredentials as object).length > 0) {
@@ -127,6 +202,7 @@ export async function POST(req: NextRequest) {
     const job = await prisma.installJob.create({
       data: {
         customerId: customer.id,
+        clientId: clientId || undefined,
         platform,
         installType,
         websiteUrls: urls,
