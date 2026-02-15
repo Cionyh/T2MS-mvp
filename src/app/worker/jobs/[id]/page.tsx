@@ -81,7 +81,7 @@ export default function WorkerJobDetailPage() {
   const [submittingChecklist, setSubmittingChecklist] = useState(false);
   const [uploadingProof, setUploadingProof] = useState(false);
   const [submittingJob, setSubmittingJob] = useState(false);
-  const [showCredentials, setShowCredentials] = useState(false);
+  const [showCredentials, setShowCredentials] = useState(true);
 
   useEffect(() => {
     fetchJob();
@@ -241,15 +241,17 @@ export default function WorkerJobDetailPage() {
     );
   }
 
-  // Decrypt credentials (for now, just parse JSON - TODO: KMS decryption)
-  let credentials: any = null;
-  if (job.accessCredentials && showCredentials) {
+  // Parse credentials JSON (access method is on job.accessMethod, not inside credentials)
+  let credentials: Record<string, unknown> | null = null;
+  if (job.accessCredentials) {
     try {
-      credentials = JSON.parse(job.accessCredentials);
+      const parsed = JSON.parse(job.accessCredentials);
+      credentials = typeof parsed === "object" && parsed !== null ? parsed : null;
     } catch (e) {
       console.error("Failed to parse credentials", e);
     }
   }
+  const accessMethod = (job.accessMethod || "").toLowerCase().replace(/-/g, "_");
 
   return (
     <div className="container mx-auto py-8 max-w-4xl">
@@ -328,8 +330,8 @@ export default function WorkerJobDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Access Credentials */}
-        {job.assignedWorker && (
+        {/* Access Credentials - show for assigned jobs (worker viewing their job) or when credentials exist */}
+        {(job.assignedWorker || job.accessCredentials) && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -353,46 +355,67 @@ export default function WorkerJobDetailPage() {
                 </Button>
               </div>
             </CardHeader>
-            {showCredentials && credentials && (
+            {showCredentials && (
               <CardContent>
-                {credentials.method === "temporary_login" && (
+                {!credentials || Object.keys(credentials).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No access credentials provided for this job.</p>
+                ) : accessMethod === "temporary_login" || credentials.adminUrl != null ? (
                   <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Admin URL:</span>
-                      <p className="font-mono">{credentials.adminUrl}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Username:</span>
-                      <p className="font-mono">{credentials.username}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Password:</span>
-                      <p className="font-mono">{credentials.password}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Expiry:</span>
-                      <p>{credentials.expiry}</p>
-                    </div>
+                    {credentials.adminUrl != null && (
+                      <div>
+                        <span className="text-muted-foreground">Admin URL:</span>
+                        <p className="font-mono break-all">{String(credentials.adminUrl)}</p>
+                      </div>
+                    )}
+                    {credentials.username != null && (
+                      <div>
+                        <span className="text-muted-foreground">Username:</span>
+                        <p className="font-mono">{String(credentials.username)}</p>
+                      </div>
+                    )}
+                    {credentials.password != null && (
+                      <div>
+                        <span className="text-muted-foreground">Password:</span>
+                        <p className="font-mono">{String(credentials.password)}</p>
+                      </div>
+                    )}
+                    {credentials.expiry != null && (
+                      <div>
+                        <span className="text-muted-foreground">Expiry:</span>
+                        <p>{String(credentials.expiry)}</p>
+                      </div>
+                    )}
                   </div>
-                )}
-                {credentials.method === "admin_invite" && (
+                ) : accessMethod === "admin_invite" || credentials.email != null ? (
                   <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Email:</span>
-                      <p>{credentials.email}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Sender:</span>
-                      <p>{credentials.sender}</p>
-                    </div>
+                    {credentials.email != null && (
+                      <div>
+                        <span className="text-muted-foreground">Invite email:</span>
+                        <p className="font-mono">{String(credentials.email)}</p>
+                      </div>
+                    )}
+                    {credentials.sender != null && (
+                      <div>
+                        <span className="text-muted-foreground">Sender:</span>
+                        <p>{String(credentials.sender)}</p>
+                      </div>
+                    )}
                   </div>
-                )}
-                {credentials.method === "instructions" && (
+                ) : accessMethod === "instructions" || credentials.steps != null ? (
                   <div className="space-y-2 text-sm">
                     <span className="text-muted-foreground">Instructions:</span>
-                    <pre className="whitespace-pre-wrap bg-muted p-3 rounded">
-                      {credentials.steps}
+                    <pre className="whitespace-pre-wrap bg-muted p-3 rounded text-sm">
+                      {credentials.steps != null ? String(credentials.steps) : "No instructions."}
                     </pre>
+                  </div>
+                ) : (
+                  <div className="space-y-2 text-sm">
+                    {Object.entries(credentials).map(([key, value]) => (
+                      <div key={key}>
+                        <span className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").trim()}:</span>
+                        <p className="font-mono break-all">{String(value)}</p>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
