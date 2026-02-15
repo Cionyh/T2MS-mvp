@@ -144,35 +144,53 @@ export async function GET(req: NextRequest) {
       return NextResponse.json([]);
     }
 
-    /* 3️⃣ Fetch and return the organization's clients with latest install job status */
-    const clients = await prisma.client.findMany({
-      where: { organizationId },
-      include: {
-        phoneNumbers: {
-          where: { verified: true },
-          select: {
-            id: true,
-            phone: true,
-            verified: true,
+    /* 3️⃣ Fetch clients; include install job status if DB has clientId column (install_job) */
+    let clients: Array<Record<string, unknown>>;
+    try {
+      const result = await prisma.client.findMany({
+        where: { organizationId },
+        include: {
+          phoneNumbers: {
+            where: { verified: true },
+            select: {
+              id: true,
+              phone: true,
+              verified: true,
+            },
+          },
+          installJobs: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: { id: true, status: true },
           },
         },
-        installJobs: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { id: true, status: true },
-        },
-      },
-    });
+      });
+      clients = result.map((client) => {
+        const { installJobs, ...rest } = client;
+        return {
+          ...rest,
+          installJob: installJobs?.[0] ?? null,
+        };
+      });
+    } catch (includeError: unknown) {
+      const code = (includeError as { code?: string })?.code;
+      if (code === "P2022" || (includeError instanceof Error && includeError.message?.includes("clientId"))) {
+        const result = await prisma.client.findMany({
+          where: { organizationId },
+          include: {
+            phoneNumbers: {
+              where: { verified: true },
+              select: { id: true, phone: true, verified: true },
+            },
+          },
+        });
+        clients = result.map((client) => ({ ...client, installJob: null }));
+      } else {
+        throw includeError;
+      }
+    }
 
-    const clientsWithInstallStatus = clients.map((client) => {
-      const { installJobs, ...rest } = client;
-      return {
-        ...rest,
-        installJob: installJobs?.[0] ?? null,
-      };
-    });
-
-    return NextResponse.json(clientsWithInstallStatus);
+    return NextResponse.json(clients);
   } catch (error) {
     console.error("[CLIENTS_GET]", error);
     return new NextResponse("Internal error", { status: 500 });
