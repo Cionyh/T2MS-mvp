@@ -16,7 +16,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { toast } from "sonner";
+import { format } from "date-fns";
 import { INSTALL_JOB_STATUS } from "@/lib/job-status";
+
+function formatExpiry(value: unknown): string {
+  if (value == null) return "";
+  const str = String(value).trim();
+  if (!str) return "";
+  const date = new Date(str);
+  if (Number.isNaN(date.getTime())) return str;
+  return format(date, "MMM d, yyyy 'at' h:mm a");
+}
 
 interface Job {
   id: string;
@@ -382,7 +392,7 @@ export default function WorkerJobDetailPage() {
                     {credentials.expiry != null && (
                       <div>
                         <span className="text-muted-foreground">Expiry:</span>
-                        <p>{String(credentials.expiry)}</p>
+                        <p>{formatExpiry(credentials.expiry)}</p>
                       </div>
                     )}
                   </div>

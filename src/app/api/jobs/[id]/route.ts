@@ -176,6 +176,15 @@ export async function PATCH(
         },
       });
 
+      // When job is completed, auto-publish the associated site (Client)
+      const jobClientId = (updatedJob as { clientId?: string | null }).clientId;
+      if (status === INSTALL_JOB_STATUS.COMPLETED && jobClientId) {
+        await prisma.client.update({
+          where: { id: jobClientId },
+          data: { pinned: true },
+        }).catch((err) => console.error("[JOBS_PATCH] Auto-publish site failed:", err));
+      }
+
       return NextResponse.json(updatedJob);
     }
 

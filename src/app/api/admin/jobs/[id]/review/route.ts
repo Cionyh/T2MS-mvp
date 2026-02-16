@@ -108,7 +108,14 @@ export async function POST(
       },
     });
 
-    // If approved, create a payout record (if not already exists)
+    // If approved, auto-publish the associated site and create payout
+    if (action === "approve" && updatedJob.clientId) {
+      await prisma.client.update({
+        where: { id: updatedJob.clientId },
+        data: { pinned: true },
+      }).catch((err) => console.error("[ADMIN_JOBS_REVIEW] Auto-publish site failed:", err));
+    }
+
     if (action === "approve" && updatedJob.assignedWorkerId) {
       const existingPayout = await prisma.workerPayout.findFirst({
         where: {
