@@ -159,18 +159,35 @@ export async function PATCH(req: NextRequest) {
         select: { organizationId: true },
       });
       const orgIds = members.map((m) => m.organizationId);
-      const clientCount =
+      const clients =
         orgIds.length > 0
-          ? await prisma.client.count({
+          ? await prisma.client.findMany({
               where: { organizationId: { in: orgIds } },
+              select: { id: true },
             })
-          : 0;
-      if (clientCount === 0) {
+          : [];
+      if (clients.length === 0) {
         return NextResponse.json(
           {
             error:
               "You must register at least one site before completing onboarding.",
             needsSiteRegistration: true,
+          },
+          { status: 400 }
+        );
+      }
+      const verifiedPhoneCount = await prisma.phoneNumber.count({
+        where: {
+          clientId: { in: clients.map((c) => c.id) },
+          verified: true,
+        },
+      });
+      if (verifiedPhoneCount === 0) {
+        return NextResponse.json(
+          {
+            error:
+              "You must verify at least one phone number for your site before completing onboarding.",
+            needsPhoneVerification: true,
           },
           { status: 400 }
         );

@@ -16,7 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { client } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { Loader2, Zap, Layers, Rocket, Check, Globe } from "lucide-react";
+import { Loader2, Zap, Layers, Rocket, Check, Globe, Phone } from "lucide-react";
+import { PhoneNumberManagement } from "@/components/app/phone-number-management";
 
 const EARLY_BIRD_FEATURES = [
   "1 User / Seat",
@@ -45,7 +46,10 @@ function OnboardingContent() {
   const [status, setStatus] = useState<{
     completed: boolean;
     needsSiteRegistration?: boolean;
+    needsPhoneVerification?: boolean;
+    firstClientId?: string | null;
   } | null>(null);
+  const [phoneStepClientId, setPhoneStepClientId] = useState<string | null>(null);
   const [registerForm, setRegisterForm] = useState({
     name: "",
     domain: "",
@@ -146,6 +150,18 @@ function OnboardingContent() {
         throw new Error(clientData.error || "Failed to register site");
       }
 
+      toast.success("Site registered! Now add and verify a phone number.");
+      setPhoneStepClientId(clientData.id);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handlePhoneVerified = async () => {
+    setLoading("complete");
+    try {
       const completeRes = await fetch("/api/onboarding/complete", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -155,9 +171,8 @@ function OnboardingContent() {
       if (!completeRes.ok) {
         throw new Error(completeData.error || "Failed to complete onboarding");
       }
-
-      toast.success("Site registered! Welcome to T2MS.");
-      router.replace(`/app/sites?installChoice=1&clientId=${clientData.id}`);
+      toast.success("Phone verified! Welcome to T2MS.");
+      router.replace("/app");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -167,12 +182,54 @@ function OnboardingContent() {
 
   const showRegisterSiteStep =
     statusLoaded &&
-    (successParam === "1" || status?.needsSiteRegistration === true);
+    (successParam === "1" || status?.needsSiteRegistration === true) &&
+    !phoneStepClientId;
+
+  const phoneVerificationClientId =
+    phoneStepClientId ?? status?.firstClientId ?? null;
+  const showPhoneVerificationStep =
+    statusLoaded &&
+    (phoneStepClientId !== null || status?.needsPhoneVerification === true) &&
+    phoneVerificationClientId !== null;
 
   if (!statusLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (showPhoneVerificationStep && phoneVerificationClientId) {
+    return (
+      <div className="min-h-screen bg-muted/30 py-12 px-4 flex flex-col items-center">
+        <div className="w-full max-w-md text-center">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">
+              Verify Phone Number
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              Add and verify a phone number to receive SMS messages for your site.
+            </p>
+          </div>
+        </div>
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Phone className="h-5 w-5 text-amber-600" />
+              Phone Numbers
+            </CardTitle>
+            <CardDescription>
+              Add verified phone numbers to receive SMS messages for this site.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PhoneNumberManagement
+              clientId={phoneVerificationClientId}
+              onPhoneVerified={handlePhoneVerified}
+            />
+          </CardContent>
+        </Card>
       </div>
     );
   }

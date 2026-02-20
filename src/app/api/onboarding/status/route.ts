@@ -32,22 +32,41 @@ export async function GET() {
       select: { organizationId: true },
     });
     const orgIds = members.map((m) => m.organizationId);
-    const clientCount =
+    const clients =
       orgIds.length > 0
-        ? await prisma.client.count({
+        ? await prisma.client.findMany({
             where: { organizationId: { in: orgIds } },
+            select: { id: true },
+            orderBy: { createdAt: "asc" },
+          })
+        : [];
+    const hasRegisteredSite = clients.length > 0;
+    const firstClientId = clients[0]?.id ?? null;
+
+    // Check if any client has at least one verified phone number
+    const verifiedPhoneCount =
+      clients.length > 0
+        ? await prisma.phoneNumber.count({
+            where: {
+              clientId: { in: clients.map((c) => c.id) },
+              verified: true,
+            },
           })
         : 0;
-    const hasRegisteredSite = clientCount > 0;
+    const hasVerifiedPhone = verifiedPhoneCount > 0;
 
-    // Completed only when completedAt is set AND (if paid) user has registered at least one site
+    // Completed when: completedAt set AND (if paid) has site AND verified phone
     const completed =
       !!onboarding?.completedAt &&
-      (!hasPaidPlan || hasRegisteredSite);
+      (!hasPaidPlan || (hasRegisteredSite && hasVerifiedPhone));
 
     // Paid users must register a site before onboarding is considered complete
     const needsSiteRegistration =
-      hasPaidPlan && !completed && !hasRegisteredSite;
+      hasPaidPlan && !hasRegisteredSite;
+
+    // Paid users with site must verify phone before completing
+    const needsPhoneVerification =
+      hasPaidPlan && hasRegisteredSite && !hasVerifiedPhone;
 
     return NextResponse.json({
       completed,
@@ -57,6 +76,9 @@ export async function GET() {
       installAddonStatus: onboarding?.installAddonStatus,
       needsSiteRegistration,
       hasRegisteredSite,
+      needsPhoneVerification,
+      hasVerifiedPhone,
+      firstClientId,
     });
   } catch (error) {
     console.error("Onboarding status error:", error);

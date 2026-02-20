@@ -41,9 +41,10 @@ interface PhoneNumber {
 
 interface PhoneNumberManagementProps {
   clientId: string;
+  onPhoneVerified?: () => void;
 }
 
-export function PhoneNumberManagement({ clientId }: PhoneNumberManagementProps) {
+export function PhoneNumberManagement({ clientId, onPhoneVerified }: PhoneNumberManagementProps) {
   const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumber[]>([]);
   const [loading, setLoading] = useState(true);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -160,6 +161,7 @@ export function PhoneNumberManagement({ clientId }: PhoneNumberManagementProps) 
       setVerifyDialogOpen(false);
       setSelectedPhoneNumber(null);
       fetchPhoneNumbers();
+      onPhoneVerified?.();
     } catch (error: any) {
       toast.error(error.message || "Invalid verification code");
     } finally {
