@@ -23,6 +23,7 @@ import {
   Target,
   Loader2,
   MessageCircle,
+  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, Variants } from "framer-motion";
@@ -68,7 +69,8 @@ import {
 import { DotPattern } from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
 import { EmbedDialog } from "./embed-dialog";
-import { IframeDialog } from "./iframe-dialog"; 
+import { IframeDialog } from "./iframe-dialog";
+import { InstallationGuideDialog } from "./installation-guide-dialog"; 
 import { Switch } from "@/components/ui/switch";
 import { Info } from "lucide-react";
 import { PhoneNumberManagement } from "./phone-number-management";
@@ -172,6 +174,9 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [iframeDialogOpen, setIframeDialogOpen] = useState(false);
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null);
   const [configureDialogOpen, setConfigureDialogOpen] = useState(false);
+  const [installationGuideOpen, setInstallationGuideOpen] = useState(false);
+  const [installationGuideClientId, setInstallationGuideClientId] = useState<string | null>(null);
+  const [installationGuideSiteName, setInstallationGuideSiteName] = useState<string>("");
   const [fontStylesDialogOpen, setFontStylesDialogOpen] = useState(false);
   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -194,7 +199,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     fetchWebsites();
   }, [userId]);
 
-  // After redirect from build page: show "Site Registered Successfully" and install choice popup
+  // Show install choice popup: (1) after redirect with installChoice=1, or (2) when any site is unpublished
   useEffect(() => {
     const installChoice = searchParams.get("installChoice");
     const clientId = searchParams.get("clientId");
@@ -205,6 +210,17 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       window.history.replaceState({}, "", "/app/sites");
     }
   }, [searchParams]);
+
+  // Show install choice popup when any site is unpublished (every time user lands on sites page)
+  useEffect(() => {
+    if (loading) return;
+    if (searchParams.get("installChoice") === "1") return; // Already handled above
+    const unpublished = websites.find((w) => !(w.pinned ?? false));
+    if (unpublished) {
+      setInstallChoiceClientId(unpublished.id);
+      setInstallChoiceDialogOpen(true);
+    }
+  }, [websites, loading, searchParams]);
 
   const handleNewSiteClick = () => {
     router.push("/app/build");
@@ -518,9 +534,24 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 <Separator />
                 <CardContent className="px-4 py-1">
   <div className="space-y-3">
-      <p>
-        <span className="font-semibold">Domain:</span> {website.domain}
-      </p>
+      <div className="flex items-center gap-2 flex-wrap">
+        <p className="text-sm">
+          <span className="font-semibold">Domain:</span> {website.domain}
+        </p>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2 text-muted-foreground hover:text-foreground -ml-1"
+          onClick={() => {
+            setInstallationGuideClientId(website.id);
+            setInstallationGuideSiteName(website.name);
+            setInstallationGuideOpen(true);
+          }}
+        >
+          <BookOpen className="h-4 w-4 mr-1" />
+          Installation Guide
+        </Button>
+      </div>
       {website.installJob && (
         <p className="flex items-center gap-2">
           <span className="font-semibold">Install request:</span>
@@ -599,7 +630,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       {/* T2MS Install offer */}
       <div className="pt-2 flex items-center gap-3">
         <p className="text-sm font-semibold text-foreground tracking-tight">
-          Have T2MS Install for <span className="text-amber-700 dark:text-amber-500">£9.99</span>
+          Have T2MS Install for <span className="text-amber-700 dark:text-amber-500">$9.99</span>
         </p>
         <Button
           variant="secondary"
@@ -702,6 +733,14 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         onOpenChange={setIframeDialogOpen}
         clientId={selectedWebsiteId}
         widgetConfig={selectedWebsiteId ? websites.find(w => w.id === selectedWebsiteId)?.widgetConfig : undefined}
+      />
+
+      {/* Installation Guide Dialog */}
+      <InstallationGuideDialog
+        open={installationGuideOpen}
+        onOpenChange={setInstallationGuideOpen}
+        clientId={installationGuideClientId}
+        siteName={installationGuideSiteName || undefined}
       />
 
       {/* Configure Sheet */}

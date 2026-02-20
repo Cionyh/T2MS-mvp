@@ -172,7 +172,7 @@ function OnboardingContent() {
         throw new Error(completeData.error || "Failed to complete onboarding");
       }
       toast.success("Phone verified! Welcome to T2MS.");
-      router.replace("/app");
+      router.replace(`/app/sites?installChoice=1&clientId=${phoneVerificationClientId}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {

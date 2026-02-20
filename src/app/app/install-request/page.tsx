@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2, CreditCard, Wrench } from "lucide-react";
+import { Loader2, CreditCard, Wrench, Info, Eye, EyeOff } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -38,6 +38,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ACCESS_METHOD, INSTALL_TYPE } from "@/lib/job-status";
 
 const PLATFORMS = [
@@ -53,13 +58,13 @@ const PLATFORMS = [
 
 const INSTALL_ADDON_OPTIONS = [
   { id: "standard", name: "Standard website install (script embed)", price: "$9.99 one-time" },
-  { id: "restricted", name: "Restricted platform (Google Sites / iframe)", price: "$9.99 one-time" },
 ];
 
 const setupSchema = z
   .object({
     websiteUrl: z.string().url({ message: "Invalid URL format. Include https:// or http://." }),
     platform: z.string().min(1, { message: "Platform selection is required." }),
+    platformOther: z.string().optional(),
     installType: z.enum([INSTALL_TYPE.SCRIPT, INSTALL_TYPE.IFRAME]),
     preferredPlacement: z.string().optional(),
     accessMethod: z.enum([
@@ -119,12 +124,44 @@ const setupSchema = z
       return true;
     },
     { message: "SMS consent text must match exactly.", path: ["smsConsentText"] }
+  )
+  .refine(
+    (data) => {
+      if (data.platform === "Other") {
+        const other = (data.platformOther ?? "").trim();
+        return other.length > 0;
+      }
+      return true;
+    },
+    { message: "Please specify your platform.", path: ["platformOther"] }
   );
 
 type SetupFormValues = z.infer<typeof setupSchema>;
 
 const SMS_CONSENT_TEXT =
   "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
+
+function LabelWithInfo({ label, info }: { label: string; info: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <FormLabel>{label}</FormLabel>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-full p-0.5"
+            aria-label="More info"
+          >
+            <Info className="h-4 w-4" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="max-w-xs text-sm" align="start">
+          {info}
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
 
 function InstallRequestContent() {
   const { data: session, isPending: sessionLoading } = useSession();
@@ -145,12 +182,14 @@ function InstallRequestContent() {
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [sites, setSites] = useState<Array<{ id: string; name: string; domain: string }>>([]);
   const [loadingSites, setLoadingSites] = useState(false);
+  const [showTempLoginPassword, setShowTempLoginPassword] = useState(false);
 
   const form = useForm<SetupFormValues>({
     resolver: zodResolver(setupSchema),
     defaultValues: {
       websiteUrl: "",
       platform: "",
+      platformOther: "",
       installType: INSTALL_TYPE.SCRIPT,
       preferredPlacement: "",
       accessMethod: ACCESS_METHOD.TEMPORARY_LOGIN,
@@ -252,7 +291,7 @@ function InstallRequestContent() {
         body: JSON.stringify({
           websiteUrls: [websiteUrl],
           clientId: websiteSource === "sites" ? selectedSiteId : undefined,
-          platform: values.platform,
+          platform: values.platform === "Other" ? (values.platformOther || "").trim() : values.platform,
           installType: installAddonSku === "standard" ? INSTALL_TYPE.SCRIPT : INSTALL_TYPE.IFRAME,
           preferredPlacement: values.preferredPlacement || null,
           accessMethod: values.accessMethod,
@@ -502,7 +541,10 @@ function InstallRequestContent() {
                 name="websiteUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website URL *</FormLabel>
+                    <LabelWithInfo
+                      label="Website URL *"
+                      info="Enter the exact website address where you want Text2MySite Widget installed. Example: https://MeYou.index/Events"
+                    />
                     <FormDescription>
                       Select an existing site or enter the URL where you want the widget installed.
                     </FormDescription>
@@ -602,7 +644,10 @@ function InstallRequestContent() {
                 name="platform"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Platform *</FormLabel>
+                    <LabelWithInfo
+                      label="Platform *"
+                      info='Select the platform your website is built on (WordPress, Wix, Squarespace, etc., or choose "Other").'
+                    />
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -617,6 +662,24 @@ function InstallRequestContent() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {field.value === "Other" && (
+                      <FormField
+                        control={form.control}
+                        name="platformOther"
+                        render={({ field: otherField }) => (
+                          <FormItem className="mt-3">
+                            <FormLabel>Specify platform *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g. Drupal, Magento, custom CMS"
+                                {...otherField}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -627,7 +690,10 @@ function InstallRequestContent() {
                 name="installType"
                 render={() => (
                   <FormItem>
-                    <FormLabel>Install type *</FormLabel>
+                    <LabelWithInfo
+                      label="Install type *"
+                      info="This is pre-selected based on your plan."
+                    />
                     <FormControl>
                       <div className="rounded-md border bg-muted/50 px-3 py-2 text-sm">
                         {installAddonSku === "standard"
@@ -648,7 +714,10 @@ function InstallRequestContent() {
                 name="preferredPlacement"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Preferred placement (optional)</FormLabel>
+                    <LabelWithInfo
+                      label="Preferred placement (optional)"
+                      info="This will be the standard tickler. Once installed on the site you can customize the configuration."
+                    />
                     <FormControl>
                       <Input placeholder="e.g. bottom-right" {...field} />
                     </FormControl>
@@ -662,7 +731,10 @@ function InstallRequestContent() {
                 name="accessMethod"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Access method *</FormLabel>
+                    <LabelWithInfo
+                      label="Access method *"
+                      info="Temporary login: Choose this if you can provide short-term admin access for installation. Admin invite: Select this if your platform allows you to invite Text2MySite as an admin or collaborator. Instructions only: Choose this if you prefer to install the script yourself using our instructions."
+                    />
                     <FormControl>
                       <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col gap-2">
                         <div className="flex items-center space-x-2">
@@ -688,7 +760,10 @@ function InstallRequestContent() {
                 <div className="space-y-4 pl-6 border-l-2">
                   <FormField control={form.control} name="tempLoginUrl" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Admin URL *</FormLabel>
+                      <LabelWithInfo
+                        label="Admin URL *"
+                        info="Tell Text2MySite the https:// (URL) to enter into your website's admin portal."
+                      />
                       <FormControl>
                         <Input placeholder="https://yoursite.com/wp-admin" {...field} />
                       </FormControl>
@@ -697,21 +772,49 @@ function InstallRequestContent() {
                   )} />
                   <FormField control={form.control} name="tempLoginUsername" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Username *</FormLabel>
+                      <LabelWithInfo
+                        label="Username *"
+                        info="Enter the username Text2MySite should use to access your site."
+                      />
                       <FormControl><Input {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="tempLoginPassword" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password *</FormLabel>
-                      <FormControl><Input type="password" {...field} /></FormControl>
+                      <LabelWithInfo
+                        label="Password *"
+                        info="Enter the password Text2MySite should use to access your site. You may change it after installation is complete."
+                      />
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type={showTempLoginPassword ? "text" : "password"}
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowTempLoginPassword(!showTempLoginPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label={showTempLoginPassword ? "Hide password" : "Show password"}
+                          >
+                            {showTempLoginPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="tempLoginExpiry" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Expiry *</FormLabel>
+                      <LabelWithInfo
+                        label="Expiry *"
+                        info="Let Text2MySite know the date and time when the temporary login access expires."
+                      />
                       <FormControl><Input type="datetime-local" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -723,14 +826,20 @@ function InstallRequestContent() {
                 <div className="space-y-4 pl-6 border-l-2">
                   <FormField control={form.control} name="inviteEmail" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Invite email *</FormLabel>
+                      <LabelWithInfo
+                        label="Invite email *"
+                        info="Enter the email address to invite Text2MySite as an admin or collaborator on your platform."
+                      />
                       <FormControl><Input type="email" placeholder="installer@example.com" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="inviteSender" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Sender (optional)</FormLabel>
+                      <LabelWithInfo
+                        label="Sender (optional)"
+                        info="Email address that will send the invite (e.g. installer@t2ms.com)."
+                      />
                       <FormControl><Input placeholder="installer@t2ms.com" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -742,7 +851,10 @@ function InstallRequestContent() {
                 <div className="pl-6 border-l-2">
                   <FormField control={form.control} name="instructions" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Instructions *</FormLabel>
+                      <LabelWithInfo
+                        label="Instructions *"
+                        info="Provide step-by-step instructions for installing the script on your site."
+                      />
                       <FormControl>
                         <Textarea placeholder="1. Go to…&#10;2. Click…" className="min-h-[120px]" {...field} />
                       </FormControl>
@@ -754,7 +866,10 @@ function InstallRequestContent() {
 
               <FormField control={form.control} name="notes" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes (optional)</FormLabel>
+                  <LabelWithInfo
+                    label="Notes (optional)"
+                    info="Share anything we should know—special instructions, restrictions, or preferences."
+                  />
                   <FormControl>
                     <Textarea placeholder="Any constraints or special requirements…" className="min-h-[80px]" {...field} />
                   </FormControl>
@@ -781,7 +896,10 @@ function InstallRequestContent() {
                         />
                       </FormControl>
                       <div className="space-y-1">
-                        <FormLabel className="font-semibold">SMS consent *</FormLabel>
+                        <LabelWithInfo
+                          label="SMS consent *"
+                          info="Required to confirm you have permission to send text messages using Text2MySite."
+                        />
                         <FormDescription className="text-sm">{SMS_CONSENT_TEXT}</FormDescription>
                       </div>
                     </FormItem>
@@ -793,7 +911,10 @@ function InstallRequestContent() {
                     name="smsConsentText"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Type the consent text above to confirm *</FormLabel>
+                        <LabelWithInfo
+                          label="Type the consent text above to confirm *"
+                          info="Type the exact consent text to confirm you have permission to send text messages."
+                        />
                         <FormControl>
                           <Textarea
                             placeholder="Type the consent text exactly as shown…"
