@@ -125,8 +125,8 @@ export async function POST(
       });
 
       if (!existingPayout) {
-        // Calculate payout amount based on install type
-        const payoutAmount = 9.99;
+        // Worker rate per completed install (same for all install types)
+        const payoutAmount = 3;
 
         await prisma.workerPayout.create({
           data: {
