@@ -11,9 +11,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { client } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { Loader2, Zap, Layers, Rocket, Check } from "lucide-react";
+import { Loader2, Zap, Layers, Rocket, Check, Globe } from "lucide-react";
 
 const EARLY_BIRD_FEATURES = [
   "1 User / Seat",
@@ -39,6 +42,15 @@ function OnboardingContent() {
   const successParam = searchParams.get("success");
   const [loading, setLoading] = useState<string | null>(null);
   const [statusLoaded, setStatusLoaded] = useState(false);
+  const [status, setStatus] = useState<{
+    completed: boolean;
+    needsSiteRegistration?: boolean;
+  } | null>(null);
+  const [registerForm, setRegisterForm] = useState({
+    name: "",
+    domain: "",
+    websiteOwnership: false,
+  });
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -49,6 +61,7 @@ function OnboardingContent() {
           router.replace("/app");
           return;
         }
+        setStatus(data);
         setStatusLoaded(true);
       } catch {
         setStatusLoaded(true);
@@ -57,26 +70,7 @@ function OnboardingContent() {
     fetchStatus();
   }, [router]);
 
-  // Return from Stripe subscription success: complete onboarding and redirect to app
-  useEffect(() => {
-    if (successParam !== "1" || !statusLoaded) return;
-    setLoading("complete");
-    fetch("/api/onboarding/complete", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data.error) {
-          toast.success("Onboarding complete!");
-          router.replace("/app");
-        } else {
-          setLoading(null);
-        }
-      })
-      .catch(() => setLoading(null));
-  }, [successParam, statusLoaded, router]);
+  // After Stripe success: show register-site step (do NOT call complete until site is registered)
 
   const handlePaidPlan = async (planId: "starter" | "pro") => {
     setLoading(planId);
@@ -127,6 +121,54 @@ function OnboardingContent() {
     window.location.href = "mailto:sales@t2ms.biz";
   };
 
+  const handleRegisterSite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!registerForm.name.trim() || !registerForm.domain.trim()) {
+      toast.error("Please enter a business name and domain.");
+      return;
+    }
+    if (!registerForm.websiteOwnership) {
+      toast.error("Please acknowledge that you own or have rights to this website.");
+      return;
+    }
+    setLoading("register");
+    try {
+      const clientRes = await fetch("/api/client", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: registerForm.name.trim(),
+          domain: registerForm.domain.trim(),
+        }),
+      });
+      const clientData = await clientRes.json();
+      if (!clientRes.ok) {
+        throw new Error(clientData.error || "Failed to register site");
+      }
+
+      const completeRes = await fetch("/api/onboarding/complete", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const completeData = await completeRes.json();
+      if (!completeRes.ok) {
+        throw new Error(completeData.error || "Failed to complete onboarding");
+      }
+
+      toast.success("Site registered! Welcome to T2MS.");
+      router.replace(`/app/sites?installChoice=1&clientId=${clientData.id}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const showRegisterSiteStep =
+    statusLoaded &&
+    (successParam === "1" || status?.needsSiteRegistration === true);
+
   if (!statusLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/30">
@@ -135,13 +177,88 @@ function OnboardingContent() {
     );
   }
 
-  if (successParam === "1") {
+  if (showRegisterSiteStep) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">Completing your setup…</p>
+      <div className="min-h-screen bg-muted/30 py-12 px-4 flex flex-col items-center">
+        <div className="w-full max-w-md text-center">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">
+              Register Your Site
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              Add your website to get started. You won&apos;t be able to access the dashboard until you register at least one site.
+            </p>
+          </div>
         </div>
+        <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Globe className="h-5 w-5 text-amber-600" />
+                Site Details
+              </CardTitle>
+              <CardDescription>
+                Enter your business name and website domain.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleRegisterSite} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Business Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="Your Business Name"
+                    value={registerForm.name}
+                    onChange={(e) =>
+                      setRegisterForm((s) => ({ ...s, name: e.target.value }))
+                    }
+                    disabled={!!loading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="domain">Domain (e.g. https://example.com)</Label>
+                  <Input
+                    id="domain"
+                    placeholder="https://example.com"
+                    value={registerForm.domain}
+                    onChange={(e) =>
+                      setRegisterForm((s) => ({ ...s, domain: e.target.value }))
+                    }
+                    disabled={!!loading}
+                  />
+                </div>
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="ownership"
+                    checked={registerForm.websiteOwnership}
+                    onCheckedChange={(checked) =>
+                      setRegisterForm((s) => ({
+                        ...s,
+                        websiteOwnership: !!checked,
+                      }))
+                    }
+                    disabled={!!loading}
+                  />
+                  <Label
+                    htmlFor="ownership"
+                    className="text-sm font-normal leading-relaxed cursor-pointer"
+                  >
+                    I acknowledge that I own and/or have rights to this website.
+                  </Label>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={!!loading}
+                  className="w-full !bg-amber-600 hover:!bg-amber-700 !text-white"
+                >
+                  {loading === "register" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Register Site & Continue"
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
       </div>
     );
   }

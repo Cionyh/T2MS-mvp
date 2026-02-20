@@ -145,6 +145,38 @@ export async function PATCH(req: NextRequest) {
       });
     }
 
+    // For paid plans: require at least one registered site before completing
+    const activeSubscription = await prisma.subscription.findFirst({
+      where: {
+        referenceId: session.user.id,
+        status: { in: ["active", "trialing"] },
+      },
+    });
+    const hasPaidPlan = !!activeSubscription;
+    if (hasPaidPlan && !hasInstallSetup) {
+      const members = await prisma.member.findMany({
+        where: { userId: session.user.id },
+        select: { organizationId: true },
+      });
+      const orgIds = members.map((m) => m.organizationId);
+      const clientCount =
+        orgIds.length > 0
+          ? await prisma.client.count({
+              where: { organizationId: { in: orgIds } },
+            })
+          : 0;
+      if (clientCount === 0) {
+        return NextResponse.json(
+          {
+            error:
+              "You must register at least one site before completing onboarding.",
+            needsSiteRegistration: true,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Mark onboarding complete (plan/add-on flow)
     await prisma.onboarding.upsert({
       where: { userId: session.user.id },
