@@ -17,8 +17,6 @@ export async function GET() {
       where: { userId: session.user.id },
     });
 
-    const completed = !!onboarding?.completedAt;
-
     // User is "paid" only when they have an active Stripe subscription (not just planId, which is set before payment)
     const activeSubscription = await prisma.subscription.findFirst({
       where: {
@@ -41,6 +39,11 @@ export async function GET() {
           })
         : 0;
     const hasRegisteredSite = clientCount > 0;
+
+    // Completed only when completedAt is set AND (if paid) user has registered at least one site
+    const completed =
+      !!onboarding?.completedAt &&
+      (!hasPaidPlan || hasRegisteredSite);
 
     // Paid users must register a site before onboarding is considered complete
     const needsSiteRegistration =
