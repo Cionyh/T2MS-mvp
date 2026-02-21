@@ -50,19 +50,15 @@ export async function POST(
       );
     }
 
-    // Validate all checklist items are true
-    const allChecked =
+    // Validate mandatory checklist items (first three) are true
+    const mandatoryChecked =
       widgetLoadsDesktop &&
       widgetLoadsMobile &&
-      messagingUIOpens &&
-      testMessageSends &&
-      incomingMessageReachesChannel &&
-      replyReachesTestPhone &&
-      noLayoutOrConsoleErrors;
+      messagingUIOpens;
 
-    if (!allChecked) {
+    if (!mandatoryChecked) {
       return NextResponse.json(
-        { error: "All checklist items must be completed" },
+        { error: "Widget loads on desktop, widget loads on mobile, and messaging UI opens must be checked" },
         { status: 400 }
       );
     }

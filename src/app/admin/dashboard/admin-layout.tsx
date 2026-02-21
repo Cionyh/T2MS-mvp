@@ -48,13 +48,13 @@ import { signOut } from "@/lib/auth-client";
 const navItems = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Clients", href: "/admin/dashboard/clients", icon: Users },
-  { label: "Jobs", href: "/admin/dashboard/jobs", icon: ClipboardList },
   { label: "Sites", href: "/admin/dashboard/sites", icon: Database },
   { label: "Messages", href: "/admin/dashboard/messages", icon: MessageSquare },
-  { label: "Teammembers", href: "/admin/dashboard/workers", icon: Briefcase },
   { label: "Subscriptions", href: "/admin/dashboard/subscriptions", icon: CreditCard },
-  { label: "Install Requests", href: "/admin/dashboard/install-requests", icon: Wrench },
   { label: "Analytics", href: "/admin/dashboard/analytics", icon: BarChart3 },
+  { label: "Jobs", href: "/admin/dashboard/jobs", icon: ClipboardList },
+  { label: "Teammembers", href: "/admin/dashboard/workers", icon: Briefcase },
+  { label: "Install Requests", href: "/admin/dashboard/install-requests", icon: Wrench },
   { label: "Settings", href: "/admin/dashboard/settings", icon: Settings },
 ];
 

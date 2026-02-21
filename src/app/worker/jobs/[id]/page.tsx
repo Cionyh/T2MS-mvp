@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, CheckCircle2, Upload, FileText, Lock, Unlock } from "lucide-react";
+import { Loader2, CheckCircle2, Upload, Lock, Unlock, Copy } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -10,6 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,6 +20,139 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { INSTALL_JOB_STATUS } from "@/lib/job-status";
+
+function EmbedScriptCard({ clientId }: { clientId: string }) {
+  const apiBase = process.env.NEXT_PUBLIC_WIDGET_API_URL || "https://www.t2ms.biz";
+
+  const scriptEmbedCode = `
+<script
+  src="${apiBase}/widget"
+  data-client-id="${clientId}"
+  data-api="${apiBase}"
+  defer
+></script>`.trim();
+
+  const iframeEmbedCode = `<iframe
+  src="${apiBase}/widget/iframe?clientId=${clientId}"
+  width="100%"
+  height="400"
+  frameborder="0"
+  scrolling="no"
+  allowtransparency="true"
+></iframe>`.trim();
+
+  const iframeScriptEmbedCode = `
+<script
+  src="${apiBase}/widget/iframe-script"
+  data-client-id="${clientId}"
+  data-api="${apiBase}"
+  defer
+></script>`.trim();
+
+  const handleCopyScript = () => {
+    navigator.clipboard.writeText(scriptEmbedCode);
+    toast.success("Script embed code copied!");
+  };
+
+  const handleCopyIframe = () => {
+    navigator.clipboard.writeText(iframeEmbedCode);
+    toast.success("iFrame embed code copied!");
+  };
+
+  const handleCopyIframeScript = () => {
+    navigator.clipboard.writeText(iframeScriptEmbedCode);
+    toast.success("iFrame script embed code copied!");
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Embed Script</CardTitle>
+        <CardDescription>
+          Copy the embed code below and paste it into the website to install the T2MS widget.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="script" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="script">Script Embed</TabsTrigger>
+            <TabsTrigger value="iframe">iFrame Embed</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="script" className="space-y-4 mt-4">
+            <div>
+              <p className="text-sm font-medium mb-2">Standard script embed</p>
+              <p className="text-sm text-muted-foreground mb-2">
+                Works on most websites that allow external scripts. Add this code before the closing{" "}
+                <code className="bg-muted px-1 rounded">&lt;/body&gt;</code> tag.
+              </p>
+              <Textarea
+                value={scriptEmbedCode}
+                readOnly
+                rows={6}
+                className="font-mono text-sm bg-muted"
+                onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={handleCopyScript}
+              >
+                <Copy className="w-4 h-4 mr-2" /> Copy
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="iframe" className="space-y-4 mt-4">
+            <div>
+              <p className="text-sm font-medium mb-2">Direct iFrame</p>
+              <p className="text-sm text-muted-foreground mb-2">
+                For Google Sites, Wix, Squarespace and other platforms that restrict scripts.
+              </p>
+              <Textarea
+                value={iframeEmbedCode}
+                readOnly
+                rows={8}
+                className="font-mono text-sm bg-muted"
+                onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={handleCopyIframe}
+              >
+                <Copy className="w-4 h-4 mr-2" /> Copy
+              </Button>
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">iFrame script (alternative)</p>
+              <p className="text-sm text-muted-foreground mb-2">
+                Script that injects an iframe. Use when platforms allow scripts but not direct iframe tags.
+              </p>
+              <Textarea
+                value={iframeScriptEmbedCode}
+                readOnly
+                rows={6}
+                className="font-mono text-sm bg-muted"
+                onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={handleCopyIframeScript}
+              >
+                <Copy className="w-4 h-4 mr-2" /> Copy
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}
 
 function formatExpiry(value: unknown): string {
   if (value == null) return "";
@@ -32,6 +167,7 @@ interface Job {
   id: string;
   platform: string;
   installType: string;
+  clientId: string | null;
   websiteUrls: string[];
   preferredPlacement: string | null;
   accessMethod: string;
@@ -218,7 +354,8 @@ export default function WorkerJobDetailPage() {
     );
   };
 
-  const allChecklistItemsChecked = Object.values(checklist).every((v) => v === true);
+  const mandatoryChecklistKeys = ["widgetLoadsDesktop", "widgetLoadsMobile", "messagingUIOpens"] as const;
+  const allChecklistItemsChecked = mandatoryChecklistKeys.every((k) => checklist[k] === true);
   const hasDesktopProof = job?.proofs.some((p) => p.type === "desktop");
   const hasMobileProof = job?.proofs.some((p) => p.type === "mobile");
   const hasMessageProof = job?.proofs.some((p) => p.type === "message");
@@ -340,6 +477,11 @@ export default function WorkerJobDetailPage() {
           </CardContent>
         </Card>
 
+        {/* Embed Script - show when job has a site (clientId) */}
+        {job.clientId && (
+          <EmbedScriptCard clientId={job.clientId} />
+        )}
+
         {/* Access Credentials - show for assigned jobs (worker viewing their job) or when credentials exist */}
         {(job.assignedWorker || job.accessCredentials) && (
           <Card>
@@ -438,7 +580,7 @@ export default function WorkerJobDetailPage() {
           <CardHeader>
             <CardTitle>QA Checklist</CardTitle>
             <CardDescription>
-              Complete all items before submitting for QA
+              Complete the first three items (required) before submitting the checklist
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
