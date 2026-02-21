@@ -356,6 +356,8 @@ export function SignUp() {
                 <Checkbox
                   checked={smsOptIn}
                   onCheckedChange={(checked) => setSmsOptIn(checked === true)}
+                  className="border-black dark:border-neutral-400 [&[data-state=checked]]:border-primary"
+                  style={!smsOptIn ? { border: "1px solid black" } : undefined}
                 />
                 <Label className="text-sm">
                   I consent to the SMS Terms & Conditions. *
@@ -383,6 +385,8 @@ export function SignUp() {
                 <Checkbox
                   checked={termsAccepted}
                   onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                  className="border-black dark:border-neutral-400 [&[data-state=checked]]:border-primary"
+                  style={!termsAccepted ? { border: "1px solid black" } : undefined}
                 />
                 <Label className="text-sm">
                   I agree to the{" "}

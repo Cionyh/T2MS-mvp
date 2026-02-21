@@ -138,3 +138,20 @@
 .phone-input .PhoneInputInput {
   @apply border-0 bg-transparent focus:outline-none focus:ring-0;
 }
+
+/* Checkbox - 1px solid black border for clear visibility (target Radix root) */
+button[role="checkbox"] {
+  border: 1px solid black !important;
+}
+
+button[role="checkbox"][data-state="checked"] {
+  border-color: var(--primary) !important;
+}
+
+.dark button[role="checkbox"] {
+  border-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.dark button[role="checkbox"][data-state="checked"] {
+  border-color: var(--primary) !important;
+}
