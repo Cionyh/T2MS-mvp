@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { checkSiteLimit } from "@/lib/plan-limits";
 import { getActiveOrganization } from "@/lib/organization-helpers";
+import { INSTALL_JOB_STATUS } from "@/lib/job-status";
 
 /* ----------  POST /api/client  ----------------------------------------- */
 export async function POST(req: Request) {
@@ -93,6 +94,36 @@ export async function POST(req: Request) {
         pinned: false,
       },
     });
+
+    // Auto-create an install job (no payment required) so site shows "Installation In Progress"
+    try {
+      let customer = await prisma.customer.findUnique({
+        where: { userId: session.user.id },
+      });
+      if (!customer) {
+        customer = await prisma.customer.create({
+          data: { userId: session.user.id },
+        });
+      }
+      await prisma.installJob.create({
+        data: {
+          customerId: customer.id,
+          clientId: client.id,
+          platform: "To be confirmed",
+          installType: "script",
+          websiteUrls: [client.domain.startsWith("http") ? client.domain : `https://${client.domain}`],
+          accessMethod: "instructions",
+          accessCredentials: "{}",
+          status: INSTALL_JOB_STATUS.QUEUED,
+          priority: 0,
+          checklistCompleted: false,
+          proofUploaded: false,
+        },
+      });
+    } catch (jobErr) {
+      console.error("[CLIENT_POST] Auto-create install job failed:", jobErr);
+      // Don't fail client creation if job creation fails
+    }
 
     // Return all defaults along with id
     return NextResponse.json({

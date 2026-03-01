@@ -143,8 +143,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [websites, setWebsites] = useState<Website[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingWebsiteId, setEditingWebsiteId] = useState<string | null>(null);
-  const [installChoiceDialogOpen, setInstallChoiceDialogOpen] = useState(false);
-  const [installChoiceClientId, setInstallChoiceClientId] = useState<string | null>(null);
 
   // Editable fields
   const [editedName, setEditedName] = useState("");
@@ -199,28 +197,15 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     fetchWebsites();
   }, [userId]);
 
-  // Show install choice popup: (1) after redirect with installChoice=1, or (2) when any site is unpublished
+  // Clean URL when landing from onboarding with installChoice=1
   useEffect(() => {
     const installChoice = searchParams.get("installChoice");
     const clientId = searchParams.get("clientId");
     if (installChoice === "1" && clientId) {
       toast.success("Site Registered Successfully");
-      setInstallChoiceClientId(clientId);
-      setInstallChoiceDialogOpen(true);
       window.history.replaceState({}, "", "/app/sites");
     }
   }, [searchParams]);
-
-  // Show install choice popup when any site is unpublished (every time user lands on sites page)
-  useEffect(() => {
-    if (loading) return;
-    if (searchParams.get("installChoice") === "1") return; // Already handled above
-    const unpublished = websites.find((w) => !(w.pinned ?? false));
-    if (unpublished) {
-      setInstallChoiceClientId(unpublished.id);
-      setInstallChoiceDialogOpen(true);
-    }
-  }, [websites, loading, searchParams]);
 
   const handleNewSiteClick = () => {
     router.push("/app/build");
@@ -474,10 +459,20 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         className={`px-2 py-0.5 text-xs rounded-full font-medium ${
           website.pinned
             ? "bg-green-500 text-foreground"
+            : website.installJob &&
+              website.installJob.status !== "COMPLETED" &&
+              website.installJob.status !== "CANCELLED"
+            ? "bg-amber-500/90 text-foreground"
             : "bg-muted text-foreground"
         }`}
       >
-        {website.pinned ? "Published" : "Unpublished"}
+        {website.pinned
+          ? "Published"
+          : website.installJob &&
+            website.installJob.status !== "COMPLETED" &&
+            website.installJob.status !== "CANCELLED"
+          ? "Installation In Progress"
+          : "Unpublished"}
       </span>
     </div>
   </div>
@@ -627,23 +622,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         </Button>
       </p>
 
-      {/* T2MS Install offer */}
-      <div className="pt-2 flex items-center gap-3">
-        <p className="text-sm font-semibold text-foreground tracking-tight">
-          Have T2MS Install for <span className="text-amber-700 dark:text-amber-500">$9.99</span>
-        </p>
-        <Button
-          variant="secondary"
-          size="sm"
-          className="h-8 shrink-0 text-xs font-medium rounded-md"
-          asChild
-        >
-          <a href="/app/install-request">
-            Get T2MS Install
-          </a>
-        </Button>
-      </div>
-
       {/* Configure button */}
       <div className="pt-2">
         <Button
@@ -683,42 +661,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           ))}
         </div>
       )}
-
-      {/* Install choice: Self install vs T2MS install (after registering from build page) */}
-      <Dialog open={installChoiceDialogOpen} onOpenChange={setInstallChoiceDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>How would you like to install the widget?</DialogTitle>
-            <DialogDescription>
-              Choose to copy the embed code yourself or have our team install it for you.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 mt-4">
-            <Button
-              variant="outline"
-              className="w-full justify-start text-foreground"
-              onClick={() => {
-                if (installChoiceClientId) {
-                  setSelectedWebsiteId(installChoiceClientId);
-                  setEmbedDialogOpen(true);
-                }
-                setInstallChoiceDialogOpen(false);
-              }}
-            >
-              Self install
-            </Button>
-            <Button
-              className="w-full justify-start text-foreground"
-              onClick={() => {
-                setInstallChoiceDialogOpen(false);
-                router.push("/app/install-request");
-              }}
-            >
-              T2MS install
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Reusable Embed Dialog */}
       <EmbedDialog
