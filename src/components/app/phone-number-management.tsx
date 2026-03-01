@@ -54,6 +54,9 @@ export function PhoneNumberManagement({ clientId, onPhoneVerified }: PhoneNumber
   const [pinCode, setPinCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSendingPin, setIsSendingPin] = useState(false);
+  /** When set, add dialog shows verification code step (same popup) */
+  const [addFlowPendingVerify, setAddFlowPendingVerify] = useState<PhoneNumber | null>(null);
+  const [isAddingPhone, setIsAddingPhone] = useState(false);
 
   useEffect(() => {
     if (clientId) {
@@ -86,24 +89,78 @@ export function PhoneNumberManagement({ clientId, onPhoneVerified }: PhoneNumber
       return;
     }
 
+    setIsAddingPhone(true);
     try {
-      const res = await fetch(`/api/client/${clientId}/phone`, {
+      const addRes = await fetch(`/api/client/${clientId}/phone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: newPhone }),
       });
 
-      if (!res.ok) {
-        const error = await res.json();
+      if (!addRes.ok) {
+        const error = await addRes.json();
         throw new Error(error.error || "Failed to add phone number");
       }
 
-      toast.success("Phone number added. Please verify it.");
+      const addData = await addRes.json();
+      const phoneRecord = addData.phoneNumber as PhoneNumber;
+
+      const verifyRes = await fetch("/api/phone/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId,
+          phone: newPhone,
+        }),
+      });
+
+      if (!verifyRes.ok) {
+        const error = await verifyRes.json();
+        throw new Error(error.error || "Failed to send verification code");
+      }
+
+      toast.success("Verification code sent via SMS");
+      setAddFlowPendingVerify(phoneRecord);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to add phone number");
+    } finally {
+      setIsAddingPhone(false);
+    }
+  };
+
+  const handleVerifyInAddDialog = async () => {
+    if (!addFlowPendingVerify || !pinCode) {
+      toast.error("Please enter the verification code");
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      const res = await fetch("/api/phone/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumberId: addFlowPendingVerify.id,
+          pinCode,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Invalid verification code");
+      }
+
+      toast.success("Phone number verified successfully!");
+      setPinCode("");
+      setAddFlowPendingVerify(null);
       setNewPhone("");
       setAddDialogOpen(false);
       fetchPhoneNumbers();
+      onPhoneVerified?.();
     } catch (error: any) {
-      toast.error(error.message || "Failed to add phone number");
+      toast.error(error.message || "Invalid verification code");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -203,7 +260,16 @@ export function PhoneNumberManagement({ clientId, onPhoneVerified }: PhoneNumber
             Add verified phone numbers to receive SMS messages for this site.
           </p>
         </div>
-        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <Dialog
+          open={addDialogOpen}
+          onOpenChange={(open) => {
+            setAddDialogOpen(open);
+            if (!open) {
+              setAddFlowPendingVerify(null);
+              setPinCode("");
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button size="sm" variant="outline">
               <Plus className="mr-2 h-4 w-4" />
@@ -212,31 +278,81 @@ export function PhoneNumberManagement({ clientId, onPhoneVerified }: PhoneNumber
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add Phone Number</DialogTitle>
+              <DialogTitle>
+                {addFlowPendingVerify ? "Verify Phone Number" : "Add Phone Number"}
+              </DialogTitle>
               <DialogDescription>
-                Add a phone number to receive SMS messages for this site. You'll need to verify it.
+                {addFlowPendingVerify
+                  ? `Enter the 6-digit verification code sent to ${addFlowPendingVerify.phone}`
+                  : "Add a phone number to receive SMS messages for this site. We'll send a verification code right away."}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone-input">Phone Number</Label>
-                <PhoneInput
-                  international
-                  defaultCountry="US"
-                  value={newPhone}
-                  onChange={(value) => setNewPhone(value || "")}
-                  placeholder="Enter phone number"
-                  className="phone-input"
-                />
-              </div>
+              {!addFlowPendingVerify ? (
+                <div className="space-y-2">
+                  <Label htmlFor="phone-input">Phone Number</Label>
+                  <PhoneInput
+                    international
+                    defaultCountry="US"
+                    value={newPhone}
+                    onChange={(value) => setNewPhone(value || "")}
+                    placeholder="Enter phone number"
+                    className="phone-input"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="pin-code-add">Verification Code</Label>
+                  <Input
+                    id="pin-code-add"
+                    type="text"
+                    placeholder="123456"
+                    value={pinCode}
+                    onChange={(e) => setPinCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    maxLength={6}
+                    className="text-center text-2xl tracking-widest"
+                  />
+                </div>
+              )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setAddDialogOpen(false);
+                  setAddFlowPendingVerify(null);
+                  setPinCode("");
+                }}
+                disabled={isAddingPhone || isVerifying}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleAddPhone}>
-                Add Phone Number
-              </Button>
+              {!addFlowPendingVerify ? (
+                <Button onClick={handleAddPhone} disabled={isAddingPhone}>
+                  {isAddingPhone ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending code...
+                    </>
+                  ) : (
+                    "Send verification code"
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleVerifyInAddDialog}
+                  disabled={isVerifying || pinCode.length !== 6}
+                >
+                  {isVerifying ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    "Verify"
+                  )}
+                </Button>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>
