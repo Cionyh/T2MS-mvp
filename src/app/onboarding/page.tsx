@@ -69,8 +69,14 @@ function OnboardingContent() {
   const [pendingVerifyClientId, setPendingVerifyClientId] = useState<string | null>(null);
   const [pendingVerifyPhoneId, setPendingVerifyPhoneId] = useState<string | null>(null);
   const [pendingVerifyPhoneDisplay, setPendingVerifyPhoneDisplay] = useState("");
+  const [pendingVerifyPhone, setPendingVerifyPhone] = useState(""); // for resend API
   const [verifyCode, setVerifyCode] = useState("");
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [resendCooldownSeconds, setResendCooldownSeconds] = useState(0);
+  const [isResending, setIsResending] = useState(false);
+
+  const PENDING_VERIFY_STORAGE_KEY = "t2ms_onboarding_verify_pending";
+  const RESEND_COOLDOWN_SECONDS = 60;
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -89,6 +95,44 @@ function OnboardingContent() {
     };
     fetchStatus();
   }, [router]);
+
+  // Restore pending verify from sessionStorage so dialog shows again after refresh (only when on register step)
+  useEffect(() => {
+    if (typeof window === "undefined" || !statusLoaded || !status) return;
+    const onRegisterStep =
+      (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("success") === "1") ||
+      status?.needsSiteRegistration === true;
+    if (!onRegisterStep) return;
+    const raw = sessionStorage.getItem(PENDING_VERIFY_STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw) as {
+        clientId: string;
+        phoneId: string;
+        phoneDisplay: string;
+        phone: string;
+      };
+      if (data.clientId && data.phoneId && data.phoneDisplay) {
+        setPendingVerifyClientId(data.clientId);
+        setPendingVerifyPhoneId(data.phoneId);
+        setPendingVerifyPhoneDisplay(data.phoneDisplay);
+        setPendingVerifyPhone(data.phone || data.phoneDisplay);
+        setVerifyCodeDialogOpen(true);
+        setResendCooldownSeconds(0); // allow resend immediately after restore
+      }
+    } catch {
+      sessionStorage.removeItem(PENDING_VERIFY_STORAGE_KEY);
+    }
+  }, [statusLoaded, status]);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldownSeconds <= 0) return;
+    const t = setInterval(() => {
+      setResendCooldownSeconds((s) => (s <= 1 ? 0 : s - 1));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [resendCooldownSeconds]);
 
   // After Stripe success: show register-site step (do NOT call complete until site is registered)
 
@@ -198,11 +242,23 @@ function OnboardingContent() {
       }
 
       toast.success("Verification code sent via SMS.");
+      const phoneForResend = registerForm.phone.trim();
       setPendingVerifyClientId(clientId);
       setPendingVerifyPhoneId(phoneRecord.id);
       setPendingVerifyPhoneDisplay(phoneRecord.phone);
+      setPendingVerifyPhone(phoneForResend);
       setVerifyCode("");
+      setResendCooldownSeconds(RESEND_COOLDOWN_SECONDS);
       setVerifyCodeDialogOpen(true);
+      sessionStorage.setItem(
+        PENDING_VERIFY_STORAGE_KEY,
+        JSON.stringify({
+          clientId,
+          phoneId: phoneRecord.id,
+          phoneDisplay: phoneRecord.phone,
+          phone: phoneForResend,
+        })
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -245,11 +301,13 @@ function OnboardingContent() {
       }
 
       toast.success("Phone verified! Welcome to T2MS.");
+      sessionStorage.removeItem(PENDING_VERIFY_STORAGE_KEY);
       const clientIdToRedirect = pendingVerifyClientId;
       setVerifyCodeDialogOpen(false);
       setPendingVerifyClientId(null);
       setPendingVerifyPhoneId(null);
       setPendingVerifyPhoneDisplay("");
+      setPendingVerifyPhone("");
       setVerifyCode("");
       if (clientIdToRedirect) {
         router.replace(`/app/sites?installChoice=1&clientId=${clientIdToRedirect}`);
@@ -260,6 +318,31 @@ function OnboardingContent() {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setIsVerifyingCode(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (!pendingVerifyClientId || !pendingVerifyPhone || resendCooldownSeconds > 0) return;
+    setIsResending(true);
+    try {
+      const res = await fetch("/api/phone/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: pendingVerifyClientId,
+          phone: pendingVerifyPhone,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to send verification code");
+      }
+      toast.success("Verification code sent again.");
+      setResendCooldownSeconds(RESEND_COOLDOWN_SECONDS);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to resend code");
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -447,7 +530,7 @@ function OnboardingContent() {
               }
             }}
           >
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Verify Phone Number</DialogTitle>
                 <DialogDescription>
@@ -468,6 +551,29 @@ function OnboardingContent() {
                     maxLength={6}
                     className="text-center text-2xl tracking-widest"
                   />
+                </div>
+                <div className="text-center">
+                  {resendCooldownSeconds > 0 ? (
+                    <span className="text-sm text-muted-foreground">
+                      Resend code in {resendCooldownSeconds}s
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResendCode}
+                      disabled={isResending}
+                      className="text-sm text-primary hover:underline disabled:opacity-50"
+                    >
+                      {isResending ? (
+                        <>
+                          <Loader2 className="inline h-3 w-3 animate-spin mr-1" />
+                          Sending...
+                        </>
+                      ) : (
+                        "Resend code"
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
               <DialogFooter>

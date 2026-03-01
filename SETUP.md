@@ -58,6 +58,9 @@ BETTER_AUTH_URL="http://localhost:3000"
 # Application URL
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
+# Widget API URL (used in embed script - defaults to https://www.t2ms.biz if not set)
+NEXT_PUBLIC_WIDGET_API_URL="https://www.t2ms.biz"
+
 # Twilio Configuration
 TWILIO_ACCOUNT_SID="your-twilio-account-sid"
 TWILIO_AUTH_TOKEN="your-twilio-auth-token"
@@ -68,7 +71,7 @@ TWILIO_VERIFY_SERVICE_SID="your-twilio-verify-service-sid"
 STRIPE_SECRET_KEY="sk_test_your-stripe-secret-key"
 STRIPE_WEBHOOK_SECRET="whsec_your-webhook-secret"
 STRIPE_STARTER_PRICE_ID="price_your-starter-price-id"
-STRIPE_PRO_PRICE_ID="price_your-pro-price-id"
+STRIPE_PRO_PRICE_ID="price_1Szn8i1ZWEwBpolW1fMI9TQA"   # Standard subscription (product prod_TxiZhc5CBJxTwO)
 STRIPE_ENTERPRISE_PRICE_ID="price_your-enterprise-price-id"
 
 # PostHog Analytics (Optional)
@@ -88,6 +91,7 @@ NEXT_PUBLIC_POSTHOG_HOST="https://app.posthog.com"
   - You can generate one with: `openssl rand -base64 32`
 - **BETTER_AUTH_URL**: Base URL of your application
 - **NEXT_PUBLIC_APP_URL**: Public URL of your application
+- **NEXT_PUBLIC_WIDGET_API_URL**: Base URL for the widget embed script (used in `src` and `data-api` attributes). Defaults to `https://www.t2ms.biz` if not set.
 
 #### Twilio
 - **TWILIO_ACCOUNT_SID**: Your Twilio Account SID (from Twilio Console)
@@ -98,8 +102,8 @@ NEXT_PUBLIC_POSTHOG_HOST="https://app.posthog.com"
 #### Stripe
 - **STRIPE_SECRET_KEY**: Your Stripe secret key (starts with `sk_test_` for test mode)
 - **STRIPE_WEBHOOK_SECRET**: Webhook secret from Stripe dashboard
-- **STRIPE_STARTER_PRICE_ID**: Stripe Price ID for Starter plan
-- **STRIPE_PRO_PRICE_ID**: Stripe Price ID for Pro plan
+- **STRIPE_STARTER_PRICE_ID**: Stripe Price ID for Starter plan (Early Bird)
+- **STRIPE_PRO_PRICE_ID**: Stripe Price ID for Pro plan (Standard subscription). Product ID: `prod_TxiZhc5CBJxTwO` — use the recurring price ID from this product.
 - **STRIPE_ENTERPRISE_PRICE_ID**: Stripe Price ID for Enterprise plan
 
 #### PostHog (Optional)
@@ -298,6 +302,27 @@ If you encounter issues:
 2. Review the error messages in the terminal/browser console
 3. Check the project's issue tracker (if available)
 4. Review the Phase 2 documentation files for architecture details
+
+## Resolving failed migrations (P3009)
+
+If the build fails with **P3009** (“migrate found failed migrations in the target database”) or the app returns 500 with “column `install_job.clientId` does not exist”:
+
+**One-time fix (run against your production database):**
+
+```bash
+# From your machine with DATABASE_URL set to production (e.g. in .env or export)
+npm run db:fix-production-migrations
+```
+
+This will:
+1. Mark the failed migration `20260130100000_add_install_job_system` as **applied** (so Prisma stops blocking).
+2. Run **migrate deploy** to apply pending migrations (e.g. add `install_job.clientId`).
+
+**Where to run it:**
+- **Locally:** Ensure `.env` has your production `DATABASE_URL`, then run the command. If you get a TLS/SSL error, try running from your deployment platform (e.g. Railway shell) or add `?sslmode=require` to the URL if your provider supports it.
+- **Railway:** Use the project’s shell (e.g. “Run a command” or one-off job) with `DATABASE_URL` available, and run `npm run db:fix-production-migrations`.
+
+After it succeeds, redeploy the app so the new schema is in use.
 
 ## Production Deployment
 
