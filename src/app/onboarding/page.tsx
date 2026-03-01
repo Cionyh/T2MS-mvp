@@ -18,6 +18,16 @@ import { client } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { Loader2, Zap, Layers, Rocket, Check, Globe, Phone } from "lucide-react";
 import { PhoneNumberManagement } from "@/components/app/phone-number-management";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 const EARLY_BIRD_FEATURES = [
   "1 User / Seat",
@@ -53,8 +63,15 @@ function OnboardingContent() {
   const [registerForm, setRegisterForm] = useState({
     name: "",
     domain: "",
+    phone: "",
     websiteOwnership: false,
   });
+  const [verifyCodeDialogOpen, setVerifyCodeDialogOpen] = useState(false);
+  const [pendingVerifyClientId, setPendingVerifyClientId] = useState<string | null>(null);
+  const [pendingVerifyPhoneId, setPendingVerifyPhoneId] = useState<string | null>(null);
+  const [pendingVerifyPhoneDisplay, setPendingVerifyPhoneDisplay] = useState("");
+  const [verifyCode, setVerifyCode] = useState("");
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -131,6 +148,10 @@ function OnboardingContent() {
       toast.error("Please enter a business name and domain.");
       return;
     }
+    if (!registerForm.phone.trim()) {
+      toast.error("Please enter a phone number.");
+      return;
+    }
     if (!registerForm.websiteOwnership) {
       toast.error("Please acknowledge that you own or have rights to this website.");
       return;
@@ -150,12 +171,96 @@ function OnboardingContent() {
         throw new Error(clientData.error || "Failed to register site");
       }
 
-      toast.success("Site registered! Now add and verify a phone number.");
-      setPhoneStepClientId(clientData.id);
+      const clientId = clientData.id as string;
+
+      const addPhoneRes = await fetch(`/api/client/${clientId}/phone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: registerForm.phone.trim() }),
+      });
+      if (!addPhoneRes.ok) {
+        const addErr = await addPhoneRes.json();
+        throw new Error(addErr.error || "Failed to add phone number");
+      }
+      const addPhoneData = await addPhoneRes.json();
+      const phoneRecord = addPhoneData.phoneNumber as { id: string; phone: string };
+
+      const verifyRes = await fetch("/api/phone/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId,
+          phone: registerForm.phone.trim(),
+        }),
+      });
+      if (!verifyRes.ok) {
+        const verifyErr = await verifyRes.json();
+        throw new Error(verifyErr.error || "Failed to send verification code");
+      }
+
+      toast.success("Verification code sent via SMS.");
+      setPendingVerifyClientId(clientId);
+      setPendingVerifyPhoneId(phoneRecord.id);
+      setPendingVerifyPhoneDisplay(phoneRecord.phone);
+      setVerifyCode("");
+      setVerifyCodeDialogOpen(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(null);
+    }
+  };
+
+  const handleVerifyCodeSubmit = async () => {
+    if (!pendingVerifyPhoneId || !verifyCode.trim()) {
+      toast.error("Please enter the 6-digit verification code.");
+      return;
+    }
+    if (verifyCode.replace(/\D/g, "").length !== 6) {
+      toast.error("Please enter a valid 6-digit code.");
+      return;
+    }
+    setIsVerifyingCode(true);
+    try {
+      const res = await fetch("/api/phone/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumberId: pendingVerifyPhoneId,
+          pinCode: verifyCode.replace(/\D/g, ""),
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Invalid verification code");
+      }
+
+      const completeRes = await fetch("/api/onboarding/complete", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!completeRes.ok) {
+        const completeData = await completeRes.json();
+        throw new Error(completeData.error || "Failed to complete onboarding");
+      }
+
+      toast.success("Phone verified! Welcome to T2MS.");
+      const clientIdToRedirect = pendingVerifyClientId;
+      setVerifyCodeDialogOpen(false);
+      setPendingVerifyClientId(null);
+      setPendingVerifyPhoneId(null);
+      setPendingVerifyPhoneDisplay("");
+      setVerifyCode("");
+      if (clientIdToRedirect) {
+        router.replace(`/app/sites?installChoice=1&clientId=${clientIdToRedirect}`);
+      } else {
+        router.replace("/app");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setIsVerifyingCode(false);
     }
   };
 
@@ -283,6 +388,23 @@ function OnboardingContent() {
                     disabled={!!loading}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <PhoneInput
+                    international
+                    defaultCountry="US"
+                    value={registerForm.phone}
+                    onChange={(value) =>
+                      setRegisterForm((s) => ({ ...s, phone: value || "" }))
+                    }
+                    placeholder="Enter phone number"
+                    className="phone-input"
+                    disabled={!!loading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    We&apos;ll send a verification code to this number after you register.
+                  </p>
+                </div>
                 <div className="flex items-start gap-3">
                   <Checkbox
                     id="ownership"
@@ -316,6 +438,64 @@ function OnboardingContent() {
               </form>
             </CardContent>
           </Card>
+
+          <Dialog
+            open={verifyCodeDialogOpen}
+            onOpenChange={(open) => {
+              setVerifyCodeDialogOpen(open);
+              if (!open && pendingVerifyClientId) {
+                setPhoneStepClientId(pendingVerifyClientId);
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Verify Phone Number</DialogTitle>
+                <DialogDescription>
+                  Enter the 6-digit verification code sent to {pendingVerifyPhoneDisplay}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="verify-code">Verification Code</Label>
+                  <Input
+                    id="verify-code"
+                    type="text"
+                    placeholder="123456"
+                    value={verifyCode}
+                    onChange={(e) =>
+                      setVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
+                    maxLength={6}
+                    className="text-center text-2xl tracking-widest"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setVerifyCodeDialogOpen(false)}
+                  disabled={isVerifyingCode}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleVerifyCodeSubmit}
+                  disabled={isVerifyingCode || verifyCode.replace(/\D/g, "").length !== 6}
+                  className="!bg-amber-600 hover:!bg-amber-700"
+                >
+                  {isVerifyingCode ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    "Verify"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
       </div>
     );
   }
