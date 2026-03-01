@@ -29,22 +29,21 @@ import {
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 
-const EARLY_BIRD_FEATURES = [
-  "1 User / Seat",
+const STARTER_PLAN_FEATURES = [
   "1 Website",
-  "100 messages per month",
-  "Priority support",
-  "Widget customization tools",
-  "14-day free trial",
+  "100 Messages per Month",
+  "Professional Widget Installation (Included)",
+  "Priority Support",
+  "14-Day Free Trial",
 ];
 
-const STANDARD_FEATURES = [
-  "1 to 3 Users / Seats",
+const GROWTH_PLAN_FEATURES = [
   "Up to 3 Websites",
-  "220 messages per month",
-  "Priority support",
-  "Widget customization tools",
-  "14-day free trial",
+  "1–3 Users / Seats",
+  "220 Messages per Month",
+  "Professional Widget Installation (Included)",
+  "Priority Support",
+  "14-Day Free Trial",
 ];
 
 function OnboardingContent() {
@@ -348,7 +347,7 @@ function OnboardingContent() {
               Register Your Site
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Add your website to get started. You won&apos;t be able to access the dashboard until you register at least one site.
+              Let&apos;s connect your first website to get started.
             </p>
           </div>
         </div>
@@ -513,24 +512,24 @@ function OnboardingContent() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 items-stretch">
-          {/* Limited Offer Early Bird Special */}
+          {/* Starter Plan – uses STRIPE_STARTER_PRICE_ID */}
           <Card className="flex flex-col border-2 border-amber-600/50 shadow-md min-h-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
                 <Zap className="h-5 w-5 text-amber-600" />
-                Limited Offer Early Bird Special
+                Starter Plan
               </CardTitle>
               <div className="mt-1">
-                <span className="text-2xl font-bold text-amber-700">$9.99</span>
-                <span className="text-muted-foreground">/mo</span>
+                <span className="text-2xl font-bold text-amber-700">$14.99</span>
+                <span className="text-muted-foreground">/month</span>
               </div>
               <CardDescription className="text-sm">
-                Ideal for busy entrepreneurs or personal projects.
+                Everything you need to get started with one website.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 min-h-0 overflow-y-auto">
               <ul className="space-y-2">
-                {EARLY_BIRD_FEATURES.map((feature) => (
+                {STARTER_PLAN_FEATURES.map((feature) => (
                   <li key={feature} className="flex items-center gap-2 text-sm">
                     <Check className="h-4 w-4 shrink-0 text-amber-600" />
                     {feature}
@@ -553,24 +552,24 @@ function OnboardingContent() {
             </CardFooter>
           </Card>
 
-          {/* Limited Offer Standard Price */}
+          {/* Growth Plan – uses STRIPE_PRO_PRICE_ID */}
           <Card className="flex flex-col border-2 border-amber-600/50 shadow-md min-h-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
                 <Layers className="h-5 w-5 text-amber-600" />
-                Limited Offer Standard Price
+                Growth Plan
               </CardTitle>
               <div className="mt-1">
-                <span className="text-2xl font-bold text-amber-700">$19.95</span>
-                <span className="text-muted-foreground">/mo</span>
+                <span className="text-2xl font-bold text-amber-700">$24.99</span>
+                <span className="text-muted-foreground">/month</span>
               </div>
               <CardDescription className="text-sm">
-                Perfect for small sites or personal projects.
+                Scale with multiple websites and team seats.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 min-h-0 overflow-y-auto">
               <ul className="space-y-2">
-                {STANDARD_FEATURES.map((feature) => (
+                {GROWTH_PLAN_FEATURES.map((feature) => (
                   <li key={feature} className="flex items-center gap-2 text-sm">
                     <Check className="h-4 w-4 shrink-0 text-amber-600" />
                     {feature}

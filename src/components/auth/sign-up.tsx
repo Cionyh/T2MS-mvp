@@ -38,7 +38,13 @@ import {
 } from "@/components/ui/select";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import Link from "next/link";
 
 const BUSINESS_CATEGORIES = [
@@ -78,6 +84,8 @@ export function SignUp() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [smsTermsOpen, setSmsTermsOpen] = useState(false);
+  const [cancellationPolicyOpen, setCancellationPolicyOpen] = useState(false);
   const [smsOptIn, setSmsOptIn] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const router = useRouter();
@@ -363,20 +371,33 @@ export function SignUp() {
                   I consent to the SMS Terms & Conditions. *
                 </Label>
               </div>
-              <Collapsible>
-                <CollapsibleTrigger className="text-xs text-muted-foreground hover:text-foreground underline">
-                  View SMS Terms & Conditions
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-2 text-xs text-muted-foreground leading-relaxed">
-                  <strong>Opt-In (End-User Consent for SMS):</strong> By providing your mobile number and using Text2MySite™ (T2MS),
-                  you consent to receive text messages related to website updates,
-                  account activity, and service notifications. Message frequency
-                  varies based on use. Standard message and data rates may apply.
-                  Consent is not a condition of purchase. You may opt out of
-                  receiving messages at any time by replying STOP. For help, reply
-                  HELP.
-                </CollapsibleContent>
-              </Collapsible>
+              <Dialog open={smsTermsOpen} onOpenChange={setSmsTermsOpen}>
+                <DialogTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground hover:text-foreground underline text-left"
+                  >
+                    View SMS Terms & Conditions
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>SMS Terms & Conditions</DialogTitle>
+                  </DialogHeader>
+                  <div className="text-sm text-muted-foreground leading-relaxed space-y-2">
+                    <p><strong>Opt-In (End-User Consent for SMS):</strong></p>
+                    <p>
+                      By providing your mobile number and using Text2MySite™ (T2MS),
+                      you consent to receive text messages related to website updates,
+                      account activity, and service notifications. Message frequency
+                      varies based on use. Standard message and data rates may apply.
+                      Consent is not a condition of purchase. You may opt out of
+                      receiving messages at any time by replying STOP. For help, reply
+                      HELP.
+                    </p>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
             {/* Terms and Conditions Checkbox */}
@@ -404,28 +425,41 @@ export function SignUp() {
                   . *
                 </Label>
               </div>
-              <Collapsible>
-                <CollapsibleTrigger className="text-xs text-muted-foreground hover:text-foreground underline">
-                  View Cancellation Policy
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-2 text-xs text-muted-foreground leading-relaxed">
-                  <strong>Opt-Out / Client Cancellation (Business Customers of T2MS):</strong> Clients may cancel their T2MS account at any time by providing written
-                  notice to{" "}
-                  <a
-                    href="mailto:support@t2ms.biz"
-                    className="text-primary hover:underline"
+              <Dialog open={cancellationPolicyOpen} onOpenChange={setCancellationPolicyOpen}>
+                <DialogTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground hover:text-foreground underline text-left"
                   >
-                    support@t2ms.biz
-                  </a>
-                  . Account cancellation requests must be received at least 10 business
-                  days prior to the next billing cycle to avoid additional charges.
-                  In the event of non-payment, T2MS reserves the right to suspend or
-                  terminate services immediately. Clients remain responsible for any
-                  unpaid balances accrued prior to cancellation or suspension.
-                  Once an account is cancelled, associated numbers, keywords, and content
-                  may be permanently deleted and cannot be recovered.
-                </CollapsibleContent>
-              </Collapsible>
+                    View Cancellation Policy
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Cancellation Policy</DialogTitle>
+                  </DialogHeader>
+                  <div className="text-sm text-muted-foreground leading-relaxed space-y-2">
+                    <p><strong>Opt-Out / Client Cancellation (Business Customers of T2MS):</strong></p>
+                    <p>
+                      Clients may cancel their T2MS account at any time by providing written
+                      notice to{" "}
+                      <a
+                        href="mailto:support@t2ms.biz"
+                        className="text-primary hover:underline"
+                      >
+                        support@t2ms.biz
+                      </a>
+                      . Account cancellation requests must be received at least 10 business
+                      days prior to the next billing cycle to avoid additional charges.
+                      In the event of non-payment, T2MS reserves the right to suspend or
+                      terminate services immediately. Clients remain responsible for any
+                      unpaid balances accrued prior to cancellation or suspension.
+                      Once an account is cancelled, associated numbers, keywords, and content
+                      may be permanently deleted and cannot be recovered.
+                    </p>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <Button
