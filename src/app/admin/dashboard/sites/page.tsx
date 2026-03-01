@@ -17,7 +17,9 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trash2, Edit } from "lucide-react";
+import { Loader2, Trash2, Edit, Target, Copy } from "lucide-react";
+import { EmbedDialog } from "@/components/app/embed-dialog";
+import { IframeDialog } from "@/components/app/iframe-dialog";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +45,9 @@ export default function AdminClientsPage() {
   const [search, setSearch] = useState("");
   const [editingClient, setEditingClient] = useState<null | Client>(null);
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
+  const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
+  const [iframeDialogOpen, setIframeDialogOpen] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
   const { data, isLoading, isError, refetch } = useAdminClients({
     page,
@@ -137,6 +142,28 @@ export default function AdminClientsPage() {
                       {new Date(client.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedClientId(client.id);
+                          setEmbedDialogOpen(true);
+                        }}
+                        title="Copy Embed Script"
+                      >
+                        <Target className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedClientId(client.id);
+                          setIframeDialogOpen(true);
+                        }}
+                        title="Copy iFrame Embed"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
                       {/* Edit Dialog */}
                       <Dialog
                         open={!!editingClient && editingClient.id === client.id}
@@ -233,6 +260,17 @@ export default function AdminClientsPage() {
           );
         })()}
       </div>
+
+      <EmbedDialog
+        open={embedDialogOpen}
+        onOpenChange={setEmbedDialogOpen}
+        clientId={selectedClientId}
+      />
+      <IframeDialog
+        open={iframeDialogOpen}
+        onOpenChange={setIframeDialogOpen}
+        clientId={selectedClientId}
+      />
 
       {/* Pagination */}
       {data && data.pagination.totalPages > 1 && (

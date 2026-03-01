@@ -102,7 +102,7 @@ export default function WidgetInstallRequestsPage() {
                               : "bg-primary/10 text-primary"
                       }`}
                     >
-                      {job.status.replace(/_/g, " ")}
+                      {job.status === "QUEUED" ? "Installation In Progress" : job.status.replace(/_/g, " ")}
                     </span>
                   </div>
                   {job.status === "PENDING_PAYMENT" && (

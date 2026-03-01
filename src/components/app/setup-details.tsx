@@ -152,7 +152,7 @@ export function SetupDetailsTab() {
                             : "bg-primary/10 text-primary"
                       }`}
                     >
-                      {job.status.replace(/_/g, " ")}
+                      {job.status === "QUEUED" ? "Installation In Progress" : job.status.replace(/_/g, " ")}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">

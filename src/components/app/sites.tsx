@@ -20,7 +20,6 @@ import {
   Eye,
   EyeOff,
   Copy,
-  Target,
   Loader2,
   MessageCircle,
   BookOpen,
@@ -560,7 +559,9 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                   : ""
             }
           >
-            {website.installJob.status.replace(/_/g, " ")}
+            {website.installJob.status === "QUEUED"
+              ? "Installation In Progress"
+              : website.installJob.status.replace(/_/g, " ")}
           </Badge>
           {website.installJob.status === "PENDING_PAYMENT" && (
             <Button
@@ -633,27 +634,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         </Button>
       </div>
 
-      {/* ✅ Embed Script Button */}
-      <div className="pt-2">
-        <Button
-          variant="outline"
-          className="w-full border-2 border-primary rounded-full hover:bg-primary/20 text-foreground"
-          onClick={() => handleOpenEmbedDialog(website.id)}
-        >
-          <Target className="mr-2 h-4 w-4" /> Copy Embed Script 
-        </Button>
-      </div>
-
-      {/* ✅ iFrame Embed Button */}
-      <div className="pt-2">
-        <Button
-          variant="outline"
-          className="w-full border-2 border-primary rounded-full hover:bg-primary/20 text-foreground"
-          onClick={() => handleOpenIframeDialog(website.id)}
-        >
-          <Copy className="mr-2 h-4 w-4" /> Copy iFrame Embed
-        </Button>
-      </div>
     </div>
   </CardContent>
               </Card>

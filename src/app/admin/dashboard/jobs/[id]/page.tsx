@@ -11,7 +11,11 @@ import {
   UserCheck,
   FileText,
   AlertCircle,
+  Target,
+  Copy,
 } from "lucide-react";
+import { EmbedDialog } from "@/components/app/embed-dialog";
+import { IframeDialog } from "@/components/app/iframe-dialog";
 import {
   Card,
   CardContent,
@@ -55,6 +59,7 @@ import {
 
 interface Job {
   id: string;
+  clientId: string | null;
   platform: string;
   installType: string;
   websiteUrls: string[];
@@ -116,6 +121,8 @@ export default function AdminJobDetailPage() {
   const [reviewAction, setReviewAction] = useState<"approve" | "reject">("approve");
   const [reviewNotes, setReviewNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
+  const [iframeDialogOpen, setIframeDialogOpen] = useState(false);
 
   // Fetch job
   const { data: job, isLoading, error } = useQuery<Job>({
@@ -361,8 +368,39 @@ export default function AdminJobDetailPage() {
                   <p className="whitespace-pre-wrap">{job.notes}</p>
                 </div>
               )}
+              {job.clientId && (
+                <div className="pt-2 flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEmbedDialogOpen(true)}
+                  >
+                    <Target className="mr-2 h-4 w-4" />
+                    Copy Embed Script
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIframeDialogOpen(true)}
+                  >
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy iFrame Embed
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
+
+          <EmbedDialog
+            open={embedDialogOpen}
+            onOpenChange={setEmbedDialogOpen}
+            clientId={job?.clientId ?? null}
+          />
+          <IframeDialog
+            open={iframeDialogOpen}
+            onOpenChange={setIframeDialogOpen}
+            clientId={job?.clientId ?? null}
+          />
 
           {/* Access Credentials */}
           <Card>
