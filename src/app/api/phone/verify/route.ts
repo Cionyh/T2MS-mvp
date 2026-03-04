@@ -69,11 +69,22 @@ export async function POST(req: NextRequest) {
 
     // Check if phone number already exists for this client
     let phoneNumber = await prisma.phoneNumber.findFirst({
-      where: {
-        clientId,
-        phone,
-      },
+      where: { clientId, phone },
     });
+
+    // Enforce one phone, one website: reject if phone is already used by another client
+    const existingOtherClient = await prisma.phoneNumber.findFirst({
+      where: { phone },
+    });
+    if (existingOtherClient && existingOtherClient.clientId !== clientId) {
+      return NextResponse.json(
+        {
+          error:
+            "This phone number is already linked to another website. Each phone number can only be used for one website.",
+        },
+        { status: 409 }
+      );
+    }
 
     if (isFirstPhone) {
       // Use Twilio Verify API for owner's first phone

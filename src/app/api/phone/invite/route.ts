@@ -43,12 +43,23 @@ export async function POST(req: NextRequest) {
     const inviteToken = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
 
+    // Check if phone number already exists for another client (one phone, one website)
+    const existingOtherClient = await prisma.phoneNumber.findFirst({
+      where: { phone },
+    });
+    if (existingOtherClient && existingOtherClient.clientId !== clientId) {
+      return NextResponse.json(
+        {
+          error:
+            "This phone number is already linked to another website. Each phone number can only be used for one website.",
+        },
+        { status: 409 }
+      );
+    }
+
     // Check if phone number already exists for this client
     let phoneNumber = await prisma.phoneNumber.findFirst({
-      where: {
-        clientId,
-        phone,
-      },
+      where: { clientId, phone },
     });
 
     if (phoneNumber) {

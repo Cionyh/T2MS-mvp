@@ -86,16 +86,26 @@ export async function POST(
     }
 
     // Check if phone number already exists for this client
-    const existingPhone = await prisma.phoneNumber.findFirst({
-      where: {
-        clientId,
-        phone,
-      },
+    const existingForClient = await prisma.phoneNumber.findFirst({
+      where: { clientId, phone },
     });
-
-    if (existingPhone) {
+    if (existingForClient) {
       return NextResponse.json(
         { error: "This phone number is already added to this client" },
+        { status: 409 }
+      );
+    }
+
+    // Enforce one phone, one website: reject if phone is already used by another client
+    const existingAnywhere = await prisma.phoneNumber.findFirst({
+      where: { phone },
+    });
+    if (existingAnywhere) {
+      return NextResponse.json(
+        {
+          error:
+            "This phone number is already linked to another website. Each phone number can only be used for one website.",
+        },
         { status: 409 }
       );
     }
