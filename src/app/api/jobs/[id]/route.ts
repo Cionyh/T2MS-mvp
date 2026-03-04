@@ -154,16 +154,18 @@ export async function PATCH(
 
     // Handle status update
     if (status) {
-      // Validate status transition
-      if (!isValidStatusTransition(job.status as any, status)) {
+      const isAdmin = session.user.role === "admin";
+
+      // Validate status transition (admins can transition to any status)
+      if (!isAdmin && !isValidStatusTransition(job.status as any, status)) {
         return NextResponse.json(
           { error: `Invalid status transition from ${job.status} to ${status}` },
           { status: 400 }
         );
       }
 
-      // Workers can only update their own jobs
-      if (worker && job.assignedWorkerId !== worker.id) {
+      // Workers can only update their own jobs; admins can update any job
+      if (!isAdmin && worker && job.assignedWorkerId !== worker.id) {
         return NextResponse.json(
           { error: "You can only update jobs assigned to you" },
           { status: 403 }
