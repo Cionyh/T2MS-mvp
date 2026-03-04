@@ -29,4 +29,6 @@ export const {
 	signOut,
 	useSession,
 	getSession,
+	requestPasswordReset,
+	resetPassword,
 } = client;
