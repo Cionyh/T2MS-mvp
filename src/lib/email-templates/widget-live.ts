@@ -45,10 +45,11 @@ export interface WidgetLiveTemplateVars {
 }
 
 export function renderWidgetLiveEmail(vars: WidgetLiveTemplateVars) {
+  const v = vars as unknown as Record<string, unknown>;
   return {
     subject: WIDGET_LIVE_SUBJECT,
     preheader: WIDGET_LIVE_PREHEADER,
-    html: wrapHtml(renderTemplate(BODY_HTML, vars), WIDGET_LIVE_PREHEADER),
-    text: renderTemplate(BODY_TEXT, vars),
+    html: wrapHtml(renderTemplate(BODY_HTML, v), WIDGET_LIVE_PREHEADER),
+    text: renderTemplate(BODY_TEXT, v),
   };
 }

@@ -37,10 +37,11 @@ export interface WelcomeTemplateVars {
 }
 
 export function renderWelcomeEmail(vars: WelcomeTemplateVars) {
+  const v = vars as unknown as Record<string, unknown>;
   return {
     subject: WELCOME_SUBJECT,
     preheader: WELCOME_PREHEADER,
-    html: wrapHtml(renderTemplate(BODY_HTML, vars), WELCOME_PREHEADER),
-    text: renderTemplate(BODY_TEXT, vars),
+    html: wrapHtml(renderTemplate(BODY_HTML, v), WELCOME_PREHEADER),
+    text: renderTemplate(BODY_TEXT, v),
   };
 }

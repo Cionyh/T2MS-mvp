@@ -36,10 +36,11 @@ export interface PasswordResetTemplateVars {
 }
 
 export function renderPasswordResetEmail(vars: PasswordResetTemplateVars) {
+  const v = vars as unknown as Record<string, unknown>;
   return {
     subject: PASSWORD_RESET_SUBJECT,
     preheader: PASSWORD_RESET_PREHEADER,
-    html: wrapHtml(renderTemplate(BODY_HTML, vars), PASSWORD_RESET_PREHEADER),
-    text: renderTemplate(BODY_TEXT, vars),
+    html: wrapHtml(renderTemplate(BODY_HTML, v), PASSWORD_RESET_PREHEADER),
+    text: renderTemplate(BODY_TEXT, v),
   };
 }
