@@ -1,11 +1,12 @@
 /**
  * Replace {{variable}} placeholders in a string.
+ * Accepts any object with string values (e.g. WelcomeTemplateVars, PasswordResetTemplateVars).
  */
-export function renderTemplate(
-  template: string,
-  vars: Record<string, string>
-): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? "");
+export function renderTemplate(template: string, vars: Record<string, unknown>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+    const v = vars[key];
+    return v != null ? String(v) : "";
+  });
 }
 
 /**
