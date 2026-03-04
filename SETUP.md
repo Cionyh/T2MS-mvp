@@ -77,6 +77,11 @@ STRIPE_ENTERPRISE_PRICE_ID="price_your-enterprise-price-id"
 # PostHog Analytics (Optional)
 NEXT_PUBLIC_POSTHOG_KEY="your-posthog-key"
 NEXT_PUBLIC_POSTHOG_HOST="https://app.posthog.com"
+
+# SendGrid (optional – used for organization invitation emails)
+SENDGRID_API_KEY="your-sendgrid-api-key"
+SENDGRID_FROM_EMAIL="noreply@yourdomain.com"
+SENDGRID_FROM_NAME="T2MS"
 ```
 
 ### Environment Variable Details
@@ -109,6 +114,11 @@ NEXT_PUBLIC_POSTHOG_HOST="https://app.posthog.com"
 #### PostHog (Optional)
 - **NEXT_PUBLIC_POSTHOG_KEY**: PostHog project API key
 - **NEXT_PUBLIC_POSTHOG_HOST**: PostHog host URL
+
+#### SendGrid (Optional)
+- **SENDGRID_API_KEY**: SendGrid API key (Mail Send permission). If not set, invitation emails are skipped (logged only).
+- **SENDGRID_FROM_EMAIL**: Sender email (must be verified in SendGrid). Defaults to `noreply@t2ms.biz`.
+- **SENDGRID_FROM_NAME**: Sender display name. Defaults to `T2MS`.
 
 ## Step 4: Set Up PostgreSQL Database
 

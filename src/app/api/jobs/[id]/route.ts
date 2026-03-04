@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { verifyWorker } from "@/lib/worker-helpers";
 import { INSTALL_JOB_STATUS, isValidStatusTransition } from "@/lib/job-status";
+import { sendEmail } from "@/lib/sendgrid";
+import { renderWidgetLiveEmail } from "@/lib/email-templates";
 
 interface Params {
   id: string;
@@ -176,13 +178,46 @@ export async function PATCH(
         },
       });
 
-      // When job is completed, auto-publish the associated site (Client)
+      // When job is completed, auto-publish the associated site (Client) and send Widget Live email
       const jobClientId = (updatedJob as { clientId?: string | null }).clientId;
-      if (status === INSTALL_JOB_STATUS.COMPLETED && jobClientId) {
-        await prisma.client.update({
-          where: { id: jobClientId },
-          data: { pinned: true },
-        }).catch((err) => console.error("[JOBS_PATCH] Auto-publish site failed:", err));
+      if (status === INSTALL_JOB_STATUS.COMPLETED) {
+        if (jobClientId) {
+          await prisma.client.update({
+            where: { id: jobClientId },
+            data: { pinned: true },
+          }).catch((err) => console.error("[JOBS_PATCH] Auto-publish site failed:", err));
+        }
+        // Widget Live email: after installation is marked complete
+        const jobWithUser = await prisma.installJob.findUnique({
+          where: { id: params.id },
+          include: {
+            customer: {
+              include: {
+                user: { select: { email: true, name: true } },
+              },
+            },
+            client: { select: { domain: true } },
+          },
+        });
+        const user = jobWithUser?.customer?.user;
+        const websiteUrl =
+          jobWithUser?.client?.domain ??
+          (Array.isArray(jobWithUser?.websiteUrls) && jobWithUser.websiteUrls.length > 0
+            ? jobWithUser.websiteUrls[0]
+            : "");
+        if (user?.email && websiteUrl) {
+          const dashboardLink =
+            process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+          const firstName = (user.name ?? "").trim().split(/\s+/)[0] || "there";
+          const { subject, html, text } = renderWidgetLiveEmail({
+            first_name: firstName,
+            website_url: websiteUrl,
+            dashboard_link: dashboardLink,
+          });
+          sendEmail({ to: user.email, subject, html, text }).catch((err) =>
+            console.error("[JOBS_PATCH] Widget Live email failed:", err)
+          );
+        }
       }
 
       return NextResponse.json(updatedJob);

@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { INSTALL_JOB_STATUS, ACCESS_METHOD } from "@/lib/job-status";
+import { sendEmail } from "@/lib/sendgrid";
+import { renderWelcomeEmail } from "@/lib/email-templates";
 
 const REQUIRED_CONSENT_TEXT =
   "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
@@ -204,6 +206,26 @@ export async function PATCH(req: NextRequest) {
       },
       update: { completedAt: now },
     });
+
+    // Welcome email: after successful signup and trial activation
+    if (activeSubscription && session.user.email) {
+      const dashboardLink =
+        process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+      const firstName =
+        (session.user.name ?? "").trim().split(/\s+/)[0] || "there";
+      const { subject, html, text } = renderWelcomeEmail({
+        first_name: firstName,
+        dashboard_link: dashboardLink,
+      });
+      sendEmail({
+        to: session.user.email,
+        subject,
+        html,
+        text,
+      }).catch((err) =>
+        console.error("[onboarding/complete] Welcome email failed:", err)
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

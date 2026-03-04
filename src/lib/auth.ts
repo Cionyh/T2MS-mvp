@@ -4,8 +4,10 @@ import { PrismaClient } from "@prisma/client";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin } from "better-auth/plugins";
 import { organization } from "better-auth/plugins";
-import { stripe } from "@better-auth/stripe"
-import Stripe from "stripe"
+import { stripe } from "@better-auth/stripe";
+import Stripe from "stripe";
+import { sendEmail } from "@/lib/sendgrid";
+import { renderPasswordResetEmail } from "@/lib/email-templates";
 
 const db = new PrismaClient();
 
@@ -18,16 +20,20 @@ const plugins: Parameters<typeof betterAuth>[0]["plugins"] = [
     admin(),
     organization({
       async sendInvitationEmail(data) {
-        // TODO: Implement email sending for organization invitations
-        // You can use your email service here (e.g., Resend, SendGrid, etc.)
-        const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation/${data.id}`;
-        console.log(`Invitation email should be sent to ${data.email} with link: ${inviteLink}`);
-        // Example:
-        // await sendEmail({
-        //   to: data.email,
-        //   subject: `You've been invited to join ${data.organization.name}`,
-        //   html: `...`
-        // });
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+        const inviteLink = `${baseUrl}/accept-invitation/${data.id}`;
+        const orgName = data.organization?.name ?? "the organization";
+        await sendEmail({
+          to: data.email,
+          subject: `You've been invited to join ${orgName}`,
+          html: `
+            <p>You've been invited to join <strong>${orgName}</strong> on T2MS.</p>
+            <p><a href="${inviteLink}">Accept invitation</a></p>
+            <p>If the link doesn't work, copy and paste this URL into your browser:</p>
+            <p>${inviteLink}</p>
+          `.trim(),
+          text: `You've been invited to join ${orgName} on T2MS. Accept invitation: ${inviteLink}`,
+        });
       },
     }),
   ];
@@ -123,7 +129,15 @@ export const auth = betterAuth({
 
 	emailAndPassword: {
 		enabled: true,
-    },
+		sendResetPassword: async ({ user, url }) => {
+			const firstName = (user.name ?? "").trim().split(/\s+/)[0] || "there";
+			const { subject, html, text } = renderPasswordResetEmail({
+				first_name: firstName,
+				reset_link: url,
+			});
+			void sendEmail({ to: user.email, subject, html, text });
+		},
+	},
 
     plugins,
 });
