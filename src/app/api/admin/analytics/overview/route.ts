@@ -16,6 +16,9 @@ export async function GET(req: NextRequest) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
+    // "Clients" = users who are not admin and not workers (team members)
+    const clientUserWhere = { role: { not: "admin" }, worker: { is: null } };
+
     // Fetch all data in parallel
     const [
       totalUsers,
@@ -31,9 +34,11 @@ export async function GET(req: NextRequest) {
       clientGrowth,
       messageGrowth
     ] = await Promise.all([
-      // Total counts
-      prisma.user.count(),
-      prisma.user.count({ where: { createdAt: { gte: startDate } } }),
+      // Total counts (totalUsers = client users only, not admins/workers)
+      prisma.user.count({ where: clientUserWhere }),
+      prisma.user.count({
+        where: { ...clientUserWhere, createdAt: { gte: startDate } },
+      }),
       prisma.client.count(),
       prisma.client.count({ where: { createdAt: { gte: startDate } } }),
       prisma.message.count(),
@@ -47,11 +52,11 @@ export async function GET(req: NextRequest) {
         select: { plan: true, periodStart: true, periodEnd: true }
       }),
 
-      // Growth data
+      // Growth data (client users only)
       prisma.user.groupBy({
         by: ["createdAt"],
         _count: { id: true },
-        where: { createdAt: { gte: startDate } },
+        where: { ...clientUserWhere, createdAt: { gte: startDate } },
         orderBy: { createdAt: "asc" }
       }),
       prisma.client.groupBy({

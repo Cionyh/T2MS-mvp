@@ -1,17 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { client } from "@/lib/auth-client";
 
+/**
+ * Total count of client users only (excludes admins and workers/team members).
+ * Fetches from analytics overview so the number matches the rest of the dashboard.
+ */
 export function useTotalUsers() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["totalUsers"],
     queryFn: async () => {
-      // SDK returns a wrapped object, usually { data, ... }
-      const response = await client.admin.listUsers({
-        query: { limit: 1 }, // we just need total
-      });
-
-      // Access the .data safely
-      return response?.data?.total ?? 0;
+      const res = await fetch("/api/admin/analytics/overview?days=1");
+      if (!res.ok) return 0;
+      const json = await res.json();
+      return json?.overview?.totalUsers ?? 0;
     },
   });
 

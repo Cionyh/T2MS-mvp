@@ -15,7 +15,10 @@ export async function GET(req: NextRequest) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // User analytics
+    // Client users only (exclude admins and workers)
+    const clientUserWhere = { role: { not: "admin" }, worker: { is: null } };
+
+    // User analytics (client users only)
     const [
       totalUsers,
       newUsers,
@@ -26,46 +29,53 @@ export async function GET(req: NextRequest) {
       topUsersByClients,
       userRetention
     ] = await Promise.all([
-      prisma.user.count(),
-      prisma.user.count({ where: { createdAt: { gte: startDate } } }),
-      prisma.user.count({ 
-        where: { 
-          sessions: { some: { expiresAt: { gte: new Date() } } }
-        }
+      prisma.user.count({ where: clientUserWhere }),
+      prisma.user.count({
+        where: { ...clientUserWhere, createdAt: { gte: startDate } },
       }),
-      prisma.user.count({ where: { banned: true } }),
+      prisma.user.count({
+        where: {
+          ...clientUserWhere,
+          sessions: { some: { expiresAt: { gte: new Date() } } },
+        },
+      }),
+      prisma.user.count({
+        where: { ...clientUserWhere, banned: true },
+      }),
       prisma.user.groupBy({
         by: ["role"],
-        _count: { id: true }
+        _count: { id: true },
+        where: clientUserWhere,
       }),
       prisma.user.groupBy({
         by: ["createdAt"],
         _count: { id: true },
-        where: { createdAt: { gte: startDate } },
-        orderBy: { createdAt: "asc" }
+        where: { ...clientUserWhere, createdAt: { gte: startDate } },
+        orderBy: { createdAt: "asc" },
       }),
       prisma.user.findMany({
+        where: clientUserWhere,
         select: {
           id: true,
           name: true,
           email: true,
-          createdAt: true
+          createdAt: true,
         },
         orderBy: { createdAt: "desc" },
-        take: 10
+        take: 10,
       }),
       prisma.user.findMany({
-        where: { createdAt: { gte: startDate } },
+        where: { ...clientUserWhere, createdAt: { gte: startDate } },
         select: {
           id: true,
           createdAt: true,
           sessions: {
             select: { createdAt: true },
             orderBy: { createdAt: "desc" },
-            take: 1
-          }
-        }
-      })
+            take: 1,
+          },
+        },
+      }),
     ]);
 
     // Process registration trend

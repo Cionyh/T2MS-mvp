@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import Stripe from "stripe";
+
+function getStripe(): Stripe | null {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  return new Stripe(key, { apiVersion: "2025-08-27.basil" });
+}
 
 type Params = { params: Promise<{ userId: string }> };
 
@@ -38,8 +45,30 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Cancel subscriptions in Stripe first (then we delete records in the transaction)
+    const userSubscriptions = await prisma.subscription.findMany({
+      where: {
+        referenceId: userId,
+        stripeSubscriptionId: { not: null },
+      },
+      select: { id: true, stripeSubscriptionId: true },
+    });
+    const stripe = getStripe();
+    for (const sub of userSubscriptions) {
+      const stripeSubId = sub.stripeSubscriptionId;
+      if (!stripeSubId || typeof stripeSubId !== "string") continue;
+      if (stripe) {
+        try {
+          await stripe.subscriptions.cancel(stripeSubId);
+        } catch (e) {
+          console.warn("[ADMIN_DELETE_USER] Stripe cancel failed for", stripeSubId, e);
+          // Continue: we still delete the local record so DB stays consistent
+        }
+      }
+    }
+
     await prisma.$transaction(async (tx) => {
-      // 1. Subscriptions linked to this user (Stripe/billing)
+      // 1. Subscriptions linked to this user (already cancelled in Stripe above)
       await tx.subscription.deleteMany({
         where: { referenceId: userId },
       });
