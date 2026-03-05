@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { verifyClientAccess } from "@/lib/organization-helpers";
+import { verifyClientAccess, isPhoneUsedByAnotherUser } from "@/lib/organization-helpers";
 import { randomBytes } from "crypto";
 
 /**
@@ -43,15 +43,13 @@ export async function POST(req: NextRequest) {
     const inviteToken = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
 
-    // Check if phone number already exists for another client (one phone, one website)
-    const existingOtherClient = await prisma.phoneNumber.findFirst({
-      where: { phone },
-    });
-    if (existingOtherClient && existingOtherClient.clientId !== clientId) {
+    // Multiple users cannot have the same phone; one user can add it to multiple sites
+    const usedByOther = await isPhoneUsedByAnotherUser(session.user.id, phone);
+    if (usedByOther) {
       return NextResponse.json(
         {
           error:
-            "This phone number is already linked to another website. Each phone number can only be used for one website.",
+            "This phone number is already used by another account. Each phone number can only be linked to one account.",
         },
         { status: 409 }
       );

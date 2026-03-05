@@ -51,6 +51,54 @@ export async function verifyOrganizationAccess(
 }
 
 /**
+ * Get all client IDs that a user has access to (via organization membership).
+ */
+export async function getClientIdsForUser(userId: string): Promise<string[]> {
+  try {
+    const members = await prisma.member.findMany({
+      where: { userId },
+      select: { organizationId: true },
+    });
+    const orgIds = members.map((m) => m.organizationId);
+    if (orgIds.length === 0) return [];
+    const clients = await prisma.client.findMany({
+      where: { organizationId: { in: orgIds } },
+      select: { id: true },
+    });
+    return clients.map((c) => c.id);
+  } catch (error) {
+    console.error("Error getting client IDs for user:", error);
+    return [];
+  }
+}
+
+/**
+ * Returns true if this phone number is already verified/used by a different user
+ * (i.e. on any client whose organization the current user is not a member of).
+ * Used to enforce: multiple users cannot have the same phone; one user can use it on multiple sites.
+ */
+export async function isPhoneUsedByAnotherUser(
+  userId: string,
+  phone: string
+): Promise<boolean> {
+  try {
+    const withPhone = await prisma.phoneNumber.findMany({
+      where: { phone },
+      include: { client: { select: { organizationId: true } } },
+    });
+    for (const pn of withPhone) {
+      if (!pn.client.organizationId) continue;
+      const access = await verifyOrganizationAccess(userId, pn.client.organizationId);
+      if (!access.hasAccess) return true;
+    }
+    return false;
+  } catch (error) {
+    console.error("Error checking if phone used by another user:", error);
+    return true; // safe default: reject on error
+  }
+}
+
+/**
  * Verify if a user has access to a client (via organization)
  */
 export async function verifyClientAccess(

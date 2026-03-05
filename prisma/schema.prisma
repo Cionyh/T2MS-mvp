@@ -250,8 +250,8 @@ model PhoneNumber {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  // One phone number can only be linked to one website globally
-  @@unique([phone])
+  // Same phone can't be added twice to the same client; unique per (phone, client)
+  @@unique([phone, clientId])
   @@map("phone_number")
 }
 
