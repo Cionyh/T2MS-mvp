@@ -207,6 +207,7 @@ function OnboardingContent() {
         body: JSON.stringify({
           name: registerForm.name.trim(),
           domain: registerForm.domain.trim(),
+          phone: registerForm.phone.trim(),
         }),
       });
       const clientData = await clientRes.json();

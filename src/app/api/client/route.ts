@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { checkSiteLimit } from "@/lib/plan-limits";
-import { getActiveOrganization } from "@/lib/organization-helpers";
+import { getActiveOrganization, isPhoneUsedByAnotherUser } from "@/lib/organization-helpers";
 import { INSTALL_JOB_STATUS } from "@/lib/job-status";
 
 /* ----------  POST /api/client  ----------------------------------------- */
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, domain: domainValue } = body;
+    const { name, domain: domainValue, phone: phoneValue } = body;
     domain = domainValue;
 
     if (!name || !domain) {
@@ -78,6 +78,31 @@ export async function POST(req: Request) {
         { error: "Invalid domain format" },
         { status: 400 }
       );
+    }
+
+    // Validate domain not already registered (don't create site if taken)
+    const existingByDomain = await prisma.client.findUnique({
+      where: { domain: normalizedDomain },
+    });
+    if (existingByDomain) {
+      return NextResponse.json(
+        { error: `The domain "${normalizedDomain}" is already registered.` },
+        { status: 409 }
+      );
+    }
+
+    // If phone provided (e.g. onboarding), validate it's not used by another user before creating site
+    if (phoneValue && typeof phoneValue === "string" && phoneValue.trim()) {
+      const usedByOther = await isPhoneUsedByAnotherUser(session.user.id, phoneValue.trim());
+      if (usedByOther) {
+        return NextResponse.json(
+          {
+            error:
+              "This phone number is already used by another account. Each phone number can only be linked to one account.",
+          },
+          { status: 409 }
+        );
+      }
     }
 
     const client = await prisma.client.create({

@@ -39,6 +39,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -75,6 +85,8 @@ export default function AdminDashboard() {
     reason: "",
     expirationDate: undefined as Date | undefined,
   });
+  const [deleteConfirmUserId, setDeleteConfirmUserId] = useState<string | null>(null);
+  const [deleteConfirmUserName, setDeleteConfirmUserName] = useState<string>("");
 
   const { data, isLoading: isUsersLoading } = useQuery({
     queryKey: ["admin-users-clients"],
@@ -110,10 +122,17 @@ export default function AdminDashboard() {
 	};
 
 	const handleDeleteUser = async (id: string) => {
+		if (!id) return;
 		setIsLoading(`delete-${id}`);
 		try {
-			await client.admin.removeUser({ userId: id });
-			toast.success("User deleted successfully");
+			const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+			const data = res.ok ? null : await res.json().catch(() => ({}));
+			if (!res.ok) {
+				throw new Error(data?.error || "Failed to delete user");
+			}
+			toast.success("User and all linked data (sites, subscriptions, install requests) deleted successfully");
+			setDeleteConfirmUserId(null);
+			setDeleteConfirmUserName("");
 			queryClient.invalidateQueries({
 				queryKey: ["admin-users-clients"],
 			});
@@ -378,18 +397,62 @@ export default function AdminDashboard() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap min-w-[180px]">
                         <div className="flex flex-wrap gap-2">
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteUser(user.id)}
-                            disabled={isLoading?.startsWith("delete")}
+                          <AlertDialog
+                            open={deleteConfirmUserId === user.id}
+                            onOpenChange={(open) => {
+                              if (!open) {
+                                setDeleteConfirmUserId(null);
+                                setDeleteConfirmUserName("");
+                              }
+                            }}
                           >
-                            {isLoading === `delete-${user.id}` ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash className="h-4 w-4" />
-                            )}
-                          </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                setDeleteConfirmUserId(user.id);
+                                setDeleteConfirmUserName(user.name || user.email);
+                              }}
+                              disabled={isLoading?.startsWith("delete")}
+                            >
+                              {isLoading === `delete-${user.id}` ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete user?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently delete the account for{" "}
+                                  <strong>{deleteConfirmUserName}</strong> and all linked data:
+                                  subscriptions, sites, install requests, messages, and phone numbers.
+                                  This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    if (deleteConfirmUserId) handleDeleteUser(deleteConfirmUserId);
+                                  }}
+                                  disabled={!!deleteConfirmUserId && isLoading === `delete-${deleteConfirmUserId}`}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  {deleteConfirmUserId && isLoading === `delete-${deleteConfirmUserId}` ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Deleting...
+                                    </>
+                                  ) : (
+                                    "Delete"
+                                  )}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
     
                           <Button
                             variant="outline"
