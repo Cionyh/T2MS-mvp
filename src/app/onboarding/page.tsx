@@ -62,6 +62,7 @@ function OnboardingContent() {
   const [registerForm, setRegisterForm] = useState({
     name: "",
     domain: "",
+    keyword: "",
     phone: "",
     websiteOwnership: false,
   });
@@ -191,6 +192,15 @@ function OnboardingContent() {
       toast.error("Please enter a business name and domain.");
       return;
     }
+    const rawKeyword = registerForm.keyword.trim();
+    if (!rawKeyword) {
+      toast.error("Please enter a keyword (e.g. BAKERY). You'll text KEYWORD: your message to post to this site.");
+      return;
+    }
+    if (!/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
+      toast.error("Keyword must be 1–50 characters, letters, numbers, or underscore only.");
+      return;
+    }
     if (!registerForm.phone.trim()) {
       toast.error("Please enter a phone number.");
       return;
@@ -207,6 +217,7 @@ function OnboardingContent() {
         body: JSON.stringify({
           name: registerForm.name.trim(),
           domain: registerForm.domain.trim(),
+          keyword: rawKeyword,
           phone: registerForm.phone.trim(),
         }),
       });
@@ -470,6 +481,22 @@ function OnboardingContent() {
                     }
                     disabled={!!loading}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="keyword">SMS Keyword (e.g. BAKERY)</Label>
+                  <Input
+                    id="keyword"
+                    placeholder="BAKERY"
+                    value={registerForm.keyword}
+                    onChange={(e) =>
+                      setRegisterForm((s) => ({ ...s, keyword: e.target.value.replace(/\s/g, "").toUpperCase() }))
+                    }
+                    disabled={!!loading}
+                    maxLength={50}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    To post via text, send: <strong>{registerForm.keyword || "KEYWORD"}: your message</strong>
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>

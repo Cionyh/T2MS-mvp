@@ -72,6 +72,40 @@ export async function getClientIdsForUser(userId: string): Promise<string[]> {
   }
 }
 
+/** Normalize keyword for storage and comparison: uppercase, trim. */
+export function normalizeKeyword(keyword: string): string {
+  return keyword.trim().toUpperCase();
+}
+
+/**
+ * Returns true if this keyword is already used by another client of the same user
+ * (case-insensitive). Used to enforce: keyword unique per user.
+ * @param excludeClientId - when updating a client, exclude its own id from the check
+ */
+export async function isKeywordTakenByUser(
+  userId: string,
+  keyword: string,
+  excludeClientId?: string
+): Promise<boolean> {
+  try {
+    const clientIds = await getClientIdsForUser(userId);
+    if (clientIds.length === 0) return false;
+    const normalized = normalizeKeyword(keyword);
+    if (!normalized) return false;
+    const clients = await prisma.client.findMany({
+      where: {
+        id: { in: excludeClientId ? clientIds.filter((id) => id !== excludeClientId) : clientIds },
+        keyword: { not: null },
+      },
+      select: { keyword: true },
+    });
+    return clients.some((c) => c.keyword && normalizeKeyword(c.keyword) === normalized);
+  } catch (error) {
+    console.error("Error checking keyword taken:", error);
+    return true; // safe default: reject on error
+  }
+}
+
 /**
  * Returns true if this phone number is already verified/used by a different user
  * (i.e. on any client whose organization the current user is not a member of).

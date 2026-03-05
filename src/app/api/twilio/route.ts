@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkMessageLimit } from "@/lib/plan-limits";
+import { normalizeKeyword } from "@/lib/organization-helpers";
 
 //@ts-ignore
 import * as twilio from "twilio";
@@ -113,33 +114,72 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Look up phone number in PhoneNumber table
-    const phoneNumber = await prisma.phoneNumber.findFirst({
-      where: { 
-        phone: from,
-        verified: true, // Only accept verified phone numbers
-      },
-      include: {
-        client: true,
-      },
+    // Parse optional "KEYWORD: message" prefix (case-insensitive)
+    let parsedKeyword: string | null = null;
+    let content = body;
+    const colonIndex = body.indexOf(":");
+    if (colonIndex > 0) {
+      const before = body.slice(0, colonIndex).trim();
+      const after = body.slice(colonIndex + 1).trim();
+      if (before.length > 0) {
+        parsedKeyword = normalizeKeyword(before);
+        content = after;
+      }
+    }
+    // Legacy: popup: prefix still overrides type
+    let type = "banner";
+    if (content.startsWith("popup:")) {
+      type = "popup";
+      content = content.substring(6).trim();
+    }
+
+    // All verified phone number rows for this sender (one row per client/site)
+    const phoneNumbers = await prisma.phoneNumber.findMany({
+      where: { phone: from, verified: true },
+      include: { client: true },
     });
 
-    if (!phoneNumber || !phoneNumber.client) {
+    if (phoneNumbers.length === 0) {
       console.warn("❌ No verified phone number found:", from);
       return NextResponse.json({ error: "Phone number not found or not verified" }, { status: 404 });
     }
 
-    const client = phoneNumber.client;
+    let client = phoneNumbers[0].client;
+    if (phoneNumbers.length > 1 || (phoneNumbers[0].client.keyword != null)) {
+      // Multiple sites for this phone, or single site with keyword: resolve by keyword
+      if (parsedKeyword) {
+        const match = phoneNumbers.find(
+          (pn) => pn.client.keyword && normalizeKeyword(pn.client.keyword) === parsedKeyword
+        );
+        if (match) {
+          client = match.client;
+        } else {
+          const reply = "Unknown keyword. Use KEYWORD: your message (e.g. BAKERY: Fresh croissants today).";
+          return new NextResponse(
+            `<Response><Message>${reply}</Message></Response>`,
+            { status: 200, headers: { "Content-Type": "text/xml" } }
+          );
+        }
+      } else {
+        // No keyword in message but multiple sites or site has keyword
+        const reply = "Use KEYWORD: your message to specify which site (e.g. BAKERY: your message).";
+        return new NextResponse(
+          `<Response><Message>${reply}</Message></Response>`,
+          { status: 200, headers: { "Content-Type": "text/xml" } }
+        );
+      }
+    }
+    // Single site, no keyword on client: use full body as content if we didn't parse keyword
+    if (!parsedKeyword && content === body && body.startsWith("popup:")) {
+      type = "popup";
+      content = body.substring(6).trim();
+    } else if (!parsedKeyword) {
+      content = body;
+    }
 
     if (!client.organizationId) {
       console.warn("❌ Client has no organization:", client.id);
       return NextResponse.json({ error: "Client not associated with an organization" }, { status: 400 });
-    }
-
-    let type = "banner", content = body;
-    if (body.startsWith("popup:")) {
-      type = "popup";
-      content = body.substring(6).trim();
     }
 
     console.log("📝 Saving message:", { content, type, clientId: client.id, organizationId: client.organizationId });

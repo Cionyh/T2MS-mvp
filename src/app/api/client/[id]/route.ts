@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { verifyClientAccess } from "@/lib/organization-helpers";
+import { verifyClientAccess, normalizeKeyword, isKeywordTakenByUser } from "@/lib/organization-helpers";
 
 export async function PUT(
   req: NextRequest,
@@ -35,7 +35,7 @@ export async function PUT(
 
     const body = await req.json();
 
-    // Include pinned and widgetConfig in destructure (phone removed - handled separately)
+    // Include pinned, widgetConfig, keyword (phone removed - handled separately)
     const {
       name,
       domain,
@@ -46,21 +46,49 @@ export async function PUT(
       defaultDismissAfter,
       pinned,
       widgetConfig,
+      keyword: keywordValue,
     } = body;
+
+    const updateData: Record<string, unknown> = {
+      ...(name && { name }),
+      ...(domain && { domain }),
+      ...(defaultType && { defaultType }),
+      ...(defaultBgColor && { defaultBgColor }),
+      ...(defaultTextColor && { defaultTextColor }),
+      ...(defaultFont && { defaultFont }),
+      ...(defaultDismissAfter && { defaultDismissAfter }),
+      ...(pinned !== undefined && { pinned }),
+      ...(widgetConfig !== undefined && { widgetConfig }),
+    };
+
+    if (keywordValue !== undefined) {
+      const rawKeyword = typeof keywordValue === "string" ? keywordValue.trim() : "";
+      if (!rawKeyword) {
+        return NextResponse.json(
+          { error: "Keyword cannot be empty. Use 1–50 letters, numbers, or underscore." },
+          { status: 400 }
+        );
+      }
+      if (!/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
+        return NextResponse.json(
+          { error: "Keyword must be 1–50 characters, letters, numbers, or underscore only." },
+          { status: 400 }
+        );
+      }
+      const keyword = normalizeKeyword(rawKeyword);
+      const taken = await isKeywordTakenByUser(session.user.id, keyword, id);
+      if (taken) {
+        return NextResponse.json(
+          { error: `You already have a site with keyword "${keyword}". Choose a different keyword.` },
+          { status: 409 }
+        );
+      }
+      updateData.keyword = keyword;
+    }
 
     const updatedClient = await prisma.client.update({
       where: { id },
-      data: {
-        ...(name && { name }),
-        ...(domain && { domain }),
-        ...(defaultType && { defaultType }),
-        ...(defaultBgColor && { defaultBgColor }),
-        ...(defaultTextColor && { defaultTextColor }),
-        ...(defaultFont && { defaultFont }),
-        ...(defaultDismissAfter && { defaultDismissAfter }),
-        ...(pinned !== undefined && { pinned }),
-        ...(widgetConfig !== undefined && { widgetConfig }),
-      },
+      data: updateData as Parameters<typeof prisma.client.update>[0]["data"],
     });
 
     return NextResponse.json({

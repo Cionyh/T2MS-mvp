@@ -111,6 +111,7 @@ interface Website {
   id: string;
   name: string;
   domain: string;
+  keyword?: string | null;
   organizationId?: string;
   phoneNumbers?: Array<{
     id: string;
@@ -146,6 +147,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   // Editable fields
   const [editedName, setEditedName] = useState("");
   const [editedDomain, setEditedDomain] = useState("");
+  const [editedKeyword, setEditedKeyword] = useState("");
   const [editedDefaultType, setEditedDefaultType] = useState("banner");
   const [editedDefaultBgColor, setEditedDefaultBgColor] = useState("#222");
   const [editedDefaultTextColor, setEditedDefaultTextColor] = useState("#fff");
@@ -214,6 +216,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     setSelectedWebsite(website);
     setEditedName(website.name);
     setEditedDomain(website.domain);
+    setEditedKeyword(website.keyword ?? "");
     setEditedDefaultType(website.defaultType || "banner");
     setEditedDefaultBgColor(website.defaultBgColor || "#222");
     setEditedDefaultTextColor(website.defaultTextColor || "#fff");
@@ -272,7 +275,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         body: JSON.stringify({
           name: editedName,
           domain: editedDomain,
-          // Phone removed - handled separately via phone management APIs
+          keyword: editedKeyword.trim() ? editedKeyword.trim().toUpperCase() : undefined,
           defaultType: editedDefaultType,
           defaultBgColor: editedDefaultBgColor,
           defaultTextColor: editedDefaultTextColor,
@@ -298,6 +301,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 ...site,
                 name: editedName,
                 domain: editedDomain,
+                keyword: editedKeyword.trim() ? editedKeyword.trim().toUpperCase() : null,
                 defaultType: editedDefaultType,
                 defaultBgColor: editedDefaultBgColor,
                 defaultTextColor: editedDefaultTextColor,
@@ -401,7 +405,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-600/40 bg-amber-50/80 dark:bg-amber-950/30 dark:border-amber-500/40 px-4 py-3">
         <MessageCircle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" />
         <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
-          Send text messages to <span className="font-semibold">1 (424) 484-8267</span> from the verified number to post on the widget.
+          Text <span className="font-semibold">1 (424) 484-8267</span> from your verified number. Use <strong>KEYWORD: your message</strong> (e.g. BAKERY: Fresh croissants today) to post to the right site.
         </p>
       </div>
 
@@ -532,6 +536,11 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         <p className="text-sm">
           <span className="font-semibold">Domain:</span> {website.domain}
         </p>
+        {website.keyword && (
+          <p className="text-sm">
+            <span className="font-semibold">SMS:</span> <code className="text-xs bg-muted px-1 rounded">{website.keyword}: message</code>
+          </p>
+        )}
         <Button
           variant="ghost"
           size="sm"
@@ -692,6 +701,20 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 onChange={(e) => setEditedDomain(e.target.value)}
                 className="w-full"
               />
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">SMS Keyword</Label>
+              <Input
+                value={editedKeyword}
+                onChange={(e) => setEditedKeyword(e.target.value.replace(/\s/g, "").toUpperCase())}
+                placeholder="e.g. BAKERY"
+                className="w-full"
+                maxLength={50}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                To post via text: <strong>{editedKeyword || "KEYWORD"}: your message</strong>
+              </p>
             </div>
             
             {/* Phone Numbers Section - Managed separately */}

@@ -187,6 +187,8 @@ model Client {
   organizationId String? // Nullable - clients can exist without organization (for backward compatibility)
   name           String
   domain         String  @unique
+  // SMS routing: unique per user; incoming SMS use "KEYWORD: message" to route to this site
+  keyword        String? // e.g. BAKERY, MENU; stored uppercase; required for new registrations
   // phone field removed - now in PhoneNumber model
 
   // Defaults for messages

@@ -26,21 +26,22 @@ This document consolidates three complementary Phase 2 specifications that toget
 ## Table of Contents
 
 1. [Core Principles](#1-core-principles-non-negotiable)
-2. [Customer Signup + Billing Flow](#2-customer-signup--billing-flow)
-3. [Customer Onboarding + SMS Consent Gate](#3-customer-onboarding--sms-consent-gate)
-4. [Access Method Rules](#4-access-method-rules-worker-guardrails)
-5. [Reminder Email Automation](#5-reminder-email-automation)
-6. [Install Job Creation](#6-install-job-creation)
-7. [Worker System (Philippines)](#7-worker-system-philippines)
-8. [Queue & Assignment Logic](#8-queue--assignment-logic-fair--fast)
-9. [Installation & QA Requirements](#9-installation--qa-requirements)
-10. [Completion & QA Validation](#10-completion--qa-validation)
-11. [Worker Payout Ledger](#11-worker-payout-ledger)
-12. [Multi-User Architecture](#12-multi-user-architecture)
-13. [Channel Routing System](#13-channel-routing-system)
-14. [Security Requirements](#14-security-requirements)
-15. [Phase 2 Exclusions](#15-explicit-phase-2-exclusions)
-16. [Build Order](#16-phase-2-build-order-required)
+2. [Clarification: Onboarding vs Install Add-On vs Install Setup](#2-clarification-onboarding-vs-install-add-on-vs-install-setup)
+3. [Customer Signup + Billing Flow](#3-customer-signup--billing-flow)
+4. [Customer Onboarding + SMS Consent Gate](#4-customer-onboarding--sms-consent-gate)
+5. [Access Method Rules](#5-access-method-rules-worker-guardrails)
+6. [Reminder Email Automation](#6-reminder-email-automation)
+7. [Install Job Creation](#7-install-job-creation)
+8. [Worker System (Philippines)](#8-worker-system-philippines)
+9. [Queue & Assignment Logic](#9-queue--assignment-logic-fair--fast)
+10. [Installation & QA Requirements](#10-installation--qa-requirements)
+11. [Completion & QA Validation](#11-completion--qa-validation)
+12. [Worker Payout Ledger](#12-worker-payout-ledger)
+13. [Multi-User Architecture](#13-multi-user-architecture)
+14. [Channel Routing System](#14-channel-routing-system)
+15. [Security Requirements](#15-security-requirements)
+16. [Phase 2 Exclusions](#16-explicit-phase-2-exclusions)
+17. [Build Order](#17-phase-2-build-order-required)
 
 ---
 
@@ -81,21 +82,64 @@ This document consolidates three complementary Phase 2 specifications that toget
 
 ---
 
-## 2. Customer Signup + Billing Flow
+## 2. Clarification: Onboarding vs Install Add-On vs Install Setup
 
-### 2.1 Plan + Install Add-On
+**Use this section to avoid confusion between “onboarding”, “add-on”, and the install form.**
+
+### 2.1 Post-signup onboarding
+
+**Onboarding** = the flow a new customer goes through **after signup**. It can include:
+
+1. **Plan selection** – Choose monthly subscription (e.g. Starter, Pro, Enterprise).
+2. **Optional install add-on** – Choose whether to buy the one-time paid install service (see [Install add-on](#22-install-add-on) below).
+3. **If they bought the add-on:** complete **install setup** (the form with website URLs, platform, install type, access method, etc.) and **SMS consent**. When that is done, we create an **Install Job** (queued for a worker).
+
+So: onboarding is the overall “get the customer set up” flow; the **install setup form** and **SMS consent** are specific steps inside that flow when the customer has the install add-on.
+
+### 2.2 Install add-on
+
+The **install add-on** is an **optional one-time paid product** (not part of the monthly subscription):
+
+- **Standard website install** (script embed): $19.99 one-time  
+- **Restricted platform install** (Google Sites / iframe): $39.99 one-time  
+- **Website creation / branding / multi-page build**: EXCLUDED from Phase 2 (separate future module)
+
+- Offered **during or immediately after signup** (or at checkout).
+- If the customer pays for it, they are prompted to **“Complete Setup”** (install setup + SMS consent).
+- Billing stores: `install_addon_sku`, `install_addon_status` (paid | refunded | disputed), etc.
+
+### 2.3 Install setup (the form questions)
+
+The form in the UI (Website URL(s), Platform, Install type, Preferred placement, Access method, Notes) is **not** generic “onboarding” questions (like “company name”). It is the **install setup** step:
+
+- **When we ask it:** Only when we will create an **Install Job** — i.e. when the customer has purchased (or will use) the **install add-on**.
+- **What it collects:** Everything the worker needs to perform the install (URLs, platform, install type, how to access the site, notes).
+- **Where it lives in the doc:** These fields are listed in [Section 4 – Customer Onboarding + SMS Consent Gate](#4-customer-onboarding--sms-consent-gate) as “Required Onboarding Fields” **in the sense that** they are required to complete the **install** part of onboarding (and to create the Install Job). So in short:
+  - **Onboarding** = post-signup flow (plan, optional add-on, and if add-on then install setup + SMS consent).
+  - **Add-on** = the paid one-time install product.
+  - **Install setup form** = the questions (URLs, platform, install type, access method, notes, etc.) required for creating the Install Job; they are part of onboarding only when the customer has the add-on.
+
+### 2.4 SMS consent
+
+SMS consent is a **hard gate** before we create the Install Job. Customer must confirm the compliance statement (checkbox + typed text). Stored as `sms_consent_confirmed_at`. See [Section 4.2](#42-sms-consent-confirmation-hard-gate).
+
+---
+
+## 3. Customer Signup + Billing Flow
+
+### 3.1 Plan + Install Add-On
 
 During signup or immediately after checkout, customer selects:
 
 - Monthly subscription
-- **Optional install add-on**
+- **Optional install add-on** (see [Section 2.2](#22-install-add-on))
 
 #### Install Pricing Tiers:
 - **Standard website install** (script embed): $19.99 one-time
 - **Restricted platform install** (Google Sites / iframe): $39.99 one-time
 - **Website creation / branding / multi-page build**: EXCLUDED from Phase 2 (separate future module)
 
-### 2.2 Billing Data Model (Stripe-Driven)
+### 3.2 Billing Data Model (Stripe-Driven)
 
 Store:
 - `subscription_id`
@@ -108,7 +152,7 @@ Store:
 - On refund or chargeback:
   - Associated job auto-moves to `HOLD_FINANCE_REVIEW` or `CANCELLED`
 
-### 2.3 Confirmation Email (Immediate)
+### 3.3 Confirmation Email (Immediate)
 
 Sent on successful payment:
 - Receipt
@@ -116,9 +160,11 @@ Sent on successful payment:
 
 ---
 
-## 3. Customer Onboarding + SMS Consent Gate
+## 4. Customer Onboarding + SMS Consent Gate
 
-### 3.1 Required Onboarding Fields
+### 4.1 Required Onboarding Fields (Install Setup)
+
+These fields are required when we will create an **Install Job** (i.e. when the customer has purchased or will use the **install add-on**). See [Section 2 – Clarification](#2-clarification-onboarding-vs-install-add-on-vs-install-setup).
 
 Customer must provide:
 - Website URL(s)
@@ -130,7 +176,7 @@ Customer must provide:
 - Access method (rules below)
 - Notes / constraints
 
-### 3.2 SMS Consent Confirmation (Hard Gate)
+### 4.2 SMS Consent Confirmation (Hard Gate)
 
 **This is NOT A2P registration.**
 
@@ -144,7 +190,7 @@ Customer must confirm:
 
 ---
 
-## 4. Access Method Rules (Worker Guardrails)
+## 5. Access Method Rules (Worker Guardrails)
 
 To prevent blocked jobs, access methods are validated:
 
@@ -154,18 +200,18 @@ To prevent blocked jobs, access methods are validated:
 - Password
 - Expiry date/time (required)
 
-### 4.2 Admin Invite
+### 5.2 Admin Invite
 - Email address to invite
 - Invite sender defined (internal admin or installer alias)
 
-### 4.3 Instructions Only
+### 5.3 Instructions Only
 - Explicit steps required
 
 **Jobs missing required access fields cannot enter the queue.**
 
 ---
 
-## 5. Reminder Email Automation
+## 6. Reminder Email Automation
 
 If install add-on is paid but onboarding incomplete:
 
@@ -211,7 +257,7 @@ When onboarding + SMS consent are complete:
 
 ---
 
-## 7. Worker System (Philippines)
+## 8. Worker System (Philippines)
 
 ### 7.1 Worker Roles
 
@@ -243,7 +289,7 @@ When onboarding + SMS consent are complete:
 
 ---
 
-## 8. Queue & Assignment Logic (Fair + Fast)
+## 9. Queue & Assignment Logic (Fair + Fast)
 
 ### 8.1 Assignment Model (Required)
 
@@ -263,7 +309,7 @@ When onboarding + SMS consent are complete:
 
 ---
 
-## 9. Installation & QA Requirements
+## 10. Installation & QA Requirements
 
 ### 9.1 Installation
 
@@ -297,7 +343,7 @@ Worker must confirm:
 
 ---
 
-## 10. Completion & QA Validation
+## 11. Completion & QA Validation
 
 ### 10.1 Submission
 
@@ -318,7 +364,7 @@ Job auto-completes only if:
 
 ---
 
-## 11. Worker Payout Ledger
+## 12. Worker Payout Ledger
 
 Create `worker_payouts` table:
 
@@ -336,7 +382,7 @@ Create `worker_payouts` table:
 
 ---
 
-## 12. Multi-User Architecture
+## 13. Multi-User Architecture
 
 ### 12.1 Actor Definitions
 
@@ -434,7 +480,7 @@ Represents a single conversation between a customer and the business.
 
 ---
 
-## 13. Channel Routing System
+## 14. Channel Routing System
 
 ### 13.1 Core Principle (Most Important Rule)
 
@@ -627,7 +673,7 @@ Admins must be able to:
 
 ---
 
-## 14. Security Requirements
+## 15. Security Requirements
 
 ### 14.1 Credential Encryption
 
@@ -644,7 +690,7 @@ Admins must be able to:
 
 ---
 
-## 15. Explicit Phase 2 Exclusions
+## 16. Explicit Phase 2 Exclusions
 
 **Phase 2 does NOT include:**
 
@@ -666,7 +712,7 @@ Admins must be able to:
 
 ---
 
-## 16. Phase 2 Build Order (Required)
+## 17. Phase 2 Build Order (Required)
 
 **No deviations without approval.**
 

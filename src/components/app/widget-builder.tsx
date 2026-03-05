@@ -25,6 +25,9 @@ import { cn } from "@/lib/utils";
 const clientSchema = z.object({
   name: z.string().min(2, { message: "Business Name must be at least 2 characters." }),
   domain: z.string().url({ message: "Invalid URL format. Include https:// or http://." }),
+  keyword: z.string().min(1, { message: "Keyword is required." }).regex(/^[A-Za-z0-9_]{1,50}$/, {
+    message: "Keyword must be 1–50 characters, letters, numbers, or underscore only.",
+  }),
   websiteOwnership: z.boolean().refine((val) => val === true, {
     message: "You must acknowledge that you own and/or have rights to this website.",
   }),
@@ -42,6 +45,7 @@ export default function ClientWidgetBuilder() {
     defaultValues: {
       name: "",
       domain: "",
+      keyword: "",
       websiteOwnership: false,
     },
   });
@@ -66,9 +70,9 @@ export default function ClientWidgetBuilder() {
         body: JSON.stringify({
           name: apiValues.name,
           domain: apiValues.domain,
+          keyword: apiValues.keyword.trim().toUpperCase(),
           // Phone removed - will be added separately via phone management
           // OrganizationId is handled server-side from active organization
-          // Default widget settings
           defaultType: "banner",
           defaultBgColor: "#222",
           defaultTextColor: "#fff",
@@ -129,6 +133,22 @@ export default function ClientWidgetBuilder() {
                     <FormControl>
                       <Input placeholder="https://example.com" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="keyword"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>SMS Keyword (e.g. BAKERY)</Label>
+                    <FormControl>
+                      <Input placeholder="BAKERY" {...field} maxLength={50} />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      To post via text, send: <strong>{field.value || "KEYWORD"}: your message</strong>
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
