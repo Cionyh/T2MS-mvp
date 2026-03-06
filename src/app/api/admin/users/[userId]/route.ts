@@ -39,10 +39,16 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true },
+      select: { id: true, role: true },
     });
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    if (user.role === "admin") {
+      return NextResponse.json(
+        { error: "Admin user cannot be deleted." },
+        { status: 400 }
+      );
     }
 
     // Cancel subscriptions in Stripe first (then we delete records in the transaction)

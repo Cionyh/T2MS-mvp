@@ -70,8 +70,11 @@ export default function ClientDashboardLayout({
   const [planStatus, setPlanStatus] = useState<string>("");
 
   useEffect(() => {
-    // Skip onboarding for admins — onboarding is for customers only
-    if (session?.user?.role === "admin") return;
+    // Admin users cannot use the client app — redirect to admin dashboard
+    if (session?.user?.role === "admin") {
+      router.replace("/admin/dashboard");
+      return;
+    }
 
     const runRedirectCheck = async () => {
       if (!session?.user?.id) return;

@@ -397,6 +397,7 @@ export default function AdminDashboard() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap min-w-[180px]">
                         <div className="flex flex-wrap gap-2">
+                          {user.role !== "admin" && (
                           <AlertDialog
                             open={deleteConfirmUserId === user.id}
                             onOpenChange={(open) => {
@@ -453,7 +454,7 @@ export default function AdminDashboard() {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
-    
+                          )}
                           <Button
                             variant="outline"
                             size="sm"
