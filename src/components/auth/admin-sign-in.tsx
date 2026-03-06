@@ -179,19 +179,20 @@ export default function SignIn() {
                 "Sign In"
               )}
             </Button>
-
-            <div
-              className={cn(
-                "w-full gap-2 flex items-center",
-                "justify-between flex-col"
-              )}
-            ></div>
           </form>
-          
         </Form>
-
       </CardContent>
-      <CardFooter></CardFooter>
+      <CardFooter className="flex flex-col gap-2">
+        <p className="text-center text-sm text-muted-foreground">
+          Client account?{" "}
+          <Link
+            href="/sign-in"
+            className="font-medium text-primary underline underline-offset-4 hover:no-underline"
+          >
+            Sign in as client
+          </Link>
+        </p>
+      </CardFooter>
     
     </Card>
   );
