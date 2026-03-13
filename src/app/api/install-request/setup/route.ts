@@ -6,9 +6,6 @@ import { INSTALL_JOB_STATUS, ACCESS_METHOD } from "@/lib/job-status";
 import { getActiveOrganization } from "@/lib/organization-helpers";
 import { checkSiteLimit } from "@/lib/plan-limits";
 
-const REQUIRED_CONSENT_TEXT =
-  "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
-
 /**
  * POST /api/install-request/setup
  * Submit install setup form first. Creates Customer (if needed) and InstallJob with PENDING_PAYMENT.
@@ -34,7 +31,7 @@ export async function POST(req: NextRequest) {
       accessMethod,
       accessCredentials,
       notes,
-      smsConsentText,
+      smsConsentConfirmed,
     } = body as {
       websiteUrls?: string[];
       clientId?: string;
@@ -44,15 +41,12 @@ export async function POST(req: NextRequest) {
       accessMethod?: string;
       accessCredentials?: unknown;
       notes?: string;
-      smsConsentText?: string;
+      smsConsentConfirmed?: boolean;
     };
 
-    if (
-      typeof smsConsentText !== "string" ||
-      smsConsentText.trim().toLowerCase() !== REQUIRED_CONSENT_TEXT.toLowerCase()
-    ) {
+    if (smsConsentConfirmed !== true) {
       return NextResponse.json(
-        { error: "SMS consent text must be typed exactly as shown" },
+        { error: "SMS consent must be confirmed." },
         { status: 400 }
       );
     }

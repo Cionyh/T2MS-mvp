@@ -9,7 +9,7 @@ export interface PlanLimits {
 export const PLAN_LIMITS: Record<string, PlanLimits> = {
   free: { websites: 10, messages: 1000, storage: 10 },
   starter: { websites: 1, messages: 100, storage: 10 },
-  pro: { websites: 3, messages: 220, storage: 50 },
+  pro: { websites: 3, messages: 330, storage: 50 },
   enterprise: { websites: -1, messages: -1, storage: 1000 }
 };
 

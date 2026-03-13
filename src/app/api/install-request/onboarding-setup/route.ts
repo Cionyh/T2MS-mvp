@@ -5,9 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { INSTALL_JOB_STATUS, ACCESS_METHOD } from "@/lib/job-status";
 import { verifyOrganizationAccess } from "@/lib/organization-helpers";
 
-const REQUIRED_CONSENT_TEXT =
-  "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
-
 /**
  * POST /api/install-request/onboarding-setup
  * Updates the existing InstallJob for the given client (created during onboarding)
@@ -33,7 +30,7 @@ export async function POST(req: NextRequest) {
       accessMethod,
       accessCredentials,
       notes,
-      smsConsentText,
+      smsConsentConfirmed,
     } = body as {
       clientId?: string;
       websiteUrls?: string[];
@@ -43,7 +40,7 @@ export async function POST(req: NextRequest) {
       accessMethod?: string;
       accessCredentials?: unknown;
       notes?: string;
-      smsConsentText?: string;
+      smsConsentConfirmed?: boolean;
     };
 
     if (!clientId || typeof clientId !== "string") {
@@ -53,12 +50,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (
-      typeof smsConsentText !== "string" ||
-      smsConsentText.trim().toLowerCase() !== REQUIRED_CONSENT_TEXT.toLowerCase()
-    ) {
+    if (smsConsentConfirmed !== true) {
       return NextResponse.json(
-        { error: "SMS consent text must be typed exactly as shown" },
+        { error: "SMS consent must be confirmed." },
         { status: 400 }
       );
     }

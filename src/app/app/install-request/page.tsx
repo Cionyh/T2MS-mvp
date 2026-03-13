@@ -43,6 +43,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ACCESS_METHOD, INSTALL_TYPE } from "@/lib/job-status";
 
 const PLATFORMS = [
@@ -83,7 +89,6 @@ const setupSchema = z
     smsConsentChecked: z.boolean().refine((val) => val === true, {
       message: "You must confirm SMS consent to continue.",
     }),
-    smsConsentText: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.accessMethod !== ACCESS_METHOD.TEMPORARY_LOGIN) return;
@@ -113,17 +118,6 @@ const setupSchema = z
       return true;
     },
     { message: "Instructions are required.", path: ["instructions"] }
-  )
-  .refine(
-    (data) => {
-      if (data.smsConsentChecked) {
-        const consentText =
-          "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
-        return data.smsConsentText === consentText;
-      }
-      return true;
-    },
-    { message: "SMS consent text must match exactly.", path: ["smsConsentText"] }
   )
   .refine(
     (data) => {
@@ -177,7 +171,6 @@ function InstallRequestContent() {
   const [verifying, setVerifying] = useState(false);
   const [loadingJob, setLoadingJob] = useState(false);
   const [installAddonSku, setInstallAddonSku] = useState<string>("standard");
-  const [smsConsentText, setSmsConsentText] = useState("");
   const [websiteSource, setWebsiteSource] = useState<"manual" | "sites">("manual");
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [sites, setSites] = useState<Array<{ id: string; name: string; domain: string }>>([]);
@@ -202,12 +195,10 @@ function InstallRequestContent() {
       instructions: "",
       notes: "",
       smsConsentChecked: false,
-      smsConsentText: "",
     },
   });
 
   const accessMethod = form.watch("accessMethod");
-  const smsConsentChecked = form.watch("smsConsentChecked");
 
   // If we have session_id, we're returning from Stripe — verify and redirect to install-requests
   useEffect(() => {
@@ -297,7 +288,7 @@ function InstallRequestContent() {
           accessMethod: values.accessMethod,
           accessCredentials,
           notes: values.notes || null,
-          smsConsentText: values.smsConsentText,
+          smsConsentConfirmed: values.smsConsentChecked,
         }),
       });
       const data = await res.json();
@@ -731,10 +722,126 @@ function InstallRequestContent() {
                 name="accessMethod"
                 render={({ field }) => (
                   <FormItem>
-                    <LabelWithInfo
-                      label="Access method *"
-                      info="Temporary login: Choose this if you can provide short-term admin access for installation. Admin invite: Select this if your platform allows you to invite Text2MySite as an admin or collaborator. Instructions only: Choose this if you prefer to install the script yourself using our instructions."
-                    />
+                    <div className="flex items-center justify-between gap-2">
+                      <LabelWithInfo
+                        label="Access method *"
+                        info="Temporary login: Choose this if you can provide short-term admin access for installation. Admin invite: Select this if your platform allows you to invite Text2MySite as an admin or collaborator. Instructions only: Choose this if you prefer to install the script yourself using our instructions."
+                      />
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button
+                            type="button"
+                            className="text-xs font-medium text-primary underline underline-offset-4 hover:no-underline"
+                          >
+                            Instructions to allow widget installation
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Instructions to allow widget installation</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 text-sm">
+                            <div>
+                              <p className="font-semibold">WordPress</p>
+                              <ol className="list-decimal list-inside space-y-1 mt-1">
+                                <li>Log in to your WordPress dashboard.</li>
+                                <li>Go to <strong>Users → Add New User</strong>.</li>
+                                <li>Enter: <code>install@t2ms.biz</code>.</li>
+                                <li>Set the role to <strong>Administrator</strong>.</li>
+                                <li>Click <strong>Add New User</strong>.</li>
+                              </ol>
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                Important: We will not be able to install your widget until we receive the access invitation from WordPress.
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold">Squarespace</p>
+                              <ol className="list-decimal list-inside space-y-1 mt-1">
+                                <li>Log in to your Squarespace account.</li>
+                                <li>Go to <strong>Settings → Permissions</strong>.</li>
+                                <li>Click <strong>Invite Contributor</strong>.</li>
+                                <li>Enter: <code>install@t2ms.biz</code>.</li>
+                                <li>Assign the appropriate admin-level permission needed for installation.</li>
+                                <li>Send the invite.</li>
+                              </ol>
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                Important: We will not be able to install your widget until we receive the access invitation from Squarespace.
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold">Wix</p>
+                              <ol className="list-decimal list-inside space-y-1 mt-1">
+                                <li>Log in to your Wix account.</li>
+                                <li>Go to <strong>Settings → Roles &amp; Permissions</strong>.</li>
+                                <li>Click <strong>Invite People</strong>.</li>
+                                <li>Enter: <code>install@t2ms.biz</code>.</li>
+                                <li>Assign admin/editor permissions needed for installation.</li>
+                                <li>Send the invite.</li>
+                              </ol>
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                Important: We will not be able to install your widget until we receive the access invitation from Wix.
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold">Shopify</p>
+                              <ol className="list-decimal list-inside space-y-1 mt-1">
+                                <li>Log in to your Shopify admin.</li>
+                                <li>Go to <strong>Settings → Users and Permissions</strong>.</li>
+                                <li>Click <strong>Add Staff</strong>.</li>
+                                <li>Enter: <code>install@t2ms.biz</code>.</li>
+                                <li>Grant the permissions needed for theme/widget installation.</li>
+                                <li>Send the invite.</li>
+                              </ol>
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                Important: We will not be able to install your widget until we receive the access invitation from Shopify.
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold">Webflow</p>
+                              <ol className="list-decimal list-inside space-y-1 mt-1">
+                                <li>Log in to your Webflow account.</li>
+                                <li>Open your site settings.</li>
+                                <li>Go to workspace/site access settings.</li>
+                                <li>Invite <code>install@t2ms.biz</code> with the permissions needed for installation.</li>
+                              </ol>
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                Important: We will not be able to install your widget until we receive the access invitation from Webflow.
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold">GoDaddy Website Builder</p>
+                              <ol className="list-decimal list-inside space-y-1 mt-1">
+                                <li>Log in to your GoDaddy account.</li>
+                                <li>Open your website product/dashboard.</li>
+                                <li>Go to user or collaborator access if available.</li>
+                                <li>Invite <code>install@t2ms.biz</code> with the permissions needed for installation.</li>
+                              </ol>
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                Important: We will not be able to install your widget until we receive the access invitation from GoDaddy.
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold">Joomla</p>
+                              <ol className="list-decimal list-inside space-y-1 mt-1">
+                                <li>Log in to your Joomla administrator panel.</li>
+                                <li>Go to <strong>Users</strong>.</li>
+                                <li>Add a new user with <code>install@t2ms.biz</code>.</li>
+                                <li>Assign administrator-level access needed for installation.</li>
+                              </ol>
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                Important: We will not be able to install your widget until we receive the access invitation from Joomla.
+                              </p>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                     <FormControl>
                       <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col gap-2">
                         <div className="flex items-center space-x-2">
@@ -765,7 +872,7 @@ function InstallRequestContent() {
                         info="Tell Text2MySite the https:// (URL) to enter into your website's admin portal."
                       />
                       <FormControl>
-                        <Input placeholder="https://yoursite.com/wp-admin" {...field} />
+                        <Input placeholder="https://yoursite.com/wp-admin" autoComplete="off" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -776,7 +883,7 @@ function InstallRequestContent() {
                         label="Username *"
                         info="Enter the username Text2MySite should use to access your site."
                       />
-                      <FormControl><Input {...field} /></FormControl>
+                      <FormControl><Input autoComplete="off" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -790,6 +897,7 @@ function InstallRequestContent() {
                         <div className="relative">
                           <Input
                             type={showTempLoginPassword ? "text" : "password"}
+                            autoComplete="new-password"
                             {...field}
                           />
                           <button
@@ -815,7 +923,7 @@ function InstallRequestContent() {
                         label="Expiry *"
                         info="Let Text2MySite know the date and time when the temporary login access expires."
                       />
-                      <FormControl><Input type="datetime-local" {...field} /></FormControl>
+                      <FormControl><Input type="datetime-local" autoComplete="off" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -886,13 +994,7 @@ function InstallRequestContent() {
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={(c) => {
-                            field.onChange(c);
-                            if (c) {
-                              setSmsConsentText("");
-                              form.setValue("smsConsentText", "");
-                            }
-                          }}
+                          onCheckedChange={field.onChange}
                         />
                       </FormControl>
                       <div className="space-y-1">
@@ -905,32 +1007,6 @@ function InstallRequestContent() {
                     </FormItem>
                   )}
                 />
-                {smsConsentChecked && (
-                  <FormField
-                    control={form.control}
-                    name="smsConsentText"
-                    render={({ field }) => (
-                      <FormItem>
-                        <LabelWithInfo
-                          label="Type the consent text above to confirm *"
-                          info="Type the exact consent text to confirm you have permission to send text messages."
-                        />
-                        <FormControl>
-                          <Textarea
-                            placeholder="Type the consent text exactly as shown…"
-                            className="min-h-[80px]"
-                            value={smsConsentText}
-                            onChange={(e) => {
-                              setSmsConsentText(e.target.value);
-                              field.onChange(e.target.value);
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
               </div>
 
               <div className="flex gap-4">

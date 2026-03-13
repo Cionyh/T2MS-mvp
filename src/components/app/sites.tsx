@@ -474,7 +474,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           : website.installJob &&
             website.installJob.status !== "COMPLETED" &&
             website.installJob.status !== "CANCELLED"
-          ? "Installation In Progress"
+          ? "Installation In Progress: 80%"
           : "Unpublished"}
       </span>
     </div>

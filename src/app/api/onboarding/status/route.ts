@@ -55,10 +55,21 @@ export async function GET() {
         : 0;
     const hasVerifiedPhone = verifiedPhoneCount > 0;
 
-    // Completed when: completedAt set AND (if paid) has site AND verified phone
+    // Install setup: first client's install job still has default platform "To be confirmed" → user must submit install form
+    let needsInstallSetup = false;
+    if (hasPaidPlan && hasRegisteredSite && hasVerifiedPhone && firstClientId) {
+      const installJob = await prisma.installJob.findFirst({
+        where: { clientId: firstClientId },
+        orderBy: { createdAt: "desc" },
+        select: { platform: true },
+      });
+      needsInstallSetup = installJob?.platform === "To be confirmed";
+    }
+
+    // Completed when: completedAt set AND (if paid) has site, verified phone, AND install setup submitted
     const completed =
       !!onboarding?.completedAt &&
-      (!hasPaidPlan || (hasRegisteredSite && hasVerifiedPhone));
+      (!hasPaidPlan || (hasRegisteredSite && hasVerifiedPhone && !needsInstallSetup));
 
     // Paid users must register a site before onboarding is considered complete
     const needsSiteRegistration =
@@ -78,6 +89,7 @@ export async function GET() {
       hasRegisteredSite,
       needsPhoneVerification,
       hasVerifiedPhone,
+      needsInstallSetup,
       firstClientId,
     });
   } catch (error) {

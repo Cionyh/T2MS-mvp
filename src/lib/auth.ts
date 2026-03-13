@@ -64,7 +64,7 @@ if (stripeClient && process.env.STRIPE_WEBHOOK_SECRET) {
             priceId: process.env.STRIPE_PRO_PRICE_ID!,
             limits: {
               websites: 3,
-              messages: 220,
+              messages: 330,
               storage: 50
             },
             freeTrial: {

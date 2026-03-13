@@ -41,7 +41,7 @@ const STARTER_PLAN_FEATURES = [
 const GROWTH_PLAN_FEATURES = [
   "Up to 3 Websites",
   "1–3 Users / Seats",
-  "220 Messages per Month",
+  "330 Messages per Month",
   "Professional Widget Installation (Included)",
   "Priority Support",
   "14-Day Free Trial",
@@ -57,6 +57,7 @@ function OnboardingContent() {
     completed: boolean;
     needsSiteRegistration?: boolean;
     needsPhoneVerification?: boolean;
+    needsInstallSetup?: boolean;
     firstClientId?: string | null;
   } | null>(null);
   const [phoneStepClientId, setPhoneStepClientId] = useState<string | null>(null);
@@ -94,6 +95,10 @@ function OnboardingContent() {
         }
         setStatus(data);
         setStatusLoaded(true);
+        // If install setup is required (e.g. after refresh on install step), show install form
+        if (data.needsInstallSetup && data.firstClientId && !installSetupClientId) {
+          setInstallSetupClientId(data.firstClientId);
+        }
       } catch {
         setStatusLoaded(true);
       }
@@ -306,17 +311,7 @@ function OnboardingContent() {
         throw new Error(err.error || "Invalid verification code");
       }
 
-      const completeRes = await fetch("/api/onboarding/complete", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      if (!completeRes.ok) {
-        const completeData = await completeRes.json();
-        throw new Error(completeData.error || "Failed to complete onboarding");
-      }
-
-      toast.success("Phone verified! Welcome to T2MS.");
+      toast.success("Phone verified! Next, complete the install setup.");
       sessionStorage.removeItem(PENDING_VERIFY_STORAGE_KEY);
       const clientIdToRedirect = pendingVerifyClientId;
       setVerifyCodeDialogOpen(false);
@@ -365,16 +360,7 @@ function OnboardingContent() {
   const handlePhoneVerified = async () => {
     setLoading("complete");
     try {
-      const completeRes = await fetch("/api/onboarding/complete", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      const completeData = await completeRes.json();
-      if (!completeRes.ok) {
-        throw new Error(completeData.error || "Failed to complete onboarding");
-      }
-      toast.success("Phone verified! Welcome to T2MS.");
+      toast.success("Phone verified! Next, complete the install setup.");
       setInstallSetupClientId(phoneVerificationClientId);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -437,8 +423,17 @@ function OnboardingContent() {
       <OnboardingInstallSetupForm
         clientId={installSetupClientId}
         initialWebsiteUrl={installSetupWebsiteUrl}
-        onSuccess={() => {
+        onSuccess={async () => {
           const cid = installSetupClientId;
+          try {
+            await fetch("/api/onboarding/complete", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({}),
+            });
+          } catch {
+            // Continue to redirect; status will reflect completion after install job update
+          }
           setInstallSetupClientId(null);
           router.replace(`/app/sites?installChoice=1&clientId=${cid}`);
         }}
@@ -501,6 +496,10 @@ function OnboardingContent() {
               </CardTitle>
               <CardDescription>
                 Enter your business name and website domain.
+                <div className="mt-2 text-xs text-muted-foreground">
+                  <strong>Note:</strong> You will need to assign a different keyword for each New
+                  Site.
+                </div>
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -741,7 +740,7 @@ function OnboardingContent() {
                 Growth Plan
               </CardTitle>
               <div className="mt-1">
-                <span className="text-2xl font-bold text-amber-700">$24.99</span>
+                <span className="text-2xl font-bold text-amber-700">$29.99</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
               <CardDescription className="text-sm">

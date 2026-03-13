@@ -40,6 +40,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ACCESS_METHOD, INSTALL_TYPE } from "@/lib/job-status";
 
 const PLATFORMS = [
@@ -78,7 +84,6 @@ const setupSchema = z
     smsConsentChecked: z.boolean().refine((val) => val === true, {
       message: "You must confirm SMS consent to continue.",
     }),
-    smsConsentText: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.accessMethod !== ACCESS_METHOD.TEMPORARY_LOGIN) return;
@@ -108,15 +113,6 @@ const setupSchema = z
       return true;
     },
     { message: "Instructions are required.", path: ["instructions"] }
-  )
-  .refine(
-    (data) => {
-      if (data.smsConsentChecked) {
-        return data.smsConsentText === SMS_CONSENT_TEXT;
-      }
-      return true;
-    },
-    { message: "SMS consent text must match exactly.", path: ["smsConsentText"] }
   )
   .refine(
     (data) => {
@@ -166,7 +162,6 @@ export function OnboardingInstallSetupForm({
 }: OnboardingInstallSetupFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [showTempLoginPassword, setShowTempLoginPassword] = useState(false);
-  const [smsConsentText, setSmsConsentText] = useState("");
 
   const form = useForm<SetupFormValues>({
     resolver: zodResolver(setupSchema),
@@ -185,12 +180,10 @@ export function OnboardingInstallSetupForm({
       instructions: "",
       notes: "",
       smsConsentChecked: false,
-      smsConsentText: "",
     },
   });
 
   const accessMethod = form.watch("accessMethod");
-  const smsConsentChecked = form.watch("smsConsentChecked");
 
   const handleSubmit = async (values: SetupFormValues) => {
     setSubmitting(true);
@@ -224,7 +217,7 @@ export function OnboardingInstallSetupForm({
           accessMethod: values.accessMethod,
           accessCredentials,
           notes: values.notes || null,
-          smsConsentText: values.smsConsentText,
+          smsConsentConfirmed: values.smsConsentChecked,
         }),
       });
       const data = await res.json();
@@ -335,10 +328,126 @@ export function OnboardingInstallSetupForm({
                   name="accessMethod"
                   render={({ field }) => (
                     <FormItem>
-                      <LabelWithInfo
-                        label="Access method *"
-                        info="Temporary login: provide short-term admin access. Admin invite: invite us as admin. Instructions only: install yourself using our instructions."
-                      />
+                      <div className="flex items-center justify-between gap-2">
+                        <LabelWithInfo
+                          label="Access method *"
+                          info="Temporary login: provide short-term admin access. Admin invite: invite us as admin. Instructions only: install yourself using our instructions."
+                        />
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <button
+                              type="button"
+                              className="text-xs font-medium text-primary underline underline-offset-4 hover:no-underline"
+                            >
+                              Instructions to allow widget installation
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>Instructions to allow widget installation</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 text-sm">
+                              <div>
+                                <p className="font-semibold">WordPress</p>
+                                <ol className="list-decimal list-inside space-y-1 mt-1">
+                                  <li>Log in to your WordPress dashboard.</li>
+                                  <li>Go to <strong>Users → Add New User</strong>.</li>
+                                  <li>Enter: <code>install@t2ms.biz</code>.</li>
+                                  <li>Set the role to <strong>Administrator</strong>.</li>
+                                  <li>Click <strong>Add New User</strong>.</li>
+                                </ol>
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                  Important: We will not be able to install your widget until we receive the access invitation from WordPress.
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="font-semibold">Squarespace</p>
+                                <ol className="list-decimal list-inside space-y-1 mt-1">
+                                  <li>Log in to your Squarespace account.</li>
+                                  <li>Go to <strong>Settings → Permissions</strong>.</li>
+                                  <li>Click <strong>Invite Contributor</strong>.</li>
+                                  <li>Enter: <code>install@t2ms.biz</code>.</li>
+                                  <li>Assign the appropriate admin-level permission needed for installation.</li>
+                                  <li>Send the invite.</li>
+                                </ol>
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                  Important: We will not be able to install your widget until we receive the access invitation from Squarespace.
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="font-semibold">Wix</p>
+                                <ol className="list-decimal list-inside space-y-1 mt-1">
+                                  <li>Log in to your Wix account.</li>
+                                  <li>Go to <strong>Settings → Roles &amp; Permissions</strong>.</li>
+                                  <li>Click <strong>Invite People</strong>.</li>
+                                  <li>Enter: <code>install@t2ms.biz</code>.</li>
+                                  <li>Assign admin/editor permissions needed for installation.</li>
+                                  <li>Send the invite.</li>
+                                </ol>
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                  Important: We will not be able to install your widget until we receive the access invitation from Wix.
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="font-semibold">Shopify</p>
+                                <ol className="list-decimal list-inside space-y-1 mt-1">
+                                  <li>Log in to your Shopify admin.</li>
+                                  <li>Go to <strong>Settings → Users and Permissions</strong>.</li>
+                                  <li>Click <strong>Add Staff</strong>.</li>
+                                  <li>Enter: <code>install@t2ms.biz</code>.</li>
+                                  <li>Grant the permissions needed for theme/widget installation.</li>
+                                  <li>Send the invite.</li>
+                                </ol>
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                  Important: We will not be able to install your widget until we receive the access invitation from Shopify.
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="font-semibold">Webflow</p>
+                                <ol className="list-decimal list-inside space-y-1 mt-1">
+                                  <li>Log in to your Webflow account.</li>
+                                  <li>Open your site settings.</li>
+                                  <li>Go to workspace/site access settings.</li>
+                                  <li>Invite <code>install@t2ms.biz</code> with the permissions needed for installation.</li>
+                                </ol>
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                  Important: We will not be able to install your widget until we receive the access invitation from Webflow.
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="font-semibold">GoDaddy Website Builder</p>
+                                <ol className="list-decimal list-inside space-y-1 mt-1">
+                                  <li>Log in to your GoDaddy account.</li>
+                                  <li>Open your website product/dashboard.</li>
+                                  <li>Go to user or collaborator access if available.</li>
+                                  <li>Invite <code>install@t2ms.biz</code> with the permissions needed for installation.</li>
+                                </ol>
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                  Important: We will not be able to install your widget until we receive the access invitation from GoDaddy.
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="font-semibold">Joomla</p>
+                                <ol className="list-decimal list-inside space-y-1 mt-1">
+                                  <li>Log in to your Joomla administrator panel.</li>
+                                  <li>Go to <strong>Users</strong>.</li>
+                                  <li>Add a new user with <code>install@t2ms.biz</code>.</li>
+                                  <li>Assign administrator-level access needed for installation.</li>
+                                </ol>
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                  Important: We will not be able to install your widget until we receive the access invitation from Joomla.
+                                </p>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                       <FormControl>
                         <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col gap-2">
                           <div className="flex items-center space-x-2">
@@ -369,7 +478,7 @@ export function OnboardingInstallSetupForm({
                         <FormItem>
                           <LabelWithInfo label="Admin URL *" info="URL to your site's admin (e.g. WordPress wp-admin)." />
                           <FormControl>
-                            <Input placeholder="https://yoursite.com/wp-admin" {...field} />
+                            <Input placeholder="https://yoursite.com/wp-admin" autoComplete="off" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -382,7 +491,7 @@ export function OnboardingInstallSetupForm({
                         <FormItem>
                           <LabelWithInfo label="Username *" info="Admin username for temporary access." />
                           <FormControl>
-                            <Input {...field} />
+                            <Input autoComplete="off" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -398,6 +507,7 @@ export function OnboardingInstallSetupForm({
                             <div className="relative">
                               <Input
                                 type={showTempLoginPassword ? "text" : "password"}
+                                autoComplete="new-password"
                                 {...field}
                               />
                               <button
@@ -421,7 +531,7 @@ export function OnboardingInstallSetupForm({
                         <FormItem>
                           <LabelWithInfo label="Expiry *" info="When the temporary login expires." />
                           <FormControl>
-                            <Input type="datetime-local" {...field} />
+                            <Input type="datetime-local" autoComplete="off" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -502,13 +612,7 @@ export function OnboardingInstallSetupForm({
                         <FormControl>
                           <Checkbox
                             checked={field.value}
-                            onCheckedChange={(c) => {
-                              field.onChange(c);
-                              if (c) {
-                                setSmsConsentText("");
-                                form.setValue("smsConsentText", "");
-                              }
-                            }}
+                            onCheckedChange={field.onChange}
                           />
                         </FormControl>
                         <div className="space-y-1">
@@ -518,29 +622,6 @@ export function OnboardingInstallSetupForm({
                       </FormItem>
                     )}
                   />
-                  {smsConsentChecked && (
-                    <FormField
-                      control={form.control}
-                      name="smsConsentText"
-                      render={({ field }) => (
-                        <FormItem>
-                          <LabelWithInfo label="Type the consent text above to confirm *" info="Type the exact text to confirm." />
-                          <FormControl>
-                            <Textarea
-                              placeholder="Type the consent text exactly as shown…"
-                              className="min-h-[80px]"
-                              value={smsConsentText}
-                              onChange={(e) => {
-                                setSmsConsentText(e.target.value);
-                                field.onChange(e.target.value);
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
                 </div>
 
                 <Button type="submit" disabled={submitting} className="w-full rounded-[3em] !bg-amber-600 hover:!bg-amber-700 !text-white">
