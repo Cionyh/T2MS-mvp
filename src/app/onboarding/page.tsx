@@ -18,6 +18,7 @@ import { client } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { Loader2, Zap, Layers, Rocket, Check, Globe, Phone } from "lucide-react";
 import { PhoneNumberManagement } from "@/components/app/phone-number-management";
+import { OnboardingInstallSetupForm } from "@/components/onboarding-install-setup-form";
 import {
   Dialog,
   DialogContent,
@@ -75,6 +76,9 @@ function OnboardingContent() {
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [resendCooldownSeconds, setResendCooldownSeconds] = useState(0);
   const [isResending, setIsResending] = useState(false);
+  const [installSetupClientId, setInstallSetupClientId] = useState<string | null>(null);
+  const [installSetupWebsiteUrl, setInstallSetupWebsiteUrl] = useState<string>("");
+  const [installSetupLoading, setInstallSetupLoading] = useState(false);
 
   const PENDING_VERIFY_STORAGE_KEY = "t2ms_onboarding_verify_pending";
   const RESEND_COOLDOWN_SECONDS = 60;
@@ -322,7 +326,7 @@ function OnboardingContent() {
       setPendingVerifyPhone("");
       setVerifyCode("");
       if (clientIdToRedirect) {
-        router.replace(`/app/sites?installChoice=1&clientId=${clientIdToRedirect}`);
+        setInstallSetupClientId(clientIdToRedirect);
       } else {
         router.replace("/app");
       }
@@ -371,7 +375,7 @@ function OnboardingContent() {
         throw new Error(completeData.error || "Failed to complete onboarding");
       }
       toast.success("Phone verified! Welcome to T2MS.");
-      router.replace(`/app/sites?installChoice=1&clientId=${phoneVerificationClientId}`);
+      setInstallSetupClientId(phoneVerificationClientId);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -389,13 +393,56 @@ function OnboardingContent() {
   const showPhoneVerificationStep =
     statusLoaded &&
     (phoneStepClientId !== null || status?.needsPhoneVerification === true) &&
-    phoneVerificationClientId !== null;
+    phoneVerificationClientId !== null &&
+    !installSetupClientId;
+
+  const showInstallSetupStep = statusLoaded && installSetupClientId !== null;
+
+  // When on install setup step, fetch client domain for the form
+  useEffect(() => {
+    if (!installSetupClientId) return;
+    setInstallSetupLoading(true);
+    fetch("/api/client")
+      .then((r) => r.json())
+      .then((clients: Array<{ id: string; domain: string }>) => {
+        const client = Array.isArray(clients) ? clients.find((c) => c.id === installSetupClientId) : null;
+        if (client?.domain) {
+          const url = client.domain.startsWith("http") ? client.domain : `https://${client.domain}`;
+          setInstallSetupWebsiteUrl(url);
+        } else {
+          setInstallSetupWebsiteUrl("https://example.com");
+        }
+      })
+      .catch(() => setInstallSetupWebsiteUrl("https://example.com"))
+      .finally(() => setInstallSetupLoading(false));
+  }, [installSetupClientId]);
 
   if (!statusLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
+    );
+  }
+
+  if (showInstallSetupStep && installSetupClientId) {
+    if (installSetupLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-muted/30">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+    return (
+      <OnboardingInstallSetupForm
+        clientId={installSetupClientId}
+        initialWebsiteUrl={installSetupWebsiteUrl}
+        onSuccess={() => {
+          const cid = installSetupClientId;
+          setInstallSetupClientId(null);
+          router.replace(`/app/sites?installChoice=1&clientId=${cid}`);
+        }}
+      />
     );
   }
 
