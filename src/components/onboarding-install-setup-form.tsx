@@ -45,6 +45,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { ACCESS_METHOD, INSTALL_TYPE } from "@/lib/job-status";
 
