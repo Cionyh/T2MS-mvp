@@ -165,6 +165,7 @@ function InstallRequestContent() {
   const sessionId = searchParams.get("session_id");
 
   const jobIdFromUrl = searchParams.get("jobId");
+  const clientIdFromUrl = searchParams.get("clientId");
   const [step, setStep] = useState<"choose" | "setup" | "pay">("choose");
   const [jobId, setJobId] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
@@ -219,6 +220,15 @@ function InstallRequestContent() {
       .finally(() => setVerifying(false));
   }, [sessionId, session?.user?.id, router]);
 
+  // If coming from Register Site with a specific clientId, skip plan choice and go to setup
+  useEffect(() => {
+    if (clientIdFromUrl && !jobIdFromUrl) {
+      setStep("setup");
+      setWebsiteSource("sites");
+      setSelectedSiteId(clientIdFromUrl);
+    }
+  }, [clientIdFromUrl, jobIdFromUrl]);
+
   // If we have jobId in URL (e.g. "Complete payment" from install-requests), load job and show payment step
   useEffect(() => {
     if (!jobIdFromUrl || !session?.user?.id) return;
@@ -243,10 +253,28 @@ function InstallRequestContent() {
     setLoadingSites(true);
     fetch("/api/client")
       .then((r) => r.json())
-      .then((data) => setSites(Array.isArray(data) ? data : []))
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        setSites(list);
+        if (clientIdFromUrl && websiteSource === "sites") {
+          const site = list.find((s: any) => s.id === clientIdFromUrl);
+          if (site) {
+            const url =
+              site.domain && typeof site.domain === "string"
+                ? site.domain.startsWith("http")
+                  ? site.domain
+                  : `https://${site.domain}`
+                : "";
+            if (url) {
+              form.setValue("websiteUrl", url);
+            }
+            setSelectedSiteId(clientIdFromUrl);
+          }
+        }
+      })
       .catch(() => setSites([]))
       .finally(() => setLoadingSites(false));
-  }, [step, session?.user?.id]);
+  }, [step, session?.user?.id, clientIdFromUrl, websiteSource, form]);
 
   const handleContinue = async (values: SetupFormValues) => {
     if (!session?.user?.id) {

@@ -118,7 +118,7 @@ interface Website {
     phone: string;
     verified: boolean;
   }>;
-  installJob?: { id: string; status: string } | null;
+  installJob?: { id: string; status: string; platform?: string | null } | null;
   defaultType?: string;
   defaultBgColor?: string;
   defaultTextColor?: string;
@@ -474,7 +474,9 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           : website.installJob &&
             website.installJob.status !== "COMPLETED" &&
             website.installJob.status !== "CANCELLED"
-          ? "Installation In Progress: 80%"
+          ? website.installJob.platform === "To be confirmed"
+            ? "Install form not submitted"
+            : "Installation In Progress: 80%"
           : "Unpublished"}
       </span>
     </div>
@@ -569,9 +571,22 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             }
           >
             {website.installJob.status === "QUEUED"
-              ? "Installation In Progress"
+              ? website.installJob.platform === "To be confirmed"
+                ? "Install form not submitted"
+                : "Installation In Progress"
               : website.installJob.status.replace(/_/g, " ")}
           </Badge>
+          {website.installJob.status === "QUEUED" &&
+            website.installJob.platform === "To be confirmed" && (
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-primary"
+                onClick={() => router.push(`/app/install-request?clientId=${website.id}`)}
+              >
+                Submit install form
+              </Button>
+            )}
           {website.installJob.status === "PENDING_PAYMENT" && (
             <Button
               variant="link"

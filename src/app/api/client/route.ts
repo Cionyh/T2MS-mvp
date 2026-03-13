@@ -243,7 +243,7 @@ export async function GET(req: NextRequest) {
           installJobs: {
             orderBy: { createdAt: "desc" },
             take: 1,
-            select: { id: true, status: true },
+            select: { id: true, status: true, platform: true },
           },
         },
       });

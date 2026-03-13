@@ -87,7 +87,7 @@ export default function ClientWidgetBuilder() {
       if (!res.ok) throw new Error(data.error || "Failed to register site");
 
       toast.success("Site Registered Successfully");
-      router.push(`/app/sites?installChoice=1&clientId=${data.id}`);
+      router.push(`/app/install-request?clientId=${data.id}`);
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
     }
