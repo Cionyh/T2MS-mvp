@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Bell, Shield, LogOut, Save, Edit, Key, Users } from "lucide-react";
+import { User, Shield, LogOut, Save, Edit, Key, Users, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { DotPattern } from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
@@ -35,13 +35,6 @@ export default function SettingsPage() {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [openSignOutDialog, setOpenSignOutDialog] = useState(false);
-  
-  // User preferences state
-  const [notifications, setNotifications] = useState({
-    email: true,
-    sms: true,
-    push: false,
-  });
   
   const [preferences, setPreferences] = useState({
     theme: "system",
@@ -263,67 +256,6 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Notifications */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Notifications
-              </CardTitle>
-              <CardDescription>
-                Choose how you want to be notified about updates and messages.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive updates via email
-                  </p>
-                </div>
-                <Switch
-                  checked={notifications.email}
-                  onCheckedChange={(checked) =>
-                    setNotifications(prev => ({ ...prev, email: checked }))
-                  }
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>SMS Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive updates via text message
-                  </p>
-                </div>
-                <Switch
-                  checked={notifications.sms}
-                  onCheckedChange={(checked) =>
-                    setNotifications(prev => ({ ...prev, sms: checked }))
-                  }
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Push Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive browser push notifications
-                  </p>
-                </div>
-                <Switch
-                  checked={notifications.push}
-                  onCheckedChange={(checked) =>
-                    setNotifications(prev => ({ ...prev, push: checked }))
-                  }
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-
 
           {/* Danger Zone */}
           <Card className="border-destructive">

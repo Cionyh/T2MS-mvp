@@ -72,6 +72,14 @@ export function SetupDetailsTab() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <Button asChild>
+          <Link href="/app/install-request">
+            <Wrench className="mr-2 h-4 w-4" />
+            Get Widget Installed
+          </Link>
+        </Button>
+      </div>
       {/* Plan & Add-on (from Onboarding table only) */}
       {data ? (
         <Card>

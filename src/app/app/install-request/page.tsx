@@ -305,6 +305,34 @@ function InstallRequestContent() {
         toast.error("Website URL is required.");
         return;
       }
+
+      // Free install flow for a newly added site: no payment, go back to Sites
+      if (clientIdFromUrl && websiteSource === "sites") {
+        const res = await fetch("/api/install-request/onboarding-setup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId: clientIdFromUrl,
+            websiteUrls: [websiteUrl],
+            platform: values.platform === "Other" ? (values.platformOther || "").trim() : values.platform,
+            installType: installAddonSku === "standard" ? INSTALL_TYPE.SCRIPT : INSTALL_TYPE.IFRAME,
+            preferredPlacement: values.preferredPlacement || null,
+            accessMethod: values.accessMethod,
+            accessCredentials,
+            notes: values.notes || null,
+            smsConsentConfirmed: values.smsConsentChecked,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to save install details");
+        }
+        toast.success("Install details saved. Taking you to your sites.");
+        router.replace(`/app/sites?installChoice=1&clientId=${clientIdFromUrl}`);
+        return;
+      }
+
+      // Paid install flow (existing behavior)
       const res = await fetch("/api/install-request/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
