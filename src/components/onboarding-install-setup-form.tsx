@@ -125,7 +125,7 @@ export function OnboardingInstallSetupForm({
                       Saving…
                     </>
                   ) : (
-                    "Submit Install Request"
+                    "Continue to Dashboard"
                   )}
                 </Button>
               </form>

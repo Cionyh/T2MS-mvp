@@ -478,7 +478,7 @@ function InstallRequestContent() {
                       Saving…
                     </>
                   ) : clientIdFromUrl ? (
-                    "Submit Install Request"
+                    "Continue to Dashboard"
                   ) : (
                     "Continue to payment"
                   )}
