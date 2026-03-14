@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { INSTALL_JOB_STATUS, ACCESS_METHOD } from "@/lib/job-status";
+import { INSTALL_JOB_STATUS, ACCESS_METHOD, type AccessMethod } from "@/lib/job-status";
 import { verifyOrganizationAccess } from "@/lib/organization-helpers";
+
+const VALID_ACCESS_METHODS: string[] = [ACCESS_METHOD.TEMPORARY_LOGIN, ACCESS_METHOD.ADMIN_INVITE, ACCESS_METHOD.INSTRUCTIONS_ONLY];
 
 /**
  * POST /api/install-request/onboarding-setup
@@ -86,9 +88,10 @@ export async function POST(req: NextRequest) {
     }
 
     const platformValue = platform && String(platform).trim() ? String(platform).trim() : "Customer will invite";
-    const accessMethodValue = accessMethod && [ACCESS_METHOD.TEMPORARY_LOGIN, ACCESS_METHOD.ADMIN_INVITE, ACCESS_METHOD.INSTRUCTIONS_ONLY].includes(accessMethod)
-      ? accessMethod
-      : ACCESS_METHOD.INSTRUCTIONS_ONLY;
+    const accessMethodValue: AccessMethod =
+      typeof accessMethod === "string" && VALID_ACCESS_METHODS.includes(accessMethod)
+        ? (accessMethod as AccessMethod)
+        : ACCESS_METHOD.INSTRUCTIONS_ONLY;
     const isInviteOnly = platformValue === "Customer will invite" || accessMethodValue === ACCESS_METHOD.INSTRUCTIONS_ONLY;
 
     if (!isInviteOnly && accessCredentials && typeof accessCredentials === "object" && Object.keys(accessCredentials as object).length > 0) {
