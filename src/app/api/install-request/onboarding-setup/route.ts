@@ -57,13 +57,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!platform || !accessMethod) {
-      return NextResponse.json(
-        { error: "Platform and access method are required" },
-        { status: 400 }
-      );
-    }
-
     const client = await prisma.client.findFirst({
       where: { id: clientId },
       select: { id: true, organizationId: true, domain: true },
@@ -92,23 +85,29 @@ export async function POST(req: NextRequest) {
       urls = [base];
     }
 
-    if (accessCredentials && typeof accessCredentials === "object" && Object.keys(accessCredentials as object).length > 0) {
+    const platformValue = platform && String(platform).trim() ? String(platform).trim() : "Customer will invite";
+    const accessMethodValue = accessMethod && [ACCESS_METHOD.TEMPORARY_LOGIN, ACCESS_METHOD.ADMIN_INVITE, ACCESS_METHOD.INSTRUCTIONS_ONLY].includes(accessMethod)
+      ? accessMethod
+      : ACCESS_METHOD.INSTRUCTIONS_ONLY;
+    const isInviteOnly = platformValue === "Customer will invite" || accessMethodValue === ACCESS_METHOD.INSTRUCTIONS_ONLY;
+
+    if (!isInviteOnly && accessCredentials && typeof accessCredentials === "object" && Object.keys(accessCredentials as object).length > 0) {
       const creds = accessCredentials as Record<string, unknown>;
-      if (accessMethod === ACCESS_METHOD.TEMPORARY_LOGIN) {
+      if (accessMethodValue === ACCESS_METHOD.TEMPORARY_LOGIN) {
         if (!creds.adminUrl || !creds.username || !creds.password || !creds.expiry) {
           return NextResponse.json(
             { error: "All temporary login fields are required" },
             { status: 400 }
           );
         }
-      } else if (accessMethod === ACCESS_METHOD.ADMIN_INVITE) {
+      } else if (accessMethodValue === ACCESS_METHOD.ADMIN_INVITE) {
         if (!creds.email) {
           return NextResponse.json(
             { error: "Invite email is required" },
             { status: 400 }
           );
         }
-      } else if (accessMethod === ACCESS_METHOD.INSTRUCTIONS_ONLY) {
+      } else if (accessMethodValue === ACCESS_METHOD.INSTRUCTIONS_ONLY) {
         if (!creds.steps || String(creds.steps).trim().length === 0) {
           return NextResponse.json(
             { error: "Instructions are required" },
@@ -117,6 +116,8 @@ export async function POST(req: NextRequest) {
         }
       }
     }
+
+    const credentialsToStore = isInviteOnly ? {} : (accessCredentials && typeof accessCredentials === "object" ? accessCredentials : {});
 
     const existingJob = await prisma.installJob.findFirst({
       where: { clientId },
@@ -163,12 +164,12 @@ export async function POST(req: NextRequest) {
     await prisma.installJob.update({
       where: { id: existingJob.id },
       data: {
-        platform,
+        platform: platformValue,
         installType: installType && ["script", "iframe"].includes(installType) ? installType : "script",
         websiteUrls: urls,
         preferredPlacement: preferredPlacement || null,
-        accessMethod,
-        accessCredentials: JSON.stringify(accessCredentials || {}),
+        accessMethod: accessMethodValue,
+        accessCredentials: JSON.stringify(credentialsToStore),
         notes: notes || null,
       },
     });

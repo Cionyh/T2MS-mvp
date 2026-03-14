@@ -51,27 +51,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (
-      !websiteUrls ||
-      !Array.isArray(websiteUrls) ||
-      websiteUrls.length === 0 ||
-      !platform ||
-      !installType ||
-      !["script", "iframe"].includes(installType) ||
-      !accessMethod
-    ) {
-      return NextResponse.json(
-        { error: "Install setup fields (URLs, platform, install type, access method) are required" },
-        { status: 400 }
-      );
-    }
+    const installTypeValue = installType && ["script", "iframe"].includes(installType) ? installType : "script";
+    const platformValue = platform && String(platform).trim() ? String(platform).trim() : "Customer will invite";
+    const accessMethodValue = accessMethod && [ACCESS_METHOD.TEMPORARY_LOGIN, ACCESS_METHOD.ADMIN_INVITE, ACCESS_METHOD.INSTRUCTIONS_ONLY].includes(accessMethod)
+      ? accessMethod
+      : ACCESS_METHOD.INSTRUCTIONS_ONLY;
+    const isInviteOnly = platformValue === "Customer will invite" || accessMethodValue === ACCESS_METHOD.INSTRUCTIONS_ONLY;
 
-    const urls = (websiteUrls as string[]).filter((u) => typeof u === "string" && u.trim());
-    if (urls.length === 0) {
-      return NextResponse.json(
-        { error: "At least one valid website URL is required" },
-        { status: 400 }
-      );
+    let urls: string[] = [];
+    if (websiteUrls && Array.isArray(websiteUrls) && websiteUrls.length > 0) {
+      urls = (websiteUrls as string[]).filter((u) => typeof u === "string" && u.trim());
     }
 
     let clientId: string | null = requestClientId && typeof requestClientId === "string" ? requestClientId : null;
@@ -79,10 +68,16 @@ export async function POST(req: NextRequest) {
     if (clientId) {
       const client = await prisma.client.findFirst({
         where: { id: clientId },
-        select: { id: true, organizationId: true },
+        select: { id: true, organizationId: true, domain: true },
       });
       if (!client?.organizationId) {
         return NextResponse.json({ error: "Site not found or not in your organization" }, { status: 400 });
+      }
+      if (urls.length === 0) {
+        const base = (client as { domain: string }).domain?.startsWith("http")
+          ? (client as { domain: string }).domain
+          : `https://${(client as { domain: string }).domain}`;
+        urls = [base];
       }
       const { verifyOrganizationAccess } = await import("@/lib/organization-helpers");
       const access = await verifyOrganizationAccess(session.user.id, client.organizationId);
@@ -90,6 +85,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "You do not have access to this site" }, { status: 403 });
       }
     } else {
+      if (urls.length === 0) {
+        return NextResponse.json(
+          { error: "Either clientId or at least one website URL is required" },
+          { status: 400 }
+        );
+      }
       const organizationId = await getActiveOrganization();
       if (!organizationId) {
         return NextResponse.json(
@@ -145,23 +146,23 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (accessCredentials && typeof accessCredentials === "object" && Object.keys(accessCredentials as object).length > 0) {
+    if (!isInviteOnly && accessCredentials && typeof accessCredentials === "object" && Object.keys(accessCredentials as object).length > 0) {
       const creds = accessCredentials as Record<string, unknown>;
-      if (accessMethod === ACCESS_METHOD.TEMPORARY_LOGIN) {
+      if (accessMethodValue === ACCESS_METHOD.TEMPORARY_LOGIN) {
         if (!creds.adminUrl || !creds.username || !creds.password || !creds.expiry) {
           return NextResponse.json(
             { error: "All temporary login fields are required" },
             { status: 400 }
           );
         }
-      } else if (accessMethod === ACCESS_METHOD.ADMIN_INVITE) {
+      } else if (accessMethodValue === ACCESS_METHOD.ADMIN_INVITE) {
         if (!creds.email) {
           return NextResponse.json(
             { error: "Invite email is required" },
             { status: 400 }
           );
         }
-      } else if (accessMethod === ACCESS_METHOD.INSTRUCTIONS_ONLY) {
+      } else if (accessMethodValue === ACCESS_METHOD.INSTRUCTIONS_ONLY) {
         if (!creds.steps || String(creds.steps).trim().length === 0) {
           return NextResponse.json(
             { error: "Instructions are required" },
@@ -170,6 +171,8 @@ export async function POST(req: NextRequest) {
         }
       }
     }
+
+    const credentialsToStore = isInviteOnly ? {} : (accessCredentials && typeof accessCredentials === "object" ? accessCredentials : {});
 
     const now = new Date();
     let customer = await prisma.customer.findUnique({
@@ -197,12 +200,12 @@ export async function POST(req: NextRequest) {
       data: {
         customerId: customer.id,
         clientId: clientId || undefined,
-        platform,
-        installType,
+        platform: platformValue,
+        installType: installTypeValue,
         websiteUrls: urls,
         preferredPlacement: preferredPlacement || null,
-        accessMethod,
-        accessCredentials: JSON.stringify(accessCredentials || {}),
+        accessMethod: accessMethodValue,
+        accessCredentials: JSON.stringify(credentialsToStore),
         notes: notes || null,
         status: INSTALL_JOB_STATUS.PENDING_PAYMENT,
         priority: 0,
