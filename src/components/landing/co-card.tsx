@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
 import { Plus } from "lucide-react";
 
 export function CompatibilityCard() {
@@ -96,15 +95,13 @@ export function CompatibilityCard() {
             />
           </div>
 
-          {/* "And More" */}
-          <Link href="/docs">
-            <div className="flex items-center bg-muted border border-primary rounded-full px-4 sm:px-6 py-2 sm:py-3 hover:bg-primary/10 transition-colors cursor-pointer">
-              <Plus className="h-3 sm:h-4 w-4 sm:w-5" />
-              <span className="font-semibold text-base sm:text-lg ml-2">
-                and More
-              </span>
-            </div>
-          </Link>
+          {/* "And More" - not clickable for now */}
+          <div className="flex items-center bg-muted border border-primary rounded-full px-4 sm:px-6 py-2 sm:py-3 cursor-default">
+            <Plus className="h-3 sm:h-4 w-4 sm:w-5" />
+            <span className="font-semibold text-base sm:text-lg ml-2">
+              and More
+            </span>
+          </div>
         </div>
       </div>
     </motion.div>

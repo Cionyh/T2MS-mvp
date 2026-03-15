@@ -96,8 +96,7 @@ export default function Home() {
                                       Ready to Get Started?
                                     </h2>
                                     <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-                                      Choose the perfect plan for your Text2MySite™ needs. 
-                                      Start free and scale as you grow.
+                                      $14.99 per month · 14-day free trial. Choose the perfect plan and start building.
                                     </p>
                                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                       <Link href="/pricing">
@@ -105,7 +104,7 @@ export default function Home() {
                                           View Pricing Plans
                                         </Button>
                                       </Link>
-                                      <Link href="/app/build">
+                                      <Link href="/sign-in">
                                         <Button variant="outline" size="lg" className="w-full sm:w-auto">
                                           Start Building
                                         </Button>

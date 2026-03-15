@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkMessageLimit } from "@/lib/plan-limits";
+import { checkMessageLimit, getOrganizationPlan } from "@/lib/plan-limits";
 import { normalizeKeyword } from "@/lib/organization-helpers";
 
 //@ts-ignore
@@ -144,9 +144,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Phone number not found or not verified" }, { status: 404 });
     }
 
+    const organizationId = phoneNumbers[0].client.organizationId;
+    const plan = organizationId ? await getOrganizationPlan(organizationId) : "free";
+    const isGrowthPlan = plan === "pro";
+    const requireKeyword = isGrowthPlan || phoneNumbers.length > 1;
+
     let client = phoneNumbers[0].client;
-    if (phoneNumbers.length > 1 || (phoneNumbers[0].client.keyword != null)) {
-      // Multiple sites for this phone, or single site with keyword: resolve by keyword
+
+    if (requireKeyword) {
+      // Growth plan (pro) or multiple sites: require keyword to identify which site
       if (parsedKeyword) {
         const match = phoneNumbers.find(
           (pn) => pn.client.keyword && normalizeKeyword(pn.client.keyword) === parsedKeyword
@@ -161,20 +167,24 @@ export async function POST(req: NextRequest) {
           );
         }
       } else {
-        // No keyword in message but multiple sites or site has keyword
-        const reply = "Use KEYWORD: your message to specify which site (e.g. BAKERY: your message).";
+        // No keyword in message: for growth send polite instructions
+        const reply = isGrowthPlan
+          ? "Please include your site keyword at the start of your message so we know which site to update. For example: KEYWORD: your message (e.g. BAKERY: Fresh croissants today). You can find your keyword in your site settings."
+          : "Use KEYWORD: your message to specify which site (e.g. BAKERY: your message).";
         return new NextResponse(
           `<Response><Message>${reply}</Message></Response>`,
           { status: 200, headers: { "Content-Type": "text/xml" } }
         );
       }
     }
-    // Single site, no keyword on client: use full body as content if we didn't parse keyword
-    if (!parsedKeyword && content === body && body.startsWith("popup:")) {
-      type = "popup";
-      content = body.substring(6).trim();
-    } else if (!parsedKeyword) {
+
+    // Single-site account (not growth): use full body as content (no keyword required)
+    if (!requireKeyword) {
       content = body;
+      if (body.startsWith("popup:")) {
+        type = "popup";
+        content = body.substring(6).trim();
+      }
     }
 
     if (!client.organizationId) {

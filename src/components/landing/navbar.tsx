@@ -19,7 +19,7 @@ import posthog from '@/lib/posthog'; // <-- import PostHog
 
 type NavLink = {
   label: string;
-  href: string;
+  href?: string; // optional: no href = not clickable
 };
 
 const navLinks: NavLink[] = [
@@ -27,7 +27,7 @@ const navLinks: NavLink[] = [
   { label: 'How it works', href: '#how' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'FAQs', href: '#faqs' },
-  { label: 'Tutorials', href: '/docs' },
+  { label: 'Tutorials' }, // not clickable for now
   { label: 'About', href: '#about' },
 ];
 
@@ -56,15 +56,24 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center space-x-6">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) =>
+            link.href ? (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <span
+                key={link.label}
+                className="text-sm font-medium text-foreground cursor-default"
+              >
+                {link.label}
+              </span>
+            )
+          )}
           <ThemeToggle />
           <Link href="/sign-in">
             <Button
@@ -91,16 +100,25 @@ export function Navbar() {
               </VisuallyHidden>
 
               <nav className="flex flex-col space-y-4 mt-6">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    className="text-lg font-medium text-foreground hover:text-primary transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+                {navLinks.map((link) =>
+                  link.href ? (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <span
+                      key={link.label}
+                      className="text-lg font-medium text-foreground cursor-default"
+                    >
+                      {link.label}
+                    </span>
+                  )
+                )}
               </nav>
 
               <div className="mt-auto pt-4 border-t border-border">
