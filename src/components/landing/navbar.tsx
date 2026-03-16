@@ -24,11 +24,11 @@ type NavLink = {
 
 const navLinks: NavLink[] = [
   { label: 'Home', href: '/' },
-  { label: 'How it works', href: '#how' },
+  { label: 'How it works', href: '/#how' },
   { label: 'Pricing', href: '/pricing' },
-  { label: 'FAQs', href: '#faqs' },
+  { label: 'FAQs', href: '/#faqs' },
   { label: 'Tutorials' }, // not clickable for now
-  { label: 'About', href: '#about' },
+  { label: 'About', href: '/#about' },
 ];
 
 export function Navbar() {
