@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,15 +19,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DotPattern } from "../magicui/dot-pattern";
 import { cn } from "@/lib/utils";
 
-
-// Client validation schema
-// Note: Phone is removed - phone numbers are added separately after client creation
+// Schema: keyword optional so starter plan can omit it; growth plan requires it (validated in submit)
 const clientSchema = z.object({
   name: z.string().min(2, { message: "Business Name must be at least 2 characters." }),
   domain: z.string().url({ message: "Invalid URL format. Include https:// or http://." }),
-  keyword: z.string().min(1, { message: "Keyword is required." }).regex(/^[A-Za-z0-9_]{1,50}$/, {
-    message: "Keyword must be 1–50 characters, letters, numbers, or underscore only.",
-  }),
+  keyword: z.string().optional(),
   websiteOwnership: z.boolean().refine((val) => val === true, {
     message: "You must acknowledge that you own and/or have rights to this website.",
   }),
@@ -39,6 +35,22 @@ export default function ClientWidgetBuilder() {
   const router = useRouter();
   const { data: session } = useSession();
   const userId = session?.user?.id;
+  const [plan, setPlan] = useState<string>("");
+  const [planLoading, setPlanLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) {
+      setPlanLoading(false);
+      return;
+    }
+    fetch("/api/plan/usage")
+      .then((r) => r.json())
+      .then((data) => setPlan(data?.plan ?? "free"))
+      .catch(() => setPlan("free"))
+      .finally(() => setPlanLoading(false));
+  }, [userId]);
+
+  const isStarterPlan = plan === "starter";
 
   const form = useForm<ClientSchemaType>({
     resolver: zodResolver(clientSchema),
@@ -58,21 +70,28 @@ export default function ClientWidgetBuilder() {
       toast.error("You must be logged in to register a site.");
       return;
     }
+    if (!isStarterPlan) {
+      const kw = values.keyword?.trim();
+      if (!kw) {
+        toast.error("Keyword is required for your plan. It identifies this site when you text (e.g. BAKERY: your message).");
+        return;
+      }
+      if (!/^[A-Za-z0-9_]{1,50}$/.test(kw)) {
+        toast.error("Keyword must be 1–50 characters, letters, numbers, or underscore only.");
+        return;
+      }
+    }
 
-    // Extract websiteOwnership from values
-    // Phone numbers are now handled separately via phone management APIs
-    const { websiteOwnership, ...apiValues } = values;
+    const { websiteOwnership, keyword, ...rest } = values;
 
     try {
       const res = await fetch("/api/client", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: apiValues.name,
-          domain: apiValues.domain,
-          keyword: apiValues.keyword.trim().toUpperCase(),
-          // Phone removed - will be added separately via phone management
-          // OrganizationId is handled server-side from active organization
+          name: rest.name,
+          domain: rest.domain,
+          ...(isStarterPlan ? {} : { keyword: (keyword ?? "").trim().toUpperCase() }),
           defaultType: "banner",
           defaultBgColor: "#222",
           defaultTextColor: "#fff",
@@ -137,22 +156,24 @@ export default function ClientWidgetBuilder() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="keyword"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>SMS Keyword (e.g. BAKERY)</Label>
-                    <FormControl>
-                      <Input placeholder="BAKERY" {...field} maxLength={50} />
-                    </FormControl>
-                    <p className="text-xs text-muted-foreground">
-                      To post via text, send: <strong>{field.value || "KEYWORD"}: your message</strong>
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {!planLoading && !isStarterPlan && (
+                <FormField
+                  control={form.control}
+                  name="keyword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>SMS Keyword (e.g. BAKERY)</Label>
+                      <FormControl>
+                        <Input placeholder="BAKERY" {...field} maxLength={50} />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">
+                        To post via text, send: <strong>{field.value || "KEYWORD"}: your message</strong>
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               {/* Phone numbers are now added separately after client creation via phone management */}
               <FormField
                 control={form.control}

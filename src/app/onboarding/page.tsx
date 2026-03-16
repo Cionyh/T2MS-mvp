@@ -195,20 +195,24 @@ function OnboardingContent() {
     window.location.href = "mailto:sales@t2ms.biz";
   };
 
+  const isStarterPlan = status?.planId === "starter";
+
   const handleRegisterSite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!registerForm.name.trim() || !registerForm.domain.trim()) {
       toast.error("Please enter a business name and domain.");
       return;
     }
-    const rawKeyword = registerForm.keyword.trim();
-    if (!rawKeyword) {
-      toast.error("Please enter a keyword (e.g. BAKERY). You'll text KEYWORD: your message to post to this site.");
-      return;
-    }
-    if (!/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
-      toast.error("Keyword must be 1–50 characters, letters, numbers, or underscore only.");
-      return;
+    if (!isStarterPlan) {
+      const rawKeyword = registerForm.keyword.trim();
+      if (!rawKeyword) {
+        toast.error("Please enter a keyword (e.g. BAKERY). You'll text KEYWORD: your message to post to this site.");
+        return;
+      }
+      if (!/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
+        toast.error("Keyword must be 1–50 characters, letters, numbers, or underscore only.");
+        return;
+      }
     }
     if (!registerForm.phone.trim()) {
       toast.error("Please enter a phone number.");
@@ -226,7 +230,7 @@ function OnboardingContent() {
         body: JSON.stringify({
           name: registerForm.name.trim(),
           domain: registerForm.domain.trim(),
-          keyword: rawKeyword,
+          ...(isStarterPlan ? {} : { keyword: registerForm.keyword.trim() }),
           phone: registerForm.phone.trim(),
         }),
       });
@@ -496,10 +500,12 @@ function OnboardingContent() {
               </CardTitle>
               <CardDescription>
                 Enter your business name and website domain.
-                <div className="mt-2 text-xs text-muted-foreground">
-                  <strong>Note:</strong> You will need to assign a different keyword for each New
-                  Site.
-                </div>
+                {!isStarterPlan && (
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    <strong>Note:</strong> You will need to assign a different keyword for each New
+                    Site.
+                  </div>
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -528,22 +534,24 @@ function OnboardingContent() {
                     disabled={!!loading}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="keyword">SMS Keyword (e.g. BAKERY)</Label>
-                  <Input
-                    id="keyword"
-                    placeholder="BAKERY"
-                    value={registerForm.keyword}
-                    onChange={(e) =>
-                      setRegisterForm((s) => ({ ...s, keyword: e.target.value.replace(/\s/g, "").toUpperCase() }))
-                    }
-                    disabled={!!loading}
-                    maxLength={50}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    To post via text, send: <strong>{registerForm.keyword || "KEYWORD"}: your message</strong>
-                  </p>
-                </div>
+                {!isStarterPlan && (
+                  <div className="space-y-2">
+                    <Label htmlFor="keyword">SMS Keyword (e.g. BAKERY)</Label>
+                    <Input
+                      id="keyword"
+                      placeholder="BAKERY"
+                      value={registerForm.keyword}
+                      onChange={(e) =>
+                        setRegisterForm((s) => ({ ...s, keyword: e.target.value.replace(/\s/g, "").toUpperCase() }))
+                      }
+                      disabled={!!loading}
+                      maxLength={50}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      To post via text, send: <strong>{registerForm.keyword || "KEYWORD"}: your message</strong>
+                    </p>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
                   <PhoneInput

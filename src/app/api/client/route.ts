@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { checkSiteLimit } from "@/lib/plan-limits";
+import { checkSiteLimit, getOrganizationPlan } from "@/lib/plan-limits";
 import { getActiveOrganization, isPhoneUsedByAnotherUser, normalizeKeyword, isKeywordTakenByUser } from "@/lib/organization-helpers";
 import { INSTALL_JOB_STATUS } from "@/lib/job-status";
 
@@ -33,32 +33,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Keyword: required for new sites; used for SMS routing (KEYWORD: message)
-    const rawKeyword = typeof keywordValue === "string" ? keywordValue.trim() : "";
-    if (!rawKeyword) {
-      return NextResponse.json(
-        { error: "Keyword is required. It identifies this site when you text (e.g. BAKERY: your message)." },
-        { status: 400 }
-      );
-    }
-    // Allow letters, numbers, underscore; 1–50 chars
-    if (!/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
-      return NextResponse.json(
-        { error: "Keyword must be 1–50 characters, letters, numbers, or underscore only." },
-        { status: 400 }
-      );
-    }
-    const keyword = normalizeKeyword(rawKeyword);
-
-    const taken = await isKeywordTakenByUser(session.user.id, keyword);
-    if (taken) {
-      return NextResponse.json(
-        { error: `You already have a site with keyword "${keyword}". Choose a different keyword.` },
-        { status: 409 }
-      );
-    }
-
-    // Get active organization for the user
+    // Get active organization first (needed for plan check and creation)
     const organizationId = await getActiveOrganization();
     if (!organizationId) {
       return NextResponse.json(
@@ -79,6 +54,53 @@ export async function POST(req: Request) {
         },
         { status: 403 }
       );
+    }
+
+    const plan = await getOrganizationPlan(organizationId);
+    const isStarterPlan = plan === "starter";
+    const rawKeyword = typeof keywordValue === "string" ? keywordValue.trim() : "";
+    let keyword: string | null = null;
+    if (isStarterPlan) {
+      // Starter (single-site): keyword optional; store null if not provided
+      if (rawKeyword) {
+        if (!/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
+          return NextResponse.json(
+            { error: "Keyword must be 1–50 characters, letters, numbers, or underscore only." },
+            { status: 400 }
+          );
+        }
+        const normalized = normalizeKeyword(rawKeyword);
+        const taken = await isKeywordTakenByUser(session.user.id, normalized);
+        if (taken) {
+          return NextResponse.json(
+            { error: `You already have a site with keyword "${normalized}". Choose a different keyword.` },
+            { status: 409 }
+          );
+        }
+        keyword = normalized;
+      }
+    } else {
+      // Growth (pro) or other: keyword required for SMS routing
+      if (!rawKeyword) {
+        return NextResponse.json(
+          { error: "Keyword is required. It identifies this site when you text (e.g. BAKERY: your message)." },
+          { status: 400 }
+        );
+      }
+      if (!/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
+        return NextResponse.json(
+          { error: "Keyword must be 1–50 characters, letters, numbers, or underscore only." },
+          { status: 400 }
+        );
+      }
+      keyword = normalizeKeyword(rawKeyword);
+      const taken = await isKeywordTakenByUser(session.user.id, keyword);
+      if (taken) {
+        return NextResponse.json(
+          { error: `You already have a site with keyword "${keyword}". Choose a different keyword.` },
+          { status: 409 }
+        );
+      }
     }
 
     // ✅ Normalize domain: remove protocol, www, and trailing slashes

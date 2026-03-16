@@ -61,12 +61,23 @@ export default function ClientDashboardPage({
 
   const [installJobCount, setInstallJobCount] = useState<number | null>(null);
   const [registerFirstSiteOpen, setRegisterFirstSiteOpen] = useState(false);
+  const [plan, setPlan] = useState<string>("");
 
   useEffect(() => {
     if (siteCount === 0 && websites !== undefined) {
       setRegisterFirstSiteOpen(true);
     }
   }, [siteCount, websites]);
+
+  useEffect(() => {
+    fetch("/api/plan/usage")
+      .then((r) => r.json())
+      .then((data) => setPlan(data?.plan ?? "free"))
+      .catch(() => setPlan("free"));
+  }, []);
+
+  const siteLimit = plan === "starter" ? 1 : plan === "pro" ? 3 : undefined;
+  const canAddMoreSites = siteLimit === undefined || siteCount < siteLimit;
 
   useEffect(() => {
     fetch("/api/install-jobs")
@@ -120,12 +131,14 @@ export default function ClientDashboardPage({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/app/build">
-            <Button variant="outline" className="text-foreground">
-              <Plus className="mr-2 h-4 w-4" />
-              New Site
-            </Button>
-          </Link>
+          {canAddMoreSites && (
+            <Link href="/app/build">
+              <Button variant="outline" className="text-foreground">
+                <Plus className="mr-2 h-4 w-4" />
+                New Site
+              </Button>
+            </Link>
+          )}
           <Link href="/app/install-request">
             <Button className="text-foreground">
               <Plus className="mr-2 h-4 w-4" />

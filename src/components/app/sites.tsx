@@ -179,6 +179,15 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [fontStylesDialogOpen, setFontStylesDialogOpen] = useState(false);
   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [plan, setPlan] = useState<string>("");
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch("/api/plan/usage")
+      .then((r) => r.json())
+      .then((data) => setPlan(data?.plan ?? "free"))
+      .catch(() => setPlan("free"));
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -211,6 +220,9 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const handleNewSiteClick = () => {
     router.push("/app/build");
   };
+
+  const siteLimit = plan === "starter" ? 1 : plan === "pro" ? 3 : undefined;
+  const canAddMoreSites = siteLimit === undefined || websites.length < siteLimit;
 
   const handleEditClick = (website: Website) => {
     setSelectedWebsite(website);
@@ -398,14 +410,18 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-2xl font-semibold">Registered Sites</h2>
-        <Button onClick={handleNewSiteClick} className="text-foreground">
-          <Plus className="mr-2 h-4 w-4" /> Add New Site
-        </Button>
+        {canAddMoreSites && (
+          <Button onClick={handleNewSiteClick} className="text-foreground">
+            <Plus className="mr-2 h-4 w-4" /> Add New Site
+          </Button>
+        )}
       </div>
       <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-600/40 bg-amber-50/80 dark:bg-amber-950/30 dark:border-amber-500/40 px-4 py-3">
         <MessageCircle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" />
         <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
-          Text <span className="font-semibold">1 (424) 484-8267</span> from your verified number. Use <strong>KEYWORD: your message</strong> (e.g. BAKERY: Fresh croissants today) to post to the right site.
+          {plan === "starter"
+            ? "Text 1 (424) 484-8267 from your verified number. Just send your message to post to your site."
+            : "Text 1 (424) 484-8267 from your verified number. Use KEYWORD: your message (e.g. BAKERY: Fresh croissants today) to post to the right site."}
         </p>
       </div>
 

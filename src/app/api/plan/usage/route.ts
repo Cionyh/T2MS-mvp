@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getActiveOrganization } from "@/lib/organization-helpers";
-import { getOrganizationPlanLimits } from "@/lib/plan-limits";
+import { getOrganizationPlanLimits, getOrganizationPlan } from "@/lib/plan-limits";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
     const organizationId = await getActiveOrganization();
     if (!organizationId) {
       return NextResponse.json({
+        plan: "free",
         websitesCount: 0,
         messagesCount: 0,
         limits: {
@@ -52,10 +53,14 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Get plan limits for organization
-    const limits = await getOrganizationPlanLimits(organizationId);
+    // Get plan and limits for organization
+    const [plan, limits] = await Promise.all([
+      getOrganizationPlan(organizationId),
+      getOrganizationPlanLimits(organizationId),
+    ]);
 
     return NextResponse.json({
+      plan,
       websitesCount,
       messagesCount,
       limits,
