@@ -1,12 +1,14 @@
 "use client";
 
 import { PricingSection } from "@/components/landing/pricing";
+import { Navbar } from "@/components/landing/navbar";
 import { DotPattern } from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
 
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background relative">
+      <Navbar />
       <DotPattern
         className={cn(
           "absolute inset-0 -z-50",
@@ -14,7 +16,7 @@ export default function PricingPage() {
         )}
       />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">
             Pricing

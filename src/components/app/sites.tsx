@@ -22,7 +22,6 @@ import {
   Copy,
   Loader2,
   MessageCircle,
-  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, Variants } from "framer-motion";
@@ -559,19 +558,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             <span className="font-semibold">SMS:</span> <code className="text-xs bg-muted px-1 rounded">{website.keyword}: message</code>
           </p>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 px-2 text-muted-foreground hover:text-foreground -ml-1"
-          onClick={() => {
-            setInstallationGuideClientId(website.id);
-            setInstallationGuideSiteName(website.name);
-            setInstallationGuideOpen(true);
-          }}
-        >
-          <BookOpen className="h-4 w-4 mr-1" />
-          Installation Guide
-        </Button>
       </div>
       {website.installJob && (
         <p className="flex items-center gap-2">

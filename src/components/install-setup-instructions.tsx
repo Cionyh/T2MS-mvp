@@ -15,7 +15,7 @@ export function InstallSetupInstructions() {
       <p>You just need to add the following user to your website platform:</p>
       <ul className="list-disc list-inside space-y-1 ml-2">
         <li><strong>Email:</strong> install@t2ms.biz</li>
-        <li><strong>Name:</strong> Text2MySite</li>
+        <li><strong>Name:</strong> Text To My Site Installer</li>
       </ul>
       <p>
         If someone else manages your website, you can also ask your website administrator, developer, or hosting provider to add us for you.
