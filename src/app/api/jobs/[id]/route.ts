@@ -58,6 +58,12 @@ export async function GET(
         proofs: {
           orderBy: { uploadedAt: "desc" },
         },
+        client: {
+          select: {
+            id: true,
+            pinned: true,
+          },
+        },
       },
     });
 

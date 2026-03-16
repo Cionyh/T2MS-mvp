@@ -740,19 +740,23 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               />
             </div>
 
-            <div>
-              <Label className="mb-2 text-sm font-medium">SMS Keyword</Label>
-              <Input
-                value={editedKeyword}
-                onChange={(e) => setEditedKeyword(e.target.value.replace(/\s/g, "").toUpperCase())}
-                placeholder="e.g. BAKERY"
-                className="w-full"
-                maxLength={50}
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                To post via text: <strong>{editedKeyword || "KEYWORD"}: your message</strong>
-              </p>
-            </div>
+            {plan !== "starter" && (
+              <div>
+                <Label className="mb-2 text-sm font-medium">SMS Keyword</Label>
+                <Input
+                  value={editedKeyword}
+                  onChange={(e) =>
+                    setEditedKeyword(e.target.value.replace(/\s/g, "").toUpperCase())
+                  }
+                  placeholder="e.g. BAKERY"
+                  className="w-full"
+                  maxLength={50}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  To post via text: <strong>{editedKeyword || "KEYWORD"}: your message</strong>
+                </p>
+              </div>
+            )}
             
             {/* Phone Numbers Section - Managed separately */}
             {selectedWebsite && (
