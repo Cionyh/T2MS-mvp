@@ -499,7 +499,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           : "bg-muted text-foreground";
 
         let label: string;
-        if (hasInstallInProgress) {
+        if (hasInstallInProgress && website.installJob) {
           label =
             website.installJob.platform === "To be confirmed"
               ? "Install form not submitted"
