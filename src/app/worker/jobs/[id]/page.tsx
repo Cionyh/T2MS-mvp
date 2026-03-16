@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
@@ -179,6 +180,10 @@ interface Job {
   proofUploaded: boolean;
   createdAt: string;
   updatedAt: string;
+  client?: {
+    id: string;
+    pinned: boolean;
+  } | null;
   customer: {
     user: {
       name: string;
@@ -228,6 +233,7 @@ export default function WorkerJobDetailPage() {
   const [uploadingProof, setUploadingProof] = useState(false);
   const [submittingJob, setSubmittingJob] = useState(false);
   const [showCredentials, setShowCredentials] = useState(true);
+  const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
     fetchJob();
@@ -476,6 +482,66 @@ export default function WorkerJobDetailPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Site publish controls (for jobs linked to a client/site) */}
+        {job.clientId && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Site Visibility</CardTitle>
+              <CardDescription>
+                Control whether the widget is published on the customer&apos;s site.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">
+                  {job.client?.pinned ? "Site is currently published" : "Site is currently unpublished"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Customers will still see installation progress until the job is completed.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Unpublished</span>
+                <Switch
+                  checked={job.client?.pinned ?? false}
+                  disabled={publishing}
+                  onCheckedChange={async (checked) => {
+                    try {
+                      setPublishing(true);
+                      const response = await fetch(`/api/jobs/${jobId}`, {
+                        method: "PATCH",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          action: checked ? "publish" : "unpublish",
+                        }),
+                      });
+
+                      if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || "Failed to update site visibility");
+                      }
+
+                      toast.success(
+                        `Site ${checked ? "published" : "unpublished"} successfully`
+                      );
+                      // Refresh job data to reflect latest pinned state
+                      fetchJob();
+                    } catch (error: any) {
+                      console.error("Error updating site visibility:", error);
+                      toast.error(error.message || "Failed to update site visibility");
+                    } finally {
+                      setPublishing(false);
+                    }
+                  }}
+                />
+                <span className="text-xs text-muted-foreground">Published</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Embed Script - show when job has a site (clientId) */}
         {job.clientId && (

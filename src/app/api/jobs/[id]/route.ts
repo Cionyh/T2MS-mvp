@@ -109,10 +109,47 @@ export async function PATCH(
 
     const job = await prisma.installJob.findUnique({
       where: { id: params.id },
+      include: {
+        client: {
+          select: {
+            id: true,
+            pinned: true,
+          },
+        },
+      },
     });
 
     if (!job) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
+    }
+
+    const isAdmin = session.user.role === "admin";
+
+    // Handle explicit publish / unpublish actions for admins and assigned workers
+    if (action === "publish" || action === "unpublish") {
+      if (!job.clientId) {
+        return NextResponse.json(
+          { error: "This job is not linked to a site yet" },
+          { status: 400 }
+        );
+      }
+
+      // Only admins or the assigned worker can publish/unpublish
+      if (!isAdmin && (!worker || job.assignedWorkerId !== worker.id)) {
+        return NextResponse.json(
+          { error: "You can only publish or unpublish jobs assigned to you" },
+          { status: 403 }
+        );
+      }
+
+      await prisma.client.update({
+        where: { id: job.clientId },
+        data: { pinned: action === "publish" },
+      });
+
+      return NextResponse.json({
+        message: `Site has been ${action === "publish" ? "published" : "unpublished"} successfully`,
+      });
     }
 
     // Handle claim action
@@ -154,8 +191,6 @@ export async function PATCH(
 
     // Handle status update
     if (status) {
-      const isAdmin = session.user.role === "admin";
-
       // Validate status transition (admins can transition to any status)
       if (!isAdmin && !isValidStatusTransition(job.status as any, status)) {
         return NextResponse.json(

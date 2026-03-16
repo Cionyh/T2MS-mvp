@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -73,6 +74,10 @@ interface Job {
   proofUploaded: boolean;
   createdAt: string;
   updatedAt: string;
+  client?: {
+    id: string;
+    pinned: boolean;
+  } | null;
   customer: {
     id: string;
     user: {

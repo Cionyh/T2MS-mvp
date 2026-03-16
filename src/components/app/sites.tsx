@@ -441,12 +441,25 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 <CardHeader className="flex items-center justify-between px-4 py-0">
   <div className="flex items-center space-x-3">
     <CardTitle className="text-lg font-medium">{website.name}</CardTitle>
-    
+
     {/* Published switch with badge */}
     <div className="flex items-center space-x-2">
       <Switch
         checked={website.pinned ?? false}
         onCheckedChange={async (checked) => {
+          const hasInstallInProgress =
+            website.installJob &&
+            website.installJob.status !== "COMPLETED" &&
+            website.installJob.status !== "CANCELLED";
+
+          // Customers cannot publish/unpublish until installation is complete
+          if (hasInstallInProgress) {
+            toast.error(
+              "Installation is still in progress. You can publish this site once installation is completed."
+            );
+            return;
+          }
+
           try {
             const res = await fetch(`/api/client/${website.id}`, {
               method: "PUT",
@@ -473,27 +486,34 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           }
         }}
       />
-      <span
-        className={`px-2 py-0.5 text-xs rounded-full font-medium ${
-          website.pinned
-            ? "bg-green-500 text-foreground"
-            : website.installJob &&
-              website.installJob.status !== "COMPLETED" &&
-              website.installJob.status !== "CANCELLED"
-            ? "bg-amber-500/90 text-foreground"
-            : "bg-muted text-foreground"
-        }`}
-      >
-        {website.pinned
-          ? "Published"
-          : website.installJob &&
-            website.installJob.status !== "COMPLETED" &&
-            website.installJob.status !== "CANCELLED"
-          ? website.installJob.platform === "To be confirmed"
-            ? "Install form not submitted"
-            : "Installation In Progress: 80%"
-          : "Unpublished"}
-      </span>
+      {(() => {
+        const hasInstallInProgress =
+          website.installJob &&
+          website.installJob.status !== "COMPLETED" &&
+          website.installJob.status !== "CANCELLED";
+
+        const badgeClasses = hasInstallInProgress
+          ? "bg-amber-500/90 text-foreground"
+          : website.pinned
+          ? "bg-green-500 text-foreground"
+          : "bg-muted text-foreground";
+
+        let label: string;
+        if (hasInstallInProgress) {
+          label =
+            website.installJob.platform === "To be confirmed"
+              ? "Install form not submitted"
+              : "Installation In Progress: 80%";
+        } else {
+          label = website.pinned ? "Published" : "Unpublished";
+        }
+
+        return (
+          <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${badgeClasses}`}>
+            {label}
+          </span>
+        );
+      })()}
     </div>
   </div>
 
