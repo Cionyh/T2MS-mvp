@@ -55,6 +55,7 @@ function OnboardingContent() {
   const [statusLoaded, setStatusLoaded] = useState(false);
   const [status, setStatus] = useState<{
     completed: boolean;
+    planId?: string | null;
     needsSiteRegistration?: boolean;
     needsPhoneVerification?: boolean;
     needsInstallSetup?: boolean;
