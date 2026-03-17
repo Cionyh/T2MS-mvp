@@ -200,14 +200,14 @@ export default function ClientDashboardPage({
           </Card>
         </Link>
 
-        {/* Active Widget install requests - count and link to list with status */}
+        {/* Widget Install Requests - count and link to list with status */}
         {installJobCount !== null && (
           <Link href="/app/install-requests">
             <Card className="hover:bg-background bg-muted transition-colors border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wrench className="h-5 w-5" />
-                  Active Widget install requests
+                  Widget Install Requests
                 </CardTitle>
                 <CardDescription>
                   View your install requests and their status
@@ -216,7 +216,7 @@ export default function ClientDashboardPage({
               <CardContent>
                 <p className="text-3xl font-bold">{installJobCount}</p>
                 <p className="text-muted-foreground text-sm mt-1">
-                  {installJobCount === 1 ? "Active request" : "Active requests"}
+                  {installJobCount === 1 ? "install request" : "install requests"}
                 </p>
               </CardContent>
             </Card>
