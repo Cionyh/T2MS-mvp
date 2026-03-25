@@ -57,10 +57,12 @@ export async function POST(req: Request) {
     }
 
     const plan = await getOrganizationPlan(organizationId);
-    const isStarterPlan = plan === "starter";
+    // Treat "free" as starter-like for keyword enforcement. Keyword should only be
+    // required for plans that support multiple sites / SMS routing (e.g. pro+).
+    const keywordRequired = plan === "pro" || plan === "enterprise";
     const rawKeyword = typeof keywordValue === "string" ? keywordValue.trim() : "";
     let keyword: string | null = null;
-    if (isStarterPlan) {
+    if (!keywordRequired) {
       // Starter (single-site): keyword optional; store null if not provided
       if (rawKeyword) {
         if (!/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
