@@ -70,16 +70,16 @@ export default function ClientWidgetBuilder() {
       toast.error("You must be logged in to register a site.");
       return;
     }
-    if (!isStarterPlan) {
-      const kw = values.keyword?.trim();
-      if (!kw) {
-        toast.error("Keyword is required for your plan. It identifies this site when you text (e.g. BAKERY: your message).");
-        return;
-      }
-      if (!/^[A-Za-z0-9_]{1,50}$/.test(kw)) {
-        toast.error("Keyword must be 1–50 characters, letters, numbers, or underscore only.");
-        return;
-      }
+    if (planLoading) {
+      toast.error("Loading your plan details. Please try again in a moment.");
+      return;
+    }
+    // Client-side keyword validation is best-effort only. The API is the source of truth.
+    // (Avoid blocking starter users if plan lookup is delayed or temporarily fails.)
+    const kw = values.keyword?.trim();
+    if (kw && !/^[A-Za-z0-9_]{1,50}$/.test(kw)) {
+      toast.error("Keyword must be 1–50 characters, letters, numbers, or underscore only.");
+      return;
     }
 
     const { websiteOwnership, keyword, ...rest } = values;
@@ -195,8 +195,12 @@ export default function ClientWidgetBuilder() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isSubmitting} className="w-full text-foreground">
-                {isSubmitting ? "Registering..." : "Register Site"}
+              <Button
+                type="submit"
+                disabled={isSubmitting || planLoading}
+                className="w-full text-foreground"
+              >
+                {planLoading ? "Loading plan..." : isSubmitting ? "Registering..." : "Register Site"}
               </Button>
             </form>
           </Form>

@@ -204,16 +204,17 @@ function OnboardingContent() {
       toast.error("Please enter a business name and domain.");
       return;
     }
-    if (!isStarterPlan) {
-      const rawKeyword = registerForm.keyword.trim();
-      if (!rawKeyword) {
-        toast.error("Please enter a keyword (e.g. BAKERY). You'll text KEYWORD: your message to post to this site.");
-        return;
-      }
-      if (!/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
-        toast.error("Keyword must be 1–50 characters, letters, numbers, or underscore only.");
-        return;
-      }
+    // Keyword is only required for non-starter plans; validate format if provided
+    const rawKeyword = registerForm.keyword.trim();
+    if (!isStarterPlan && !rawKeyword) {
+      toast.error(
+        "Please enter a keyword (e.g. BAKERY). You'll text KEYWORD: your message to post to this site."
+      );
+      return;
+    }
+    if (rawKeyword && !/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
+      toast.error("Keyword must be 1–50 characters, letters, numbers, or underscore only.");
+      return;
     }
     if (!registerForm.phone.trim()) {
       toast.error("Please enter a phone number.");
