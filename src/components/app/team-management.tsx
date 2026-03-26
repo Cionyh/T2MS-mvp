@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { client } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,6 +54,7 @@ interface Member {
 }
 
 export function TeamManagementTab() {
+  const { data: session } = useSession();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -64,6 +66,11 @@ export function TeamManagementTab() {
 
   // Ensure members is always an array
   const safeMembers = Array.isArray(members) ? members : [];
+  const currentUserMember = safeMembers.find(
+    (member) => member.userId === session?.user?.id
+  );
+  const currentRole = (currentUserMember?.role || "").toLowerCase();
+  const canManageTeam = currentRole.includes("owner") || currentRole.includes("admin");
 
   // Fetch active organization and members
   useEffect(() => {
@@ -145,6 +152,11 @@ export function TeamManagementTab() {
   };
 
   const handleInviteMember = async () => {
+    if (!canManageTeam) {
+      toast.error("You do not have permission to invite members.");
+      return;
+    }
+
     if (!inviteEmail || !inviteEmail.includes("@")) {
       toast.error("Please enter a valid email address");
       return;
@@ -175,6 +187,11 @@ export function TeamManagementTab() {
   };
 
   const handleRemoveMember = async (memberIdOrEmail: string) => {
+    if (!canManageTeam) {
+      toast.error("You do not have permission to remove members.");
+      return;
+    }
+
     try {
       const { error } = await client.organization.removeMember({
         memberIdOrEmail,
@@ -193,6 +210,11 @@ export function TeamManagementTab() {
   };
 
   const handleUpdateRole = async (memberId: string, newRole: string) => {
+    if (!canManageTeam) {
+      toast.error("You do not have permission to change roles.");
+      return;
+    }
+
     try {
       const { error } = await client.organization.updateMemberRole({
         memberId,
@@ -265,81 +287,83 @@ export function TeamManagementTab() {
                 Manage your organization members and their roles.
               </CardDescription>
             </div>
-            <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Invite Member
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Invite Team Member</DialogTitle>
-                  <DialogDescription>
-                    Send an invitation to join your organization. They will receive an email with instructions.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="invite-email">Email Address</Label>
-                    <Input
-                      id="invite-email"
-                      type="email"
-                      placeholder="colleague@example.com"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="invite-role">Role</Label>
-                    <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as "member" | "admin" | "owner")}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="member">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            Member
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="admin">
-                          <div className="flex items-center gap-2">
-                            <Shield className="h-4 w-4" />
-                            Admin
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Members can manage sites and messages. Admins can also manage team members.
-                    </p>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setInviteDialogOpen(false)}
-                    disabled={isInviting}
-                  >
-                    Cancel
+            {canManageTeam && (
+              <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Invite Member
                   </Button>
-                  <Button onClick={handleInviteMember} disabled={isInviting}>
-                    {isInviting ? (
-                      <>
-                        <UserPlus className="mr-2 h-4 w-4 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="mr-2 h-4 w-4" />
-                        Send Invitation
-                      </>
-                    )}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Invite Team Member</DialogTitle>
+                    <DialogDescription>
+                      Send an invitation to join your organization. They will receive an email with instructions.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="invite-email">Email Address</Label>
+                      <Input
+                        id="invite-email"
+                        type="email"
+                        placeholder="colleague@example.com"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="invite-role">Role</Label>
+                      <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as "member" | "admin" | "owner")}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="member">
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              Member
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="admin">
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-4 w-4" />
+                              Admin
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Members can manage sites and messages. Admins can also manage team members.
+                      </p>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setInviteDialogOpen(false)}
+                      disabled={isInviting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleInviteMember} disabled={isInviting}>
+                      {isInviting ? (
+                        <>
+                          <UserPlus className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="mr-2 h-4 w-4" />
+                          Send Invitation
+                        </>
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -384,52 +408,54 @@ export function TeamManagementTab() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={member.role.split(",")[0]}
-                        onValueChange={(newRole) =>
-                          handleUpdateRole(member.id, newRole)
-                        }
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="member">Member</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="owner" disabled>
-                            Owner
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {!member.role.includes("owner") && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to remove {member.user?.name || member.user?.email} from your organization?
-                                They will lose access to all organization sites and data.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleRemoveMember(member.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Remove
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </div>
+                    {canManageTeam && (
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={member.role.split(",")[0]}
+                          onValueChange={(newRole) =>
+                            handleUpdateRole(member.id, newRole)
+                          }
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="member">Member</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="owner" disabled>
+                              Owner
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {!member.role.includes("owner") && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to remove {member.user?.name || member.user?.email} from your organization?
+                                  They will lose access to all organization sites and data.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleRemoveMember(member.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Remove
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <Separator />
                 </div>
