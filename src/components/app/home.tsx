@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, BarChart3, Wrench, ExternalLink } from "lucide-react";
+import { Plus, BarChart3, Wrench } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
@@ -131,16 +131,6 @@ export default function ClientDashboardPage({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <a
-            href="/configure_widget_settings.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Button variant="secondary" className="text-foreground">
-              Widget Settings Guide
-              <ExternalLink className="ml-2 h-4 w-4" />
-            </Button>
-          </a>
           {canAddMoreSites && (
             <Link href="/app/build">
               <Button variant="outline" className="text-foreground">

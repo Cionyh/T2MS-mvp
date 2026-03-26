@@ -22,6 +22,7 @@ import {
   Copy,
   Loader2,
   MessageCircle,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, Variants } from "framer-motion";
@@ -409,11 +410,23 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-2xl font-semibold">Registered Sites</h2>
-        {canAddMoreSites && (
-          <Button onClick={handleNewSiteClick} className="text-foreground">
-            <Plus className="mr-2 h-4 w-4" /> Add New Site
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <a
+            href="/configure_widget_settings.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="secondary" className="text-foreground">
+              Widget Settings Guide
+              <ExternalLink className="ml-2 h-4 w-4" />
+            </Button>
+          </a>
+          {canAddMoreSites && (
+            <Button onClick={handleNewSiteClick} className="text-foreground">
+              <Plus className="mr-2 h-4 w-4" /> Add New Site
+            </Button>
+          )}
+        </div>
       </div>
       <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-600/40 bg-amber-50/80 dark:bg-amber-950/30 dark:border-amber-500/40 px-4 py-3">
         <MessageCircle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" />
