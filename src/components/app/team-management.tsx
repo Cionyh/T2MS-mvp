@@ -60,6 +60,7 @@ export function TeamManagementTab() {
   const [inviteRole, setInviteRole] = useState<"member" | "admin" | "owner">("member");
   const [isInviting, setIsInviting] = useState(false);
   const [activeOrganization, setActiveOrganization] = useState<any>(null);
+  const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null);
 
   // Ensure members is always an array
   const safeMembers = Array.isArray(members) ? members : [];
@@ -79,13 +80,19 @@ export function TeamManagementTab() {
 
       if (ensureRes.ok) {
         const { organizationId } = await ensureRes.json();
-        
-        // Note: Setting active organization is handled server-side via the ensure endpoint
-        // The session should already have it set, so we don't need to call the client method
+        setActiveOrganizationId(organizationId ?? null);
 
-        // Now fetch the organization
-        const { data } = await client.organization.getFullOrganization({});
-        setActiveOrganization(data);
+        // Fetch organization details; if client context is stale, keep the ensured org id
+        // so this screen can still function.
+        try {
+          const anyClient = client as any;
+          const { data } = await anyClient.organization.getFullOrganization(
+            organizationId ? { organizationId } : {}
+          );
+          setActiveOrganization(data ?? (organizationId ? { id: organizationId } : null));
+        } catch {
+          setActiveOrganization(organizationId ? { id: organizationId } : null);
+        }
         fetchMembers();
       } else {
         // Fallback: try to fetch directly
@@ -104,6 +111,7 @@ export function TeamManagementTab() {
     try {
       const { data } = await client.organization.getFullOrganization({});
       setActiveOrganization(data);
+      if (data?.id) setActiveOrganizationId(data.id);
     } catch (error) {
       console.error("Error fetching active organization:", error);
     }
@@ -227,7 +235,7 @@ export function TeamManagementTab() {
     );
   }
 
-  if (!activeOrganization) {
+  if (!activeOrganization && !activeOrganizationId) {
     return (
       <Card>
         <CardHeader>
