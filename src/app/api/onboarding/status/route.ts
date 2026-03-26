@@ -29,9 +29,30 @@ export async function GET() {
     // Check if user has registered at least one site (Client in their orgs)
     const members = await prisma.member.findMany({
       where: { userId: session.user.id },
-      select: { organizationId: true },
+      select: { organizationId: true, role: true },
     });
     const orgIds = members.map((m) => m.organizationId);
+
+    // Team members invited into an existing organization should not be forced
+    // through the owner onboarding flow (plan/add-on/site setup).
+    const isOwnerInAnyOrg = members.some((m) =>
+      (m.role ?? "").toLowerCase().includes("owner")
+    );
+    if (members.length > 0 && !isOwnerInAnyOrg) {
+      return NextResponse.json({
+        completed: true,
+        step: undefined,
+        planId: onboarding?.planId,
+        installAddonSku: onboarding?.installAddonSku,
+        installAddonStatus: onboarding?.installAddonStatus,
+        needsSiteRegistration: false,
+        hasRegisteredSite: true,
+        needsPhoneVerification: false,
+        hasVerifiedPhone: true,
+        needsInstallSetup: false,
+        firstClientId: null,
+      });
+    }
     const clients =
       orgIds.length > 0
         ? await prisma.client.findMany({
