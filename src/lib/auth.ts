@@ -23,17 +23,28 @@ const plugins: Parameters<typeof betterAuth>[0]["plugins"] = [
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
         const inviteLink = `${baseUrl}/accept-invitation/${data.id}`;
         const orgName = data.organization?.name ?? "the organization";
-        await sendEmail({
-          to: data.email,
-          subject: `You've been invited to join ${orgName}`,
-          html: `
-            <p>You've been invited to join <strong>${orgName}</strong> on T2MS.</p>
-            <p><a href="${inviteLink}">Accept invitation</a></p>
-            <p>If the link doesn't work, copy and paste this URL into your browser:</p>
-            <p>${inviteLink}</p>
-          `.trim(),
-          text: `You've been invited to join ${orgName} on T2MS. Accept invitation: ${inviteLink}`,
-        });
+        try {
+          await sendEmail({
+            to: data.email,
+            subject: `You've been invited to join ${orgName}`,
+            html: `
+              <p>You've been invited to join <strong>${orgName}</strong> on T2MS.</p>
+              <p><a href="${inviteLink}">Accept invitation</a></p>
+              <p>If the link doesn't work, copy and paste this URL into your browser:</p>
+              <p>${inviteLink}</p>
+            `.trim(),
+            text: `You've been invited to join ${orgName} on T2MS. Accept invitation: ${inviteLink}`,
+          });
+        } catch (error) {
+          // Do not fail invitation creation if email delivery fails.
+          // Better Auth should still create/store the invitation so it can be accepted via link.
+          console.error("[Invite] Failed to send invitation email", {
+            email: data.email,
+            invitationId: data.id,
+            organizationId: data.organization?.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       },
     }),
   ];
