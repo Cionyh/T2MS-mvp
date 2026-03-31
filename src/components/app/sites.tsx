@@ -163,6 +163,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [animationType, setAnimationType] = useState("fade");
   const [animationDuration, setAnimationDuration] = useState(300);
   const [fontSize, setFontSize] = useState(14);
+  const [mobileFontSize, setMobileFontSize] = useState<number | "">("");
   const [attachImage, setAttachImage] = useState("");
   const [presetText, setPresetText] = useState("");
   const [iframeWidth, setIframeWidth] = useState("100%");
@@ -248,6 +249,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     setAnimationType(widgetConfig.animationType || "fade");
     setAnimationDuration(widgetConfig.animationDuration || 300);
     setFontSize(widgetConfig.fontSize || 14);
+    setMobileFontSize(widgetConfig.mobileFontSize ?? "");
     setAttachImage(widgetConfig.attachImage || "");
     setPresetText(widgetConfig.presetText || "");
     setIframeWidth(widgetConfig.iframeWidth || "100%");
@@ -275,6 +277,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         animationType,
         animationDuration,
         fontSize,
+        ...(mobileFontSize !== "" ? { mobileFontSize } : {}),
         attachImage,
         presetText,
         iframeWidth,
@@ -968,6 +971,27 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                     <span>Extra Large: 25-48px</span>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div>
+              <Label className="mb-2 text-sm font-medium">Mobile Font Size (px)</Label>
+              <Input
+                type="number"
+                value={mobileFontSize}
+                onChange={(e) =>
+                  setMobileFontSize(e.target.value === "" ? "" : Number(e.target.value))
+                }
+                placeholder="Optional - defaults to desktop size"
+                min="8"
+                max="48"
+                className="w-full"
+              />
+              <div className="mt-2 p-3 bg-muted/50 rounded-lg border">
+                <p className="text-xs text-muted-foreground">
+                  Optional mobile-only override for banner and other widget text.
+                  Leave blank to use the regular font size on phones.
+                </p>
               </div>
             </div>
             

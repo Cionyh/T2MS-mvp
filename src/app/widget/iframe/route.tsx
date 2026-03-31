@@ -222,6 +222,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
     animationType: widgetConfig.animationType || "fade",
     animationDuration: widgetConfig.animationDuration || 300,
     fontSize: widgetConfig.fontSize || 14,
+    mobileFontSize: widgetConfig.mobileFontSize,
   };
 
   function escapeHtml(text: string): string {
@@ -269,6 +270,14 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
           minHeight: "60px",
         };
         contentHTML = `<div class="t2ms-content">${escapeHtml(content)}</div>`;
+        const mobileBannerFontSize =
+          typeof config.mobileFontSize === "number"
+            ? config.mobileFontSize
+            : Math.max(config.fontSize, 15);
+        const popupMobileFontSize =
+          typeof config.mobileFontSize === "number"
+            ? config.mobileFontSize
+            : Math.max(config.fontSize, 13);
         additionalStyles = `
     .t2ms-widget-container[data-type="banner"] {
       height: 60px;
@@ -287,16 +296,16 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
     @media (max-width: 768px) {
       .t2ms-widget-container[data-type="banner"] {
         height: auto;
-        min-height: 50px;
+        min-height: 56px;
         line-height: 1.4;
         white-space: normal;
       }
       .t2ms-widget-container[data-type="banner"] .t2ms-content {
-        padding: 12px 50px 12px 16px;
+        padding: 14px 52px 14px 16px;
         height: auto;
-        min-height: 50px;
-        line-height: 1.4;
-        font-size: ${Math.max(config.fontSize - 1, 13)}px;
+        min-height: 56px;
+        line-height: 1.45;
+        font-size: ${mobileBannerFontSize}px;
         white-space: normal;
         overflow: visible;
         text-overflow: clip;
@@ -414,7 +423,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
         padding: 12px !important;
       }
       .t2ms-widget-container[data-type="popup"] .t2ms-content {
-        font-size: ${Math.max(config.fontSize - 1, 13)}px;
+        font-size: ${popupMobileFontSize}px;
       }
     }`;
         
@@ -623,9 +632,6 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
         display: flex;
         align-items: center;
         justify-content: center;
-      }
-      .t2ms-content {
-        font-size: 14px;
       }
     }
     

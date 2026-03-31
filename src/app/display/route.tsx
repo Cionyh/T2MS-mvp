@@ -217,6 +217,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
     animationType: widgetConfig.animationType || "fade",
     animationDuration: widgetConfig.animationDuration || 300,
     fontSize: widgetConfig.fontSize || 14,
+    mobileFontSize: widgetConfig.mobileFontSize,
   };
 
   // Escape HTML to prevent XSS (server-side)
@@ -252,6 +253,10 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
 
     switch (type) {
       case "banner": {
+        const mobileBannerFontSize =
+          typeof config.mobileFontSize === "number"
+            ? config.mobileFontSize
+            : Math.max(config.fontSize, 15);
         containerStyle = {
           ...baseContainerStyle,
           width: "100%",
@@ -280,6 +285,24 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       height: 60px;
       line-height: 60px;
       font-size: ${config.fontSize}px;
+    }
+    @media (max-width: 768px) {
+      .t2ms-widget-container[data-type="banner"] {
+        height: auto;
+        min-height: 56px;
+        line-height: 1.4;
+        white-space: normal;
+      }
+      .t2ms-widget-container[data-type="banner"] .t2ms-content {
+        padding: 14px 52px 14px 16px;
+        height: auto;
+        min-height: 56px;
+        line-height: 1.45;
+        font-size: ${mobileBannerFontSize}px;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+      }
     }`;
         break;
       }
@@ -322,6 +345,10 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       }
 
       case "popup": {
+        const popupMobileFontSize =
+          typeof config.mobileFontSize === "number"
+            ? config.mobileFontSize
+            : Math.max(config.fontSize, 13);
         const position = config.widgetPosition || "top-right";
         const margin = 10;
         let top = "auto";
@@ -366,6 +393,11 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       font-size: ${config.fontSize}px;
       line-height: 1.4;
       width: 100%;
+    }
+    @media (max-width: 768px) {
+      .t2ms-widget-container[data-type="popup"] .t2ms-content {
+        font-size: ${popupMobileFontSize}px;
+      }
     }`;
         
         // For popup, add link inside the content container
