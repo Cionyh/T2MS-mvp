@@ -2,7 +2,7 @@
 
 import { motion, Variants } from "framer-motion";
 import gsap from "gsap";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer2";
 import { Hero } from "@/components/landing/hero";
@@ -16,6 +16,7 @@ import { DemoPlaceholder } from "@/components/landing/demo";
 import { LiveSandbox } from "@/components/landing/sandbox";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ReferralCapture } from "@/components/referral-capture";
 
 const containerVariants: Variants = {
   initial: { opacity: 0 },
@@ -68,6 +69,9 @@ export default function Home() {
 
   return (
     <div className="relative w-full overflow-hidden bg-background font-sans">
+      <Suspense fallback={null}>
+        <ReferralCapture />
+      </Suspense>
       <Navbar />
     <motion.div
       className="min-h-screen bg-gradient-t-b from-background via-background to-muted flex flex-col items-center px-0 py-2 sm:px-0 sm:py-2 space-y-2 text-foreground"

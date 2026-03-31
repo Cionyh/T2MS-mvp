@@ -14,11 +14,11 @@ import {
 import { BorderBeam } from "@/components/magicui/border-beam";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { signUp } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -46,6 +46,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import Link from "next/link";
+import {
+  getStoredReferralCode,
+  normalizeReferralCode,
+  storeReferralCode,
+} from "@/lib/referral";
 
 const BUSINESS_CATEGORIES = [
   "Apparel",
@@ -88,7 +93,9 @@ export function SignUp() {
   const [cancellationPolicyOpen, setCancellationPolicyOpen] = useState(false);
   const [smsOptIn, setSmsOptIn] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [activeReferralCode, setActiveReferralCode] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const form = useForm({
     resolver: zodResolver(signUpSchema),
@@ -104,6 +111,16 @@ export function SignUp() {
     },
   });
 
+  useEffect(() => {
+    const queryRef = normalizeReferralCode(searchParams.get("ref"));
+    const storedRef = getStoredReferralCode();
+    const referral = queryRef || storedRef;
+    if (referral) {
+      setActiveReferralCode(referral);
+      storeReferralCode(referral);
+    }
+  }, [searchParams]);
+
   const onSubmit = async (values: z.infer<typeof signUpSchema>) => {
     // Frontend validation for mandatory checkboxes
     if (!smsOptIn) {
@@ -117,6 +134,17 @@ export function SignUp() {
 
     setLoading(true);
     try {
+      let validReferralCode: string | undefined;
+      if (activeReferralCode) {
+        const referralRes = await fetch(
+          `/api/referral-codes/validate?code=${encodeURIComponent(activeReferralCode)}`
+        );
+        const referralData = await referralRes.json();
+        if (referralData?.valid && referralData?.code) {
+          validReferralCode = referralData.code;
+        }
+      }
+
       await signUp.email({
         email: values.email,
         password: values.password,
@@ -124,6 +152,7 @@ export function SignUp() {
         state: values.state || undefined,
         country: values.country || undefined,
         businessCategory: values.businessCategory || undefined,
+        referralCode: validReferralCode,
         callbackURL: "/onboarding",
         fetchOptions: {
           onResponse: () => {
@@ -136,6 +165,9 @@ export function SignUp() {
             toast.error(ctx.error.message);
           },
           onSuccess: async () => {
+            if (validReferralCode) {
+              storeReferralCode(null);
+            }
             router.push("/onboarding");
           },
         },
@@ -201,6 +233,11 @@ export function SignUp() {
               </div>
             </div>
             <div className="grid gap-2">
+              {activeReferralCode && (
+                <div className="rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+                  Referral code applied: <span className="font-mono font-medium text-foreground">{activeReferralCode}</span>
+                </div>
+              )}
               <FormField
                 control={form.control}
                 name="email"

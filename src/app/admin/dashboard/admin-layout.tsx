@@ -17,6 +17,7 @@ import {
   Briefcase,
   ClipboardList,
   Wrench,
+  Ticket,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +56,7 @@ const navItems = [
   { label: "Jobs", href: "/admin/dashboard/jobs", icon: ClipboardList },
   { label: "Teammembers", href: "/admin/dashboard/workers", icon: Briefcase },
   { label: "Install Requests", href: "/admin/dashboard/install-requests", icon: Wrench },
+  { label: "Referral Codes", href: "/admin/dashboard/referrals", icon: Ticket },
   { label: "Settings", href: "/admin/dashboard/settings", icon: Settings },
 ];
 
