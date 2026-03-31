@@ -274,10 +274,6 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
           typeof config.mobileFontSize === "number"
             ? config.mobileFontSize
             : Math.max(config.fontSize, 15);
-        const popupMobileFontSize =
-          typeof config.mobileFontSize === "number"
-            ? config.mobileFontSize
-            : Math.max(config.fontSize, 13);
         additionalStyles = `
     .t2ms-widget-container[data-type="banner"] {
       height: 60px;
@@ -365,6 +361,10 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       }
 
       case "popup": {
+        const popupMobileFontSize =
+          typeof config.mobileFontSize === "number"
+            ? config.mobileFontSize
+            : Math.max(config.fontSize, 13);
         const position = config.widgetPosition || "top-right";
         const margin = 10;
         let top = "auto";
