@@ -52,6 +52,7 @@ const navItems = [
   { label: "Sites", href: "/admin/dashboard/sites", icon: Database },
   { label: "Messages", href: "/admin/dashboard/messages", icon: MessageSquare },
   { label: "Subscriptions", href: "/admin/dashboard/subscriptions", icon: CreditCard },
+  { label: "Coupon Codes", href: "/admin/dashboard/coupons", icon: Ticket },
   { label: "Analytics", href: "/admin/dashboard/analytics", icon: BarChart3 },
   { label: "Jobs", href: "/admin/dashboard/jobs", icon: ClipboardList },
   { label: "Teammembers", href: "/admin/dashboard/workers", icon: Briefcase },

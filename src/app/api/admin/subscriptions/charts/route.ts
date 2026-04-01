@@ -18,6 +18,8 @@ export async function GET(req: NextRequest) {
     const twelveMonthsAgo = new Date();
     twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
 
+    const now = new Date();
+
     const subscriptions = await prisma.subscription.findMany({
       where: {
         periodStart: {
@@ -26,6 +28,10 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { periodStart: "asc" },
     });
+
+    const isCurrentlyActive = (sub: (typeof subscriptions)[number]) =>
+      (sub.status === "active" || sub.status === "trialing") &&
+      (!sub.periodEnd || sub.periodEnd > now);
 
     // Monthly subscription growth
     const monthlyGrowth = Array.from({ length: 12 }, (_, i) => {
@@ -42,14 +48,18 @@ export async function GET(req: NextRequest) {
       return {
         month: monthStart.toLocaleDateString("en-US", { month: "short", year: "numeric" }),
         subscriptions: monthSubscriptions.length,
-        active: monthSubscriptions.filter(sub => sub.status === "active").length,
-        trials: monthSubscriptions.filter(sub => sub.status === "trialing").length,
+        active: monthSubscriptions.filter(
+          (sub) => sub.status === "active" && isCurrentlyActive(sub)
+        ).length,
+        trials: monthSubscriptions.filter(
+          (sub) => sub.status === "trialing" && isCurrentlyActive(sub)
+        ).length,
       };
     });
 
     // Plan distribution for pie chart
     const planDistribution = subscriptions.reduce((acc, sub) => {
-      const plan = sub.plan.split("_")[0]; // Extract base plan name
+      const plan = sub.plan.split("_")[0];
       acc[plan] = (acc[plan] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -80,7 +90,7 @@ export async function GET(req: NextRequest) {
     // Trial conversion rate
     const totalTrials = subscriptions.filter(sub => sub.trialStart).length;
     const convertedTrials = subscriptions.filter(sub => 
-      sub.trialStart && sub.status === "active"
+      sub.trialStart && sub.status === "active" && isCurrentlyActive(sub)
     ).length;
     const conversionRate = totalTrials > 0 ? (convertedTrials / totalTrials) * 100 : 0;
 

@@ -124,15 +124,16 @@ export default function AdminSubscriptionsPage() {
 
   const getPlanBadge = (plan: string) => {
     const planColors: Record<string, string> = {
-      basic: "bg-gray-500",
+      starter: "bg-gray-500",
       pro: "bg-blue-500",
       enterprise: "bg-purple-500",
     };
     
     const basePlan = plan.split("_")[0];
     const color = planColors[basePlan] || "bg-gray-500";
+    const label = basePlan === "pro" ? "Growth" : basePlan.charAt(0).toUpperCase() + basePlan.slice(1);
     
-    return <Badge className={color}>{basePlan.charAt(0).toUpperCase() + basePlan.slice(1)}</Badge>;
+    return <Badge className={color}>{label}</Badge>;
   };
 
   if (isLoading) {
@@ -182,8 +183,8 @@ export default function AdminSubscriptionsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Plans</SelectItem>
-            <SelectItem value="basic">Basic</SelectItem>
-            <SelectItem value="pro">Pro</SelectItem>
+            <SelectItem value="starter">Starter</SelectItem>
+            <SelectItem value="pro">Growth</SelectItem>
             <SelectItem value="enterprise">Enterprise</SelectItem>
           </SelectContent>
         </Select>
@@ -207,6 +208,7 @@ export default function AdminSubscriptionsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Plan</TableHead>
+              <TableHead>Source</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>User</TableHead>
               <TableHead>Seats</TableHead>
@@ -219,6 +221,11 @@ export default function AdminSubscriptionsPage() {
             {data?.data.map((subscription) => (
               <TableRow key={subscription.id}>
                 <TableCell>{getPlanBadge(subscription.plan)}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">
+                    {subscription.source === "coupon" ? "Coupon" : "Stripe"}
+                  </Badge>
+                </TableCell>
                 <TableCell>{getStatusBadge(subscription.status)}</TableCell>
                 <TableCell>
                   {subscription.user ? (

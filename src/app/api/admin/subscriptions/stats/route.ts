@@ -19,17 +19,26 @@ export async function GET(req: NextRequest) {
 
     // Calculate stats
     const totalSubscriptions = subscriptions.length;
-    const activeSubscriptions = subscriptions.filter(sub => sub.status === "active").length;
-    const trialSubscriptions = subscriptions.filter(sub => sub.status === "trialing").length;
+    const now = new Date();
+    const isCurrentlyActive = (sub: (typeof subscriptions)[number]) =>
+      (sub.status === "active" || sub.status === "trialing") &&
+      (!sub.periodEnd || sub.periodEnd > now);
+
+    const activeSubscriptions = subscriptions.filter(
+      (sub) => sub.status === "active" && isCurrentlyActive(sub)
+    ).length;
+    const trialSubscriptions = subscriptions.filter(
+      (sub) => sub.status === "trialing" && isCurrentlyActive(sub)
+    ).length;
     const cancelledSubscriptions = subscriptions.filter(sub => sub.status === "canceled").length;
 
     // Calculate revenue (mock calculation - you'll need to implement actual pricing)
     const monthlyRevenue = subscriptions
-      .filter(sub => sub.status === "active" && sub.plan.includes("monthly"))
+      .filter(sub => isCurrentlyActive(sub) && sub.plan.includes("monthly"))
       .reduce((sum, sub) => {
         // Mock pricing based on plan
         const planPrices: Record<string, number> = {
-          "basic_monthly": 9.99,
+          "starter_monthly": 14.99,
           "pro_monthly": 29.99,
           "enterprise_monthly": 99.99,
         };
@@ -37,10 +46,10 @@ export async function GET(req: NextRequest) {
       }, 0);
 
     const annualRevenue = subscriptions
-      .filter(sub => sub.status === "active" && sub.plan.includes("annual"))
+      .filter(sub => isCurrentlyActive(sub) && sub.plan.includes("annual"))
       .reduce((sum, sub) => {
         const planPrices: Record<string, number> = {
-          "basic_annual": 99.99,
+          "starter_annual": 149.99,
           "pro_annual": 299.99,
           "enterprise_annual": 999.99,
         };

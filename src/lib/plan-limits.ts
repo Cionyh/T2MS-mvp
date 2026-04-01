@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getActiveSubscriptionWhere } from "@/lib/subscriptions";
 
 export interface PlanLimits {
   websites: number;
@@ -36,23 +37,10 @@ export async function getOrganizationPlan(organizationId: string): Promise<strin
 
     const ownerUserId = owner[0].userId;
 
-    // Get owner's user record to access stripeCustomerId
-    const ownerUser = await prisma.user.findUnique({
-      where: { id: ownerUserId },
-      select: { stripeCustomerId: true }
-    });
-
-    if (!ownerUser?.stripeCustomerId) {
-      return "free";
-    }
-
     // Check if owner has an active subscription
     const activeSubscription = await prisma.subscription.findFirst({
       where: {
-        stripeCustomerId: ownerUser.stripeCustomerId,
-        status: {
-          in: ["active", "trialing"]
-        }
+        ...getActiveSubscriptionWhere(ownerUserId),
       },
       orderBy: { periodStart: "desc" }
     });
@@ -79,21 +67,9 @@ export async function getOrganizationPlanLimits(organizationId: string): Promise
 // Legacy function for backward compatibility (deprecated - use getOrganizationPlan instead)
 export async function getUserPlan(userId: string): Promise<string> {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { stripeCustomerId: true }
-    });
-
-    if (!user?.stripeCustomerId) {
-      return "free";
-    }
-
     const activeSubscription = await prisma.subscription.findFirst({
       where: {
-        stripeCustomerId: user.stripeCustomerId,
-        status: {
-          in: ["active", "trialing"]
-        }
+        ...getActiveSubscriptionWhere(userId),
       },
       orderBy: { periodStart: "desc" }
     });

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { INSTALL_JOB_STATUS, ACCESS_METHOD } from "@/lib/job-status";
 import { sendEmail } from "@/lib/sendgrid";
 import { renderWelcomeEmail } from "@/lib/email-templates";
+import { getActiveSubscriptionWhere } from "@/lib/subscriptions";
 
 const REQUIRED_CONSENT_TEXT =
   "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
@@ -149,10 +150,7 @@ export async function PATCH(req: NextRequest) {
 
     // For paid plans: require at least one registered site before completing
     const activeSubscription = await prisma.subscription.findFirst({
-      where: {
-        referenceId: session.user.id,
-        status: { in: ["active", "trialing"] },
-      },
+      where: getActiveSubscriptionWhere(session.user.id),
     });
     const hasPaidPlan = !!activeSubscription;
     if (hasPaidPlan && !hasInstallSetup) {

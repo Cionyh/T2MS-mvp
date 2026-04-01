@@ -9,6 +9,8 @@ export interface Subscription {
   referenceId: string;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
+  source?: string | null;
+  couponCodeId?: string | null;
   status: string | null;
   periodStart: Date | null;
   periodEnd: Date | null;

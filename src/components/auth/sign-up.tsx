@@ -51,6 +51,11 @@ import {
   normalizeReferralCode,
   storeReferralCode,
 } from "@/lib/referral";
+import {
+  formatCouponPlan,
+  normalizeCouponCode,
+  storeCouponCode,
+} from "@/lib/coupons";
 
 const BUSINESS_CATEGORIES = [
   "Apparel",
@@ -94,6 +99,14 @@ export function SignUp() {
   const [smsOptIn, setSmsOptIn] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [activeReferralCode, setActiveReferralCode] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponValidating, setCouponValidating] = useState(false);
+  const [validatedCoupon, setValidatedCoupon] = useState<{
+    code: string;
+    plan: string;
+    durationInMonths: number;
+    remainingUses: number;
+  } | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -121,6 +134,50 @@ export function SignUp() {
     }
   }, [searchParams]);
 
+  const validateCouponCode = async () => {
+    const normalized = normalizeCouponCode(couponCode);
+
+    if (!normalized) {
+      setValidatedCoupon(null);
+      storeCouponCode(null);
+      toast.error("Enter a valid coupon code.");
+      return false;
+    }
+
+    try {
+      setCouponValidating(true);
+      const res = await fetch(
+        `/api/coupon-codes/validate?code=${encodeURIComponent(normalized)}`
+      );
+      const data = await res.json();
+
+      if (!res.ok || !data?.valid || !data?.coupon) {
+        setValidatedCoupon(null);
+        storeCouponCode(null);
+        toast.error(data?.error || "Coupon code is invalid.");
+        return false;
+      }
+
+      setCouponCode(data.coupon.code);
+      setValidatedCoupon({
+        code: data.coupon.code,
+        plan: data.coupon.plan,
+        durationInMonths: data.coupon.durationInMonths,
+        remainingUses: data.coupon.remainingUses,
+      });
+      storeCouponCode(data.coupon.code);
+      toast.success("Coupon code validated.");
+      return true;
+    } catch {
+      setValidatedCoupon(null);
+      storeCouponCode(null);
+      toast.error("Failed to validate coupon code.");
+      return false;
+    } finally {
+      setCouponValidating(false);
+    }
+  };
+
   const onSubmit = async (values: z.infer<typeof signUpSchema>) => {
     // Frontend validation for mandatory checkboxes
     if (!smsOptIn) {
@@ -134,6 +191,21 @@ export function SignUp() {
 
     setLoading(true);
     try {
+      const normalizedCoupon = normalizeCouponCode(couponCode);
+      if (normalizedCoupon) {
+        const isCouponStillValid =
+          validatedCoupon?.code === normalizedCoupon
+            ? true
+            : await validateCouponCode();
+
+        if (!isCouponStillValid) {
+          setLoading(false);
+          return;
+        }
+      } else {
+        storeCouponCode(null);
+      }
+
       let validReferralCode: string | undefined;
       if (activeReferralCode) {
         const referralRes = await fetch(
@@ -256,6 +328,37 @@ export function SignUp() {
                   </FormItem>
                 )}
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="coupon-code">Coupon Code (Optional)</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="coupon-code"
+                  placeholder="Enter coupon code"
+                  value={couponCode}
+                  onChange={(e) => {
+                    const nextCode = e.target.value.toUpperCase();
+                    setCouponCode(nextCode);
+                    if (validatedCoupon?.code !== nextCode) {
+                      setValidatedCoupon(null);
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={validateCouponCode}
+                  disabled={couponValidating}
+                >
+                  {couponValidating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Validate"}
+                </Button>
+              </div>
+              {validatedCoupon ? (
+                <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-900">
+                  {validatedCoupon.code} unlocks the {formatCouponPlan(validatedCoupon.plan)} plan free for{" "}
+                  {validatedCoupon.durationInMonths} month(s).
+                </div>
+              ) : null}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">

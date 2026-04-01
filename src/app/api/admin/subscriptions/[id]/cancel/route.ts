@@ -19,14 +19,29 @@ export async function POST(
 
     const { id } = params;
 
+    const now = new Date();
+
     // Update subscription to cancelled
     const cancelledSubscription = await prisma.subscription.update({
       where: { id },
       data: {
         status: "canceled",
         cancelAtPeriodEnd: true,
+        canceledAt: now,
+        endedAt: now,
+        updatedAt: now,
       },
     });
+
+    if (cancelledSubscription.source === "coupon") {
+      await prisma.couponRedemption.updateMany({
+        where: { subscriptionId: id, cancelledAt: null },
+        data: {
+          cancelledAt: now,
+          cancellationReason: "Cancelled by admin",
+        },
+      });
+    }
 
     return NextResponse.json(cancelledSubscription);
   } catch (error) {

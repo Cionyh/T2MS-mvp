@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +29,11 @@ import {
 } from "@/components/ui/dialog";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
+import {
+  formatCouponPlan,
+  getStoredCouponCode,
+  storeCouponCode,
+} from "@/lib/coupons";
 
 const STARTER_PLAN_FEATURES = [
   "1 Website",
@@ -81,31 +86,85 @@ function OnboardingContent() {
   const [installSetupClientId, setInstallSetupClientId] = useState<string | null>(null);
   const [installSetupWebsiteUrl, setInstallSetupWebsiteUrl] = useState<string>("");
   const [installSetupLoading, setInstallSetupLoading] = useState(false);
+  const [couponRedeeming, setCouponRedeeming] = useState(false);
+  const [couponSummary, setCouponSummary] = useState<{
+    code: string;
+    planLabel: string;
+    durationInMonths: number;
+  } | null>(null);
 
   const PENDING_VERIFY_STORAGE_KEY = "t2ms_onboarding_verify_pending";
   const RESEND_COOLDOWN_SECONDS = 60;
 
+  const refreshStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/onboarding/status");
+      const data = await res.json();
+      if (data.completed) {
+        router.replace("/app");
+        return;
+      }
+      setStatus(data);
+      setStatusLoaded(true);
+      if (data.needsInstallSetup && data.firstClientId && !installSetupClientId) {
+        setInstallSetupClientId(data.firstClientId);
+      }
+    } catch {
+      setStatusLoaded(true);
+    }
+  }, [installSetupClientId, router]);
+
   useEffect(() => {
-    const fetchStatus = async () => {
+    refreshStatus();
+  }, [refreshStatus]);
+
+  useEffect(() => {
+    const redeemCoupon = async () => {
+      if (!statusLoaded || !status || couponRedeeming) return;
+      if (
+        successParam === "1" ||
+        status.needsSiteRegistration ||
+        status.needsPhoneVerification ||
+        status.needsInstallSetup
+      ) {
+        return;
+      }
+
+      const storedCoupon = getStoredCouponCode();
+      if (!storedCoupon) return;
+
       try {
-        const res = await fetch("/api/onboarding/status");
+        setCouponRedeeming(true);
+        const res = await fetch("/api/coupon-codes/redeem", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: storedCoupon }),
+        });
         const data = await res.json();
-        if (data.completed) {
-          router.replace("/app");
-          return;
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to redeem coupon");
         }
-        setStatus(data);
+
+        setCouponSummary({
+          code: data.coupon.code,
+          planLabel: data.coupon.planLabel,
+          durationInMonths: data.coupon.durationInMonths,
+        });
+        storeCouponCode(null);
+        toast.success("Coupon applied. Payment has been skipped.");
+        await refreshStatus();
+      } catch (error) {
+        storeCouponCode(null);
+        toast.error(error instanceof Error ? error.message : "Failed to redeem coupon");
         setStatusLoaded(true);
-        // If install setup is required (e.g. after refresh on install step), show install form
-        if (data.needsInstallSetup && data.firstClientId && !installSetupClientId) {
-          setInstallSetupClientId(data.firstClientId);
-        }
-      } catch {
-        setStatusLoaded(true);
+      } finally {
+        setCouponRedeeming(false);
       }
     };
-    fetchStatus();
-  }, [router]);
+
+    redeemCoupon();
+  }, [couponRedeeming, refreshStatus, status, statusLoaded, successParam]);
 
   // Restore pending verify from sessionStorage so dialog shows again after refresh (only when on register step)
   useEffect(() => {
@@ -417,6 +476,17 @@ function OnboardingContent() {
     );
   }
 
+  if (couponRedeeming) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Applying coupon and skipping payment...
+        </div>
+      </div>
+    );
+  }
+
   if (showInstallSetupStep && installSetupClientId) {
     if (installSetupLoading) {
       return (
@@ -699,6 +769,12 @@ function OnboardingContent() {
           <p className="mt-2 text-muted-foreground">
             Choose the plan that&apos;s right for you — no hidden fees, no surprises.
           </p>
+          {couponSummary ? (
+            <div className="mx-auto mt-4 max-w-xl rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
+              Coupon <span className="font-mono">{couponSummary.code}</span> applied for the{" "}
+              {couponSummary.planLabel} plan for {couponSummary.durationInMonths} month(s).
+            </div>
+          ) : null}
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 items-stretch">

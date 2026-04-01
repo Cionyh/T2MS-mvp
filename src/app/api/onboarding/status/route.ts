@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { getActiveSubscriptionWhere } from "@/lib/subscriptions";
 
 export async function GET() {
   try {
@@ -19,10 +20,7 @@ export async function GET() {
 
     // User is "paid" only when they have an active Stripe subscription (not just planId, which is set before payment)
     const activeSubscription = await prisma.subscription.findFirst({
-      where: {
-        referenceId: session.user.id,
-        status: { in: ["active", "trialing"] },
-      },
+      where: getActiveSubscriptionWhere(session.user.id),
     });
     const hasPaidPlan = !!activeSubscription;
 

@@ -57,13 +57,16 @@ export async function GET(req: NextRequest) {
     // Get user data for each subscription
     const subscriptionsWithUsers = await Promise.all(
       subscriptions.map(async (sub) => {
-        let user = null;
-        if (sub.stripeCustomerId) {
-          user = await prisma.user.findFirst({
-            where: { stripeCustomerId: sub.stripeCustomerId },
-            select: { id: true, name: true, email: true },
-          });
-        }
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { id: sub.referenceId },
+              ...(sub.stripeCustomerId ? [{ stripeCustomerId: sub.stripeCustomerId }] : []),
+            ],
+          },
+          select: { id: true, name: true, email: true },
+        });
+
         return { ...sub, user };
       })
     );

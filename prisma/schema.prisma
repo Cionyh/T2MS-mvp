@@ -35,6 +35,7 @@ model User {
   onboarding   Onboarding?
   customer     Customer?
   worker       Worker?
+  couponRedemptions CouponRedemption[]
   referredBy   ReferralCode? @relation("UsersByReferralCode", fields: [referralCode], references: [code], onDelete: SetNull, onUpdate: Cascade)
 
   @@unique([email])
@@ -52,6 +53,39 @@ model ReferralCode {
   users     User[]   @relation("UsersByReferralCode")
 
   @@map("referral_code")
+}
+
+model CouponCode {
+  id               String             @id @default(cuid())
+  code             String             @unique
+  plan             String
+  durationInMonths Int
+  usageLimit       Int
+  isActive         Boolean            @default(true)
+  expiresAt        DateTime?
+  notes            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  redemptions      CouponRedemption[]
+
+  @@map("coupon_code")
+}
+
+model CouponRedemption {
+  id                 String        @id @default(cuid())
+  couponCodeId       String
+  userId             String
+  subscriptionId     String?       @unique
+  redeemedAt         DateTime      @default(now())
+  expiresAt          DateTime
+  cancelledAt        DateTime?
+  cancellationReason String?
+  couponCode         CouponCode    @relation(fields: [couponCodeId], references: [id], onDelete: Cascade)
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription       Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([couponCodeId])
+  @@map("coupon_redemption")
 }
 
 model Customer {
@@ -238,6 +272,8 @@ model Subscription {
   referenceId          String
   stripeCustomerId     String?
   stripeSubscriptionId String?
+  source               String?   @default("stripe")
+  couponCodeId         String?
   status               String?
   periodStart          DateTime?
   periodEnd            DateTime?
@@ -249,6 +285,7 @@ model Subscription {
   endedAt             DateTime?
   seats                Int?
   updatedAt            DateTime?
+  couponRedemption     CouponRedemption?
 
   @@map("subscription")
 }

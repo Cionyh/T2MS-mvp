@@ -44,11 +44,19 @@ export async function GET(req: NextRequest) {
       prisma.message.count(),
       prisma.message.count({ where: { createdAt: { gte: startDate } } }),
       prisma.subscription.count(),
-      prisma.subscription.count({ where: { status: "active" } }),
+      prisma.subscription.count({
+        where: {
+          status: "active",
+          OR: [{ periodEnd: null }, { periodEnd: { gt: new Date() } }],
+        },
+      }),
 
       // Revenue calculation
       prisma.subscription.findMany({
-        where: { status: "active" },
+        where: {
+          status: "active",
+          OR: [{ periodEnd: null }, { periodEnd: { gt: new Date() } }],
+        },
         select: { plan: true, periodStart: true, periodEnd: true }
       }),
 
