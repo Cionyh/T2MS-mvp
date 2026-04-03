@@ -15,6 +15,18 @@ const ALLOWED = new Map<string, string>([
   ["image/gif", ".gif"],
 ]);
 
+/** Next.js passes a Blob-like part; Node may not define global `File`, so avoid `instanceof File`. */
+function isFormDataFilePart(
+  value: unknown
+): value is { size: number; type: string; arrayBuffer: () => Promise<ArrayBuffer> } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { arrayBuffer?: unknown }).arrayBuffer === "function" &&
+    typeof (value as { size?: unknown }).size === "number"
+  );
+}
+
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -39,7 +51,7 @@ export async function POST(
 
     const formData = await req.formData();
     const file = formData.get("file");
-    if (!file || !(file instanceof File)) {
+    if (!isFormDataFilePart(file)) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
     if (file.size > MAX_BYTES) {
@@ -49,7 +61,15 @@ export async function POST(
       );
     }
 
-    const ext = ALLOWED.get(file.type);
+    let mime = file.type || "";
+    if (!mime && typeof (file as { name?: string }).name === "string") {
+      const n = (file as { name: string }).name.toLowerCase();
+      if (n.endsWith(".jpg") || n.endsWith(".jpeg")) mime = "image/jpeg";
+      else if (n.endsWith(".png")) mime = "image/png";
+      else if (n.endsWith(".webp")) mime = "image/webp";
+      else if (n.endsWith(".gif")) mime = "image/gif";
+    }
+    const ext = ALLOWED.get(mime);
     if (!ext) {
       return NextResponse.json(
         { error: "Use JPEG, PNG, WebP, or GIF" },
