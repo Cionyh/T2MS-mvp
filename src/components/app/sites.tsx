@@ -168,6 +168,8 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [presetText, setPresetText] = useState("");
   const [iframeWidth, setIframeWidth] = useState("100%");
   const [iframeHeight, setIframeHeight] = useState("100vh");
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [backgroundUploading, setBackgroundUploading] = useState(false);
 
   const [showClientId, setShowClientId] = useState<Record<string, boolean>>({});
   const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
@@ -256,6 +258,36 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     setIframeHeight(widgetConfig.iframeHeight || "100vh");
     
     setConfigureDialogOpen(true);
+  };
+
+  const uploadWidgetImage = async (file: File, which: "logo" | "background") => {
+    if (!selectedWebsite?.id) {
+      toast.error("Select a site first.");
+      return;
+    }
+    const setBusy = which === "logo" ? setLogoUploading : setBackgroundUploading;
+    const setUrl = which === "logo" ? setLogoUrl : setBackgroundImageUrl;
+    setBusy(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`/api/client/${selectedWebsite.id}/widget-upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Upload failed");
+      }
+      if (typeof data.url === "string") {
+        setUrl(data.url);
+        toast.success(which === "logo" ? "Logo uploaded" : "Background image uploaded");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleSaveClick = async (websiteId: string) => {
@@ -1057,13 +1089,54 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             {/* Logo and Branding */}
             <div>
               <Label className="mb-2 text-sm font-medium">Attach Logo</Label>
-              <Input
-                type="url"
-                placeholder="https://example.com/logo.png"
-                value={logoUrl}
-                onChange={(e) => setLogoUrl(e.target.value)}
-                className="w-full"
-              />
+              <p className="text-xs text-muted-foreground mb-2">
+                Upload an image (JPEG, PNG, WebP, or GIF, max 5MB) or paste an image URL.
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  id="widget-logo-upload"
+                  disabled={!selectedWebsite || logoUploading}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) void uploadWidgetImage(file, "logo");
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full shrink-0 sm:w-auto"
+                  disabled={!selectedWebsite || logoUploading}
+                  onClick={() => document.getElementById("widget-logo-upload")?.click()}
+                >
+                  {logoUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Upload image"
+                  )}
+                </Button>
+                <Input
+                  type="text"
+                  placeholder="https://example.com/logo.png"
+                  value={logoUrl}
+                  onChange={(e) => setLogoUrl(e.target.value)}
+                  className="w-full flex-1"
+                />
+              </div>
+              {logoUrl ? (
+                <div className="mt-2 rounded-md border bg-muted/30 p-2">
+                  <p className="mb-1 text-xs text-muted-foreground">Preview</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={logoUrl}
+                    alt="Logo preview"
+                    className="max-h-16 max-w-full object-contain"
+                  />
+                </div>
+              ) : null}
             </div>
 
             <div>
@@ -1079,13 +1152,53 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
 
             <div>
               <Label className="mb-2 text-sm font-medium">Widget Background Image</Label>
-              <Input
-                type="url"
-                placeholder="https://example.com/background.jpg"
-                value={backgroundImageUrl}
-                onChange={(e) => setBackgroundImageUrl(e.target.value)}
-                className="w-full"
-              />
+              <p className="text-xs text-muted-foreground mb-2">
+                Upload an image or paste a URL. Shown behind the widget when supported by the layout.
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  id="widget-bg-upload"
+                  disabled={!selectedWebsite || backgroundUploading}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) void uploadWidgetImage(file, "background");
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full shrink-0 sm:w-auto"
+                  disabled={!selectedWebsite || backgroundUploading}
+                  onClick={() => document.getElementById("widget-bg-upload")?.click()}
+                >
+                  {backgroundUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Upload image"
+                  )}
+                </Button>
+                <Input
+                  type="text"
+                  placeholder="https://example.com/background.jpg"
+                  value={backgroundImageUrl}
+                  onChange={(e) => setBackgroundImageUrl(e.target.value)}
+                  className="w-full flex-1"
+                />
+              </div>
+              {backgroundImageUrl ? (
+                <div className="mt-2 h-20 w-full overflow-hidden rounded-md border bg-muted/30">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={backgroundImageUrl}
+                    alt="Background preview"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : null}
             </div>
 
             {/* Border Style */}

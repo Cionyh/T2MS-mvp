@@ -208,13 +208,41 @@ export async function GET() {
 
         removeWidget();
 
+    // Uploaded assets may be stored as root-relative paths (/api/uploads/...). On external sites
+    // those would wrongly resolve to the host page origin — always anchor to data-api (API_BASE).
+    function resolveWidgetAssetUrl(url) {
+      if (url == null || typeof url !== "string") return "";
+      var u = url.trim();
+      if (!u) return "";
+      if (/^https?:\\/\\//i.test(u)) return u;
+      if (u.indexOf("//") === 0) {
+        var isHttps = API_BASE.indexOf("https") === 0;
+        return (isHttps ? "https:" : "http:") + u;
+      }
+      var base = API_BASE.replace(/\\/$/, "");
+      if (u.charAt(0) === "/") return base + u;
+      return base + "/" + u;
+    }
+
+    var rawConfig = widgetConfig;
+    if (typeof rawConfig === "string") {
+      try {
+        rawConfig = JSON.parse(rawConfig);
+      } catch (e) {
+        rawConfig = {};
+      }
+    }
+    if (!rawConfig || typeof rawConfig !== "object") {
+      rawConfig = {};
+    }
+
     const wrapper = document.createElement("div");
     wrapper.id = WIDGET_ID;
     wrapper.setAttribute("aria-live", "polite");
 
     // Add custom CSS classes if provided
-    if (widgetConfig.customCssClasses) {
-      wrapper.className = widgetConfig.customCssClasses;
+    if (rawConfig.customCssClasses) {
+      wrapper.className = rawConfig.customCssClasses;
     }
 
     wrapper.innerHTML = \`
@@ -227,24 +255,24 @@ export async function GET() {
 
     // Apply widget configuration with fallbacks
     const config = {
-      // Logo and branding
-      logoUrl: widgetConfig.logoUrl || "",
-      companyWebsiteLink: widgetConfig.companyWebsiteLink || "",
-      backgroundImageUrl: widgetConfig.backgroundImageUrl || "",
-      attachImage: widgetConfig.attachImage || "",
-      presetText: widgetConfig.presetText || "",
+      // Logo and branding (resolve relative upload URLs against API_BASE)
+      logoUrl: resolveWidgetAssetUrl(rawConfig.logoUrl || ""),
+      companyWebsiteLink: rawConfig.companyWebsiteLink || "",
+      backgroundImageUrl: resolveWidgetAssetUrl(rawConfig.backgroundImageUrl || ""),
+      attachImage: resolveWidgetAssetUrl(rawConfig.attachImage || ""),
+      presetText: rawConfig.presetText || "",
       
       // Border styling
-      borderStyle: widgetConfig.borderStyle || "solid",
+      borderStyle: rawConfig.borderStyle || "solid",
       
       // Position and animation
-      widgetPosition: widgetConfig.widgetPosition || "top-right",
-      animationType: widgetConfig.animationType || "fade",
-      animationDuration: widgetConfig.animationDuration || 300,
+      widgetPosition: rawConfig.widgetPosition || "top-right",
+      animationType: rawConfig.animationType || "fade",
+      animationDuration: rawConfig.animationDuration || 300,
       
       // Typography
-      fontSize: widgetConfig.fontSize || 14,
-      mobileFontSize: widgetConfig.mobileFontSize,
+      fontSize: rawConfig.fontSize || 14,
+      mobileFontSize: rawConfig.mobileFontSize,
     };
 
     // Apply base styles with sensible defaults
