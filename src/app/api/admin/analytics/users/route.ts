@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { adminAnalyticsClientUserWhere } from "@/lib/admin-analytics-filters";
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,8 +16,7 @@ export async function GET(req: NextRequest) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // Client users only (exclude admins and workers)
-    const clientUserWhere = { role: { not: "admin" }, worker: { is: null } };
+    const clientUserWhere = adminAnalyticsClientUserWhere;
 
     // User analytics (client users only)
     const [

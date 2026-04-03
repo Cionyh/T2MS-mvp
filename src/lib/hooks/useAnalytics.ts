@@ -110,6 +110,8 @@ export function useAnalyticsOverview(days: number = 30) {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    retry: 2,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -124,6 +126,8 @@ export function useUserAnalytics(days: number = 30) {
       return response.json();
     },
     staleTime: 5 * 60 * 1000,
+    retry: 2,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -138,6 +142,8 @@ export function useClientAnalytics(days: number = 30) {
       return response.json();
     },
     staleTime: 5 * 60 * 1000,
+    retry: 2,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -152,5 +158,7 @@ export function useMessageAnalytics(days: number = 30) {
       return response.json();
     },
     staleTime: 5 * 60 * 1000,
+    retry: 2,
+    refetchOnWindowFocus: true,
   });
 }

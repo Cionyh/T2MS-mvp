@@ -44,3 +44,6 @@ next-env.d.ts
 /documentation
 /.idea
 /postman
+
+# local widget uploads (production uses UPLOADS_DIR volume)
+/uploads

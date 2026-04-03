@@ -170,6 +170,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [iframeHeight, setIframeHeight] = useState("100vh");
   const [logoUploading, setLogoUploading] = useState(false);
   const [backgroundUploading, setBackgroundUploading] = useState(false);
+  const [attachImageUploading, setAttachImageUploading] = useState(false);
 
   const [showClientId, setShowClientId] = useState<Record<string, boolean>>({});
   const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
@@ -260,13 +261,26 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     setConfigureDialogOpen(true);
   };
 
-  const uploadWidgetImage = async (file: File, which: "logo" | "background") => {
+  const uploadWidgetImage = async (
+    file: File,
+    which: "logo" | "background" | "attach"
+  ) => {
     if (!selectedWebsite?.id) {
       toast.error("Select a site first.");
       return;
     }
-    const setBusy = which === "logo" ? setLogoUploading : setBackgroundUploading;
-    const setUrl = which === "logo" ? setLogoUrl : setBackgroundImageUrl;
+    const setBusy =
+      which === "logo"
+        ? setLogoUploading
+        : which === "background"
+          ? setBackgroundUploading
+          : setAttachImageUploading;
+    const setUrl =
+      which === "logo"
+        ? setLogoUrl
+        : which === "background"
+          ? setBackgroundImageUrl
+          : setAttachImage;
     setBusy(true);
     try {
       const formData = new FormData();
@@ -281,7 +295,13 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       }
       if (typeof data.url === "string") {
         setUrl(data.url);
-        toast.success(which === "logo" ? "Logo uploaded" : "Background image uploaded");
+        toast.success(
+          which === "logo"
+            ? "Logo uploaded"
+            : which === "background"
+              ? "Background image uploaded"
+              : "Image uploaded"
+        );
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
@@ -879,16 +899,57 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             {editedDefaultType === "fullscreen" && (
               <div>
                 <Label className="mb-2 text-sm font-medium">Attach Image</Label>
-                <Input
-                  type="url"
-                  placeholder="https://example.com/image.jpg"
-                  value={attachImage}
-                  onChange={(e) => setAttachImage(e.target.value)}
-                  className="w-full"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Add an image to display in the fullscreen widget. This will be shown alongside your message.
+                <p className="text-xs text-muted-foreground mb-2">
+                  Upload an image (JPEG, PNG, WebP, or GIF, max 5MB) or paste an image URL. Shown
+                  alongside your message in the fullscreen widget.
                 </p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    id="widget-attach-image-upload"
+                    disabled={!selectedWebsite || attachImageUploading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = "";
+                      if (file) void uploadWidgetImage(file, "attach");
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full shrink-0 sm:w-auto"
+                    disabled={!selectedWebsite || attachImageUploading}
+                    onClick={() =>
+                      document.getElementById("widget-attach-image-upload")?.click()
+                    }
+                  >
+                    {attachImageUploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Upload image"
+                    )}
+                  </Button>
+                  <Input
+                    type="text"
+                    placeholder="https://example.com/image.jpg"
+                    value={attachImage}
+                    onChange={(e) => setAttachImage(e.target.value)}
+                    className="w-full flex-1"
+                  />
+                </div>
+                {attachImage ? (
+                  <div className="mt-2 rounded-md border bg-muted/30 p-2">
+                    <p className="mb-1 text-xs text-muted-foreground">Preview</p>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={attachImage}
+                      alt="Fullscreen attach preview"
+                      className="max-h-40 max-w-full object-contain"
+                    />
+                  </div>
+                ) : null}
               </div>
             )}
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { adminAnalyticsClientUserWhere } from "@/lib/admin-analytics-filters";
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,8 +17,7 @@ export async function GET(req: NextRequest) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // "Clients" = users who are not admin and not workers (team members)
-    const clientUserWhere = { role: { not: "admin" }, worker: { is: null } };
+    const clientUserWhere = adminAnalyticsClientUserWhere;
 
     // Fetch all data in parallel
     const [
@@ -81,20 +81,22 @@ export async function GET(req: NextRequest) {
       })
     ]);
 
-    // Calculate revenue
+    // Calculate revenue (Stripe plan ids are often `starter` / `pro` without `_monthly` suffix)
     const planPrices: Record<string, number> = {
-      "starter": 9.99,
-      "pro": 29.99,
-      "enterprise": 99.99,
+      starter: 14.99,
+      pro: 29.99,
+      enterprise: 99.99,
     };
 
+    const planBase = (plan: string) => plan.split("_")[0];
+
     const monthlyRevenue = revenueData
-      .filter(sub => sub.plan.includes("monthly"))
-      .reduce((sum, sub) => sum + (planPrices[sub.plan.replace("_monthly", "")] || 0), 0);
+      .filter((sub) => !sub.plan.includes("annual"))
+      .reduce((sum, sub) => sum + (planPrices[planBase(sub.plan)] || 0), 0);
 
     const annualRevenue = revenueData
-      .filter(sub => sub.plan.includes("annual"))
-      .reduce((sum, sub) => sum + (planPrices[sub.plan.replace("_annual", "")] || 0), 0);
+      .filter((sub) => sub.plan.includes("annual"))
+      .reduce((sum, sub) => sum + (planPrices[planBase(sub.plan)] || 0), 0);
 
     // Process growth data
     const processGrowthData = (data: any[], label: string) => {

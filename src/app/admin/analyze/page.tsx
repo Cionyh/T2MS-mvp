@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,12 +61,16 @@ const COLORS = {
 
 const CHART_COLORS = [COLORS.primary, COLORS.secondary, COLORS.accent, COLORS.warning, COLORS.success, COLORS.info];
 
-// Custom tooltip component
+// Custom tooltip component (label may be ISO date from API)
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
+    const labelDisplay =
+      typeof label === "string" && /^\d{4}-\d{2}-\d{2}/.test(label)
+        ? new Date(label).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+        : label;
     return (
       <div className="p-3 bg-background border rounded-lg shadow-lg">
-        <p className="font-semibold text-sm mb-1">{label}</p>
+        <p className="font-semibold text-sm mb-1">{labelDisplay}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
             {entry.dataKey}: {entry.value.toLocaleString()}
@@ -135,43 +140,71 @@ const MetricCard = ({
 export default function AnalyticsDashboard() {
   const [timeRange, setTimeRange] = useState("30");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const queryClient = useQueryClient();
+  const days = parseInt(timeRange, 10);
 
   // Fetch analytics data
-  const { data: overview, isLoading: overviewLoading, refetch: refetchOverview } = useAnalyticsOverview(parseInt(timeRange));
-  const { data: userAnalytics, isLoading: userLoading } = useUserAnalytics(parseInt(timeRange));
-  const { data: clientAnalytics, isLoading: clientLoading } = useClientAnalytics(parseInt(timeRange));
-  const { data: messageAnalytics, isLoading: messageLoading } = useMessageAnalytics(parseInt(timeRange));
+  const {
+    data: overview,
+    isLoading: overviewLoading,
+    isError: overviewError,
+    error: overviewErrorDetail,
+  } = useAnalyticsOverview(days);
+  const {
+    data: userAnalytics,
+    isLoading: userLoading,
+    isError: userError,
+  } = useUserAnalytics(days);
+  const {
+    data: clientAnalytics,
+    isLoading: clientLoading,
+    isError: clientError,
+  } = useClientAnalytics(days);
+  const {
+    data: messageAnalytics,
+    isLoading: messageLoading,
+    isError: messageError,
+  } = useMessageAnalytics(days);
+
+  const hasAnyError = overviewError || userError || clientError || messageError;
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await Promise.all([
-      refetchOverview(),
-    ]);
-    setIsRefreshing(false);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["analytics-overview", days] }),
+        queryClient.invalidateQueries({ queryKey: ["user-analytics", days] }),
+        queryClient.invalidateQueries({ queryKey: ["client-analytics", days] }),
+        queryClient.invalidateQueries({ queryKey: ["message-analytics", days] }),
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Process chart data
+  // Keep ISO date strings for stable sort/chart keys; format in axis/tooltip only
   const userGrowthData = useMemo(() => {
     if (!overview?.charts?.userGrowth) return [];
-    return overview.charts.userGrowth.map(item => ({
-      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      users: item.users
+    return overview.charts.userGrowth.map((item) => ({
+      date: item.date,
+      users: item.users,
     }));
   }, [overview]);
 
   const clientGrowthData = useMemo(() => {
     if (!overview?.charts?.clientGrowth) return [];
-    return overview.charts.clientGrowth.map(item => ({
-      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      clients: item.clients
+    return overview.charts.clientGrowth.map((item) => ({
+      date: item.date,
+      clients: item.clients,
     }));
   }, [overview]);
 
   const messageGrowthData = useMemo(() => {
     if (!overview?.charts?.messageGrowth) return [];
-    return overview.charts.messageGrowth.map(item => ({
-      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      messages: item.messages
+    return overview.charts.messageGrowth.map((item) => ({
+      date: item.date,
+      messages: item.messages,
     }));
   }, [overview]);
 
@@ -193,8 +226,16 @@ export default function AnalyticsDashboard() {
       data[item.date].messages = item.messages;
     });
     
-    return Object.values(data).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return Object.values(data).sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
   }, [userGrowthData, clientGrowthData, messageGrowthData]);
+
+  const formatChartDate = (d: string) => {
+    const t = Date.parse(d);
+    if (Number.isNaN(t)) return d;
+    return new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
 
   // Widget type distribution data
   const widgetTypeData = useMemo(() => {
@@ -237,6 +278,14 @@ export default function AnalyticsDashboard() {
           <p className="text-muted-foreground">
             Comprehensive insights into your Text2MySite™ platform performance
           </p>
+          {hasAnyError && (
+            <p className="mt-2 text-sm text-destructive">
+              Some analytics failed to load.{" "}
+              {overviewError && overviewErrorDetail instanceof Error
+                ? overviewErrorDetail.message
+                : "Try Refresh or reload the page."}
+            </p>
+          )}
         </div>
         <div className="flex items-center space-x-2">
           <Select value={timeRange} onValueChange={setTimeRange}>
@@ -326,9 +375,29 @@ export default function AnalyticsDashboard() {
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={combinedGrowthData}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
+                        <XAxis
+                          dataKey="date"
+                          tickFormatter={formatChartDate}
+                          minTickGap={16}
+                        />
                         <YAxis />
-                        <Tooltip content={<CustomTooltip />} />
+                        <Tooltip
+                          content={({ active, payload, label }) => {
+                            if (!active || !payload?.length) return null;
+                            return (
+                              <div className="p-3 bg-background border rounded-lg shadow-lg">
+                                <p className="font-semibold text-sm mb-1">
+                                  {typeof label === "string" ? formatChartDate(label) : label}
+                                </p>
+                                {payload.map((entry: any, index: number) => (
+                                  <p key={index} className="text-sm" style={{ color: entry.color }}>
+                                    {entry.dataKey}: {Number(entry.value).toLocaleString()}
+                                  </p>
+                                ))}
+                              </div>
+                            );
+                          }}
+                        />
                         <Legend />
                         <Area
                           type="monotone"
@@ -340,7 +409,7 @@ export default function AnalyticsDashboard() {
                         />
                         <Area
                           type="monotone"
-                          dataKey="websites"
+                          dataKey="clients"
                           stackId="2"
                           stroke={COLORS.secondary}
                           fill={COLORS.secondary}
@@ -572,7 +641,11 @@ export default function AnalyticsDashboard() {
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={messageGrowthData}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
+                        <XAxis
+                          dataKey="date"
+                          tickFormatter={formatChartDate}
+                          minTickGap={16}
+                        />
                         <YAxis />
                         <Tooltip content={<CustomTooltip />} />
                         <Line 

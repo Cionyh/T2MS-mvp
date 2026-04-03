@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 const PLAN_OPTIONS = [
-  { id: "starter", name: "Limited Offer Early Bird Special", price: "$9.99/mo", description: "1 website, 100 messages/month, 14-day free trial" },
+  { id: "starter", name: "Limited Offer Early Bird Special", price: "$14.99/mo", description: "1 website, 100 messages/month, 14-day free trial" },
   { id: "pro", name: "Limited Offer Standard Price", price: "$29.99/mo", description: "Up to 3 websites, 330 messages/month, 14-day free trial" },
 ];
 
