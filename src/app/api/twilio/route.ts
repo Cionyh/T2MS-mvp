@@ -40,6 +40,9 @@ function getWebhookUrl(req: NextRequest): string {
   return `${proto}://${host}${path}`;
 }
 
+/** When true, skip the two success SMS after posting (API confirmation + TwiML reply). Set to false to restore. */
+const DISABLE_POST_SUCCESS_REPLY_SMS = true;
+
 export async function POST(req: NextRequest) {
   console.log("=== Twilio Webhook Debug Start ===");
 
@@ -208,22 +211,28 @@ export async function POST(req: NextRequest) {
       data: { content, clientId: client.id },
     });
 
-    try {
-      console.log("📤 Sending confirmation SMS...");
-      await twilioClient.messages.create({
-        body: `✅ Your message has been posted to your site!`,
-        from: twilioPhoneNumber,
-        to: from,
-      });
-      console.log("✅ Confirmation SMS sent.");
-    } catch (e) {
-      console.warn("⚠️ Failed to send confirmation SMS:", e);
+    if (!DISABLE_POST_SUCCESS_REPLY_SMS) {
+      try {
+        console.log("📤 Sending confirmation SMS...");
+        await twilioClient.messages.create({
+          body: `✅ Your message has been posted to your site!`,
+          from: twilioPhoneNumber,
+          to: from,
+        });
+        console.log("✅ Confirmation SMS sent.");
+      } catch (e) {
+        console.warn("⚠️ Failed to send confirmation SMS:", e);
+      }
     }
 
-    return new NextResponse(
-      `<Response><Message>Posted: "${content}"</Message></Response>`,
-      { status: 200, headers: { "Content-Type": "text/xml" } }
-    );
+    const twiml = DISABLE_POST_SUCCESS_REPLY_SMS
+      ? `<Response></Response>`
+      : `<Response><Message>Posted: "${content}"</Message></Response>`;
+
+    return new NextResponse(twiml, {
+      status: 200,
+      headers: { "Content-Type": "text/xml" },
+    });
 
   } catch (err) {
     console.error("❌ Twilio webhook processing error:", err);
