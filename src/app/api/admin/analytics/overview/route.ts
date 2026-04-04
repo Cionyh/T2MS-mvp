@@ -60,10 +60,10 @@ export async function GET(req: NextRequest) {
         select: { plan: true, periodStart: true, periodEnd: true }
       }),
 
-      // Growth data (client users only)
+      // Growth data (client users only); _all avoids ambiguous "id" with worker join
       prisma.user.groupBy({
         by: ["createdAt"],
-        _count: { id: true },
+        _count: { _all: true },
         where: { ...clientUserWhere, createdAt: { gte: startDate } },
         orderBy: { createdAt: "asc" }
       }),
@@ -103,7 +103,8 @@ export async function GET(req: NextRequest) {
       const dailyData: Record<string, number> = {};
       data.forEach(item => {
         const date = item.createdAt.toISOString().split('T')[0];
-        dailyData[date] = (dailyData[date] || 0) + item._count.id;
+        const n = item._count._all ?? item._count.id;
+        dailyData[date] = (dailyData[date] || 0) + n;
       });
 
       return Object.entries(dailyData).map(([date, count]) => ({

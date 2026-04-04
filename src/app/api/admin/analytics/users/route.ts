@@ -44,12 +44,13 @@ export async function GET(req: NextRequest) {
       }),
       prisma.user.groupBy({
         by: ["role"],
-        _count: { id: true },
+        // _all avoids ambiguous "id" when worker join is used (Postgres 42702)
+        _count: { _all: true },
         where: clientUserWhere,
       }),
       prisma.user.groupBy({
         by: ["createdAt"],
-        _count: { id: true },
+        _count: { _all: true },
         where: { ...clientUserWhere, createdAt: { gte: startDate } },
         orderBy: { createdAt: "asc" },
       }),
@@ -81,7 +82,7 @@ export async function GET(req: NextRequest) {
     // Process registration trend
     const registrationTrend = userRegistrationTrend.map(item => ({
       date: item.createdAt.toISOString().split('T')[0],
-      count: item._count.id
+      count: item._count._all,
     }));
 
     // Calculate retention rate (users who logged in within 7 days of registration)
@@ -96,7 +97,7 @@ export async function GET(req: NextRequest) {
 
     // Role distribution
     const roleDistribution = userRoles.reduce((acc, role) => {
-      acc[role.role || "user"] = role._count.id;
+      acc[role.role || "user"] = role._count._all;
       return acc;
     }, {} as Record<string, number>);
 
