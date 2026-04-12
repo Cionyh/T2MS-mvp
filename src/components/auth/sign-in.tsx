@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { signIn } from "@/lib/auth-client";
+import { signIn, getSession } from "@/lib/auth-client";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -70,7 +70,12 @@ export default function SignIn() {
             toast.error(ctx.error.message);
           },
           onSuccess: async () => {
-            router.push("/app");
+            const s = await getSession();
+            if (s?.data?.user?.role === "admin") {
+              router.replace("/admin/dashboard");
+            } else {
+              router.replace("/app");
+            }
           },
         },
       });

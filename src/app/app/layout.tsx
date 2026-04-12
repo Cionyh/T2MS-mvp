@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import ClientDashboardLayout from "./client-layout";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Dashboard | T2MS",
@@ -12,9 +12,14 @@ export const metadata = {
 };
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-const session = await auth.api.getSession({
+  const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-    return <ClientDashboardLayout session={session}>{children}</ClientDashboardLayout>;
+  // Admins must never see the customer app shell — redirect before any /app page renders (avoids flash)
+  if (session?.user?.role === "admin") {
+    redirect("/admin/dashboard");
+  }
+
+  return <ClientDashboardLayout session={session}>{children}</ClientDashboardLayout>;
 }

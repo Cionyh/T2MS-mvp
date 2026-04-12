@@ -1,11 +1,34 @@
 "use client";
 
-import { Check, Zap, Layers, Rocket } from "lucide-react";
+import { Check, ExternalLink, Zap, Layers, Rocket } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-const plans = [
+type PricingPlan = {
+  name: string;
+  planId: string;
+  price: string;
+  description: string;
+  icon: LucideIcon;
+  features: string[];
+  highlight: boolean;
+  powerfulFeatures?: {
+    title: string;
+    subtitle: string;
+    previewUrl: string;
+  };
+};
+
+const plans: PricingPlan[] = [
   {
     name: "Starter Plan",
     planId: "starter",
@@ -45,8 +68,42 @@ const plans = [
     icon: Rocket,
     features: ["Contact us at sales@t2ms.biz"],
     highlight: false,
+    powerfulFeatures: {
+      title: "Powerful Features",
+      subtitle: "Instant updates for you & your team",
+      previewUrl: "https://t2ms.site/features1.html",
+    },
   },
 ];
+
+function FeaturesPreviewDialog({ url }: { url: string }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+        >
+          View features
+          <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+        </button>
+      </DialogTrigger>
+      <DialogContent
+        showCloseButton
+        className="max-w-5xl w-[min(100vw-2rem,56rem)] h-[min(85vh,820px)] gap-0 p-0 sm:max-w-5xl flex flex-col overflow-hidden"
+      >
+        <DialogHeader className="sr-only">
+          <DialogTitle>Powerful Features</DialogTitle>
+        </DialogHeader>
+        <iframe
+          title="Powerful Features"
+          src={url}
+          className="h-full min-h-[50vh] w-full flex-1 border-0 bg-background"
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function PricingSection() {
   return (
@@ -98,6 +155,28 @@ export function PricingSection() {
                   </li>
                 ))}
               </ul>
+
+              {plan.powerfulFeatures ? (
+                <div className="mt-5 pt-5 border-t border-muted-foreground/20 space-y-2">
+                  <h4 className="text-base font-semibold text-foreground">
+                    {plan.powerfulFeatures.title}
+                  </h4>
+                  <p className="text-sm text-muted-foreground leading-snug">
+                    {plan.powerfulFeatures.subtitle}
+                  </p>
+                  <div className="pt-1 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+                    <FeaturesPreviewDialog url={plan.powerfulFeatures.previewUrl} />
+                    <a
+                      href={plan.powerfulFeatures.previewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                    >
+                      Open in new tab
+                    </a>
+                  </div>
+                </div>
+              ) : null}
 
               {isEnterprise ? (
                 <Button
