@@ -109,6 +109,8 @@ SENDGRID_FROM_NAME="T2MS"
 
 **Inbound SMS webhook URL (critical):** In the Twilio Console, set **A message comes in** to the **exact** public URL your app serves — typically **`https://www.text2mysite.com/api/twilio`** (HTTPS, same host as production, no redirect). Do **not** use `http://` or the bare apex (`text2mysite.com`) if your host redirects to `https://www...`: Twilio’s POST can be turned into a redirect response, and you may get HTML (e.g. the marketing homepage) instead of TwiML, so messages are not stored.
 
+**Twilio warning 12200 (invalid XML):** Usually means Twilio received **HTML** (wrong URL / redirect) or a **JSON** error body. The app responds with valid TwiML for `/api/twilio`; use the canonical **`https://www.../api/twilio`** URL in Twilio and redeploy so error paths also return empty `<Response/>` instead of JSON.
+
 #### Stripe
 - **STRIPE_SECRET_KEY**: Your Stripe secret key (starts with `sk_test_` for test mode)
 - **STRIPE_WEBHOOK_SECRET**: Webhook secret from Stripe dashboard
