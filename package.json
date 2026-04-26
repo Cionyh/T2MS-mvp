@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate && next build",
+    "build": "prisma migrate deploy && prisma generate && next build",
     "start": "next start",
     "db:fix-subscription": "prisma db execute --file prisma/fix-subscription-columns.sql --schema prisma/schema.prisma",
     "db:fix-user-profile": "prisma db execute --file prisma/fix-user-profile-columns.sql --schema prisma/schema.prisma",

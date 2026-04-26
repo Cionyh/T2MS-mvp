@@ -181,7 +181,7 @@ The dev server uses Turbopack for faster builds.
 npm run dev          # Start development server with Turbopack
 
 # Production
-npm run build        # Build the application for production
+npm run build        # Runs prisma migrate deploy, prisma generate, then next build
 npm start            # Start production server
 
 # Database
@@ -191,6 +191,18 @@ npx prisma generate  # Generate Prisma Client
 ```
 
 ## Troubleshooting
+
+### Prisma `P2021` — table does not exist (e.g. `affiliate_inbound_sms`)
+
+Production must apply migrations after deploy. The **`npm run build`** script runs **`prisma migrate deploy`** so Railway (and similar) create new tables on each deploy when `DATABASE_URL` is available at build time.
+
+If you deployed before that change or build runs without DB access, run once against production:
+
+```bash
+npx prisma migrate deploy
+```
+
+(use the same `DATABASE_URL` as production, e.g. Railway shell or `railway run npx prisma migrate deploy`).
 
 ### Database Connection Issues
 
