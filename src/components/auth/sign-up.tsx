@@ -76,6 +76,80 @@ const BUSINESS_CATEGORIES = [
   "Mobile Business",
 ] as const;
 
+const COUNTRIES = [
+  "United States",
+  "Canada",
+  "United Kingdom",
+  "Australia",
+  "India",
+  "Pakistan",
+  "Philippines",
+  "United Arab Emirates",
+  "Saudi Arabia",
+  "Germany",
+  "France",
+  "Spain",
+  "Italy",
+  "Netherlands",
+  "Brazil",
+  "Mexico",
+  "South Africa",
+  "Other",
+] as const;
+
+const US_STATES = [
+  "Alabama",
+  "Alaska",
+  "Arizona",
+  "Arkansas",
+  "California",
+  "Colorado",
+  "Connecticut",
+  "Delaware",
+  "Florida",
+  "Georgia",
+  "Hawaii",
+  "Idaho",
+  "Illinois",
+  "Indiana",
+  "Iowa",
+  "Kansas",
+  "Kentucky",
+  "Louisiana",
+  "Maine",
+  "Maryland",
+  "Massachusetts",
+  "Michigan",
+  "Minnesota",
+  "Mississippi",
+  "Missouri",
+  "Montana",
+  "Nebraska",
+  "Nevada",
+  "New Hampshire",
+  "New Jersey",
+  "New Mexico",
+  "New York",
+  "North Carolina",
+  "North Dakota",
+  "Ohio",
+  "Oklahoma",
+  "Oregon",
+  "Pennsylvania",
+  "Rhode Island",
+  "South Carolina",
+  "South Dakota",
+  "Tennessee",
+  "Texas",
+  "Utah",
+  "Vermont",
+  "Virginia",
+  "Washington",
+  "West Virginia",
+  "Wisconsin",
+  "Wyoming",
+] as const;
+
 const signUpSchema = z.object({
   firstName: z.string().min(2, { message: "First name must be at least 2 characters." }),
   lastName: z.string().min(2, { message: "Last name must be at least 2 characters." }),
@@ -123,6 +197,14 @@ export function SignUp() {
       businessCategory: "",
     },
   });
+  const selectedCountry = form.watch("country");
+  const isUSSelected = selectedCountry === "United States";
+
+  useEffect(() => {
+    if (!isUSSelected && form.getValues("state")) {
+      form.setValue("state", "");
+    }
+  }, [isUSSelected, form]);
 
   useEffect(() => {
     const queryRef = normalizeReferralCode(searchParams.get("ref"));
@@ -364,17 +446,27 @@ export function SignUp() {
               <div className="grid gap-2">
                 <FormField
                   control={form.control}
-                  name="state"
+                  name="country"
                   render={({ field }) => (
                     <FormItem>
-                      <Label htmlFor="state">State</Label>
-                      <FormControl>
-                        <Input
-                          id="state"
-                          placeholder="e.g. California"
-                          {...field}
-                        />
-                      </FormControl>
+                      <Label htmlFor="country">Country</Label>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || undefined}
+                      >
+                        <FormControl>
+                          <SelectTrigger id="country">
+                            <SelectValue placeholder="Select country" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {COUNTRIES.map((country) => (
+                            <SelectItem key={country} value={country}>
+                              {country}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -383,17 +475,37 @@ export function SignUp() {
               <div className="grid gap-2">
                 <FormField
                   control={form.control}
-                  name="country"
+                  name="state"
                   render={({ field }) => (
                     <FormItem>
-                      <Label htmlFor="country">Country</Label>
-                      <FormControl>
-                        <Input
-                          id="country"
-                          placeholder="e.g. United States"
-                          {...field}
-                        />
-                      </FormControl>
+                      <Label htmlFor="state">State / Province</Label>
+                      {isUSSelected ? (
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || undefined}
+                        >
+                          <FormControl>
+                            <SelectTrigger id="state">
+                              <SelectValue placeholder="Select state" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {US_STATES.map((state) => (
+                              <SelectItem key={state} value={state}>
+                                {state}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <FormControl>
+                          <Input
+                            id="state"
+                            placeholder="e.g. Ontario"
+                            {...field}
+                          />
+                        </FormControl>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
