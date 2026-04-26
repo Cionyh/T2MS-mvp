@@ -122,10 +122,12 @@ export async function POST(req: NextRequest) {
         return twimlResponse();
       }
       try {
+        const destinationPhone =
+          to?.trim() || matchedInbound?.phone || affiliateConfigured || "";
         await prisma.affiliateInboundSms.create({
           data: {
             fromPhone: from,
-            toPhone: to?.trim() || affiliateConfigured,
+            toPhone: destinationPhone,
             body,
           },
         });

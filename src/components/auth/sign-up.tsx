@@ -478,7 +478,7 @@ export function SignUp() {
                         value={field.value || undefined}
                       >
                         <FormControl>
-                          <SelectTrigger id="country">
+                          <SelectTrigger id="country" className="w-full min-w-0">
                             <SelectValue placeholder="Select country" />
                           </SelectTrigger>
                         </FormControl>
@@ -508,7 +508,7 @@ export function SignUp() {
                           value={field.value || undefined}
                         >
                           <FormControl>
-                            <SelectTrigger id="state">
+                            <SelectTrigger id="state" className="w-full min-w-0">
                               <SelectValue
                                 placeholder={
                                   isCanadaSelected ? "Select province/territory" : "Select state"
@@ -551,7 +551,7 @@ export function SignUp() {
                       value={field.value || undefined}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full min-w-0">
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                       </FormControl>
