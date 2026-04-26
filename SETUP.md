@@ -65,7 +65,7 @@ NEXT_PUBLIC_WIDGET_API_URL="https://www.t2ms.biz"
 TWILIO_ACCOUNT_SID="your-twilio-account-sid"
 TWILIO_AUTH_TOKEN="your-twilio-auth-token"
 TWILIO_PHONE_NUMBER="+1234567890"
-# Optional: inbound affiliate/demo SMS number (E.164). When set, SMS to this number is stored separately and never tied to a client. Point this number’s Messaging webhook to the same URL as production: `https://<your-app>/api/twilio`.
+# Optional: inbound affiliate SMS number (E.164). When set, SMS to this number is stored separately and never tied to a client. Point this number’s Messaging webhook to the same URL as production: `https://<your-app>/api/twilio`.
 TWILIO_AFFILIATE_PHONE_NUMBER="+14244978398"
 TWILIO_VERIFY_SERVICE_SID="your-twilio-verify-service-sid"
 
@@ -104,7 +104,7 @@ SENDGRID_FROM_NAME="T2MS"
 - **TWILIO_ACCOUNT_SID**: Your Twilio Account SID (from Twilio Console)
 - **TWILIO_AUTH_TOKEN**: Your Twilio Auth Token (from Twilio Console)
 - **TWILIO_PHONE_NUMBER**: Your Twilio phone number (format: +1234567890)
-- **TWILIO_AFFILIATE_PHONE_NUMBER** (optional): A second Twilio number used only for affiliate/partner or demo inbound SMS. Must match the number’s E.164 value in Twilio (e.g. `+14244978398`). Configure that number’s **Messaging** webhook URL to the same path as your main line: `{NEXT_PUBLIC_APP_URL}/api/twilio`. Inbound texts to this number are saved to `affiliate_inbound_sms` and shown under **Admin → Affiliate SMS**; they are not routed to customer sites.
+- **TWILIO_AFFILIATE_PHONE_NUMBER** (optional): A second Twilio number used only for affiliate/partner inbound SMS. Must match the number’s E.164 value in Twilio (e.g. `+14244978398`). Configure that number’s **Messaging** webhook URL to the same path as your main line: `{NEXT_PUBLIC_APP_URL}/api/twilio`. Inbound texts to this number are saved to `affiliate_inbound_sms` and shown under **Admin → Affiliate SMS**; they are not routed to customer sites.
 - **TWILIO_VERIFY_SERVICE_SID**: Twilio Verify Service SID (for OTP)
 
 **Inbound SMS webhook URL (critical):** In the Twilio Console, set **A message comes in** to the **exact** public URL your app serves — typically **`https://www.text2mysite.com/api/twilio`** (HTTPS, same host as production, no redirect). Do **not** use `http://` or the bare apex (`text2mysite.com`) if your host redirects to `https://www...`: Twilio’s POST can be turned into a redirect response, and you may get HTML (e.g. the marketing homepage) instead of TwiML, so messages are not stored.

@@ -39,7 +39,7 @@ export default function AdminAffiliateSmsPage() {
   } else if (!data || data.data.length === 0) {
     content = (
       <p className="text-muted-foreground text-sm">
-        No inbound messages to the affiliate / demo number yet.
+        No inbound messages to the affiliate number yet.
       </p>
     );
   } else {
@@ -47,7 +47,7 @@ export default function AdminAffiliateSmsPage() {
       <>
         <Table>
           <TableCaption>
-            Inbound SMS to the affiliate or demo Twilio number only (not customer sites).
+            Inbound SMS to the affiliate Twilio number (not customer sites).
           </TableCaption>
           <TableHeader>
             <TableRow>
@@ -106,10 +106,10 @@ export default function AdminAffiliateSmsPage() {
   return (
     <Card className="mt-6 shadow-md rounded-2xl">
       <CardHeader>
-        <CardTitle>Affiliate / demo SMS</CardTitle>
+        <CardTitle>Affiliate SMS</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Messages received on the dedicated affiliate or demo Twilio number. These are not
-          linked to any client account.
+          Messages received on the dedicated affiliate Twilio number. These are not linked to
+          any client account.
         </p>
       </CardHeader>
       <CardContent>{content}</CardContent>

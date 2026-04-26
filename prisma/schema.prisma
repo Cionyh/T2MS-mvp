@@ -266,7 +266,7 @@ model Message {
   client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 }
 
-// Inbound SMS to the affiliate/demo Twilio number only — not tied to Client or Message.
+// Inbound SMS to the affiliate Twilio number — not tied to Client or Message.
 model AffiliateInboundSms {
   id        String   @id @default(cuid())
   fromPhone String

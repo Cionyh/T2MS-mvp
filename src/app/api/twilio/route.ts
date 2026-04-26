@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     console.log("📨 Parsed SMS To:", to);
     console.log("📨 Parsed SMS Body:", body);
 
-    // Affiliate / demo number: no Twilio client needed; always return valid TwiML (never JSON).
+    // Affiliate number: no Twilio client needed; always return valid TwiML (never JSON).
     const affiliateConfigured = process.env.TWILIO_AFFILIATE_PHONE_NUMBER?.trim();
     const toNorm = normalizePhoneForCompare(to);
     const affiliateNorm = normalizePhoneForCompare(affiliateConfigured);
