@@ -4,6 +4,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/toaster-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/lib/providers/query-provider";
+import { ChatAssistantWidget } from "@/components/chat-assistant-widget";
 import posthog from "@/lib/posthog";
 
 const poppins = Poppins({
@@ -84,6 +85,7 @@ export default function RootLayout({
           <QueryProvider>
             {children}
             <ToastProvider />
+            <ChatAssistantWidget />
           </QueryProvider>
         </ThemeProvider>
       </body>
