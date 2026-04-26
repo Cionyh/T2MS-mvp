@@ -40,6 +40,14 @@ function getWebhookUrl(req: NextRequest): string {
   return `${proto}://${host}${path}`;
 }
 
+/** Normalize for comparison (handles +1, parentheses, spaces). */
+function normalizePhoneForCompare(phone: string | undefined): string | null {
+  if (!phone?.trim()) return null;
+  let d = phone.replace(/\D/g, "");
+  if (d.length === 10) d = `1${d}`;
+  return d;
+}
+
 /** When true, skip the two success SMS after posting (API confirmation + TwiML reply). Set to false to restore. */
 const DISABLE_POST_SUCCESS_REPLY_SMS = true;
 
@@ -107,10 +115,34 @@ export async function POST(req: NextRequest) {
     }
 
     const from = formData.From;
-    const body = formData.Body?.trim();
+    const to = formData.To;
+    const body = formData.Body?.trim() ?? "";
 
     console.log("📨 Parsed SMS From:", from);
+    console.log("📨 Parsed SMS To:", to);
     console.log("📨 Parsed SMS Body:", body);
+
+    const affiliateConfigured = process.env.TWILIO_AFFILIATE_PHONE_NUMBER?.trim();
+    const toNorm = normalizePhoneForCompare(to);
+    const affiliateNorm = normalizePhoneForCompare(affiliateConfigured);
+    if (affiliateConfigured && affiliateNorm && toNorm === affiliateNorm) {
+      if (!from) {
+        console.warn("⚠️ Affiliate inbound: missing From");
+        return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      }
+      await prisma.affiliateInboundSms.create({
+        data: {
+          fromPhone: from,
+          toPhone: to?.trim() || affiliateConfigured,
+          body,
+        },
+      });
+      console.log("📬 Affiliate inbound SMS stored");
+      return new NextResponse(`<Response></Response>`, {
+        status: 200,
+        headers: { "Content-Type": "text/xml" },
+      });
+    }
 
     if (!from || !body) {
       console.warn("⚠️ Missing 'From' or 'Body' field in the form data");

@@ -65,6 +65,8 @@ NEXT_PUBLIC_WIDGET_API_URL="https://www.t2ms.biz"
 TWILIO_ACCOUNT_SID="your-twilio-account-sid"
 TWILIO_AUTH_TOKEN="your-twilio-auth-token"
 TWILIO_PHONE_NUMBER="+1234567890"
+# Optional: inbound affiliate/demo SMS number (E.164). When set, SMS to this number is stored separately and never tied to a client. Point this number’s Messaging webhook to the same URL as production: `https://<your-app>/api/twilio`.
+TWILIO_AFFILIATE_PHONE_NUMBER="+14244978398"
 TWILIO_VERIFY_SERVICE_SID="your-twilio-verify-service-sid"
 
 # Stripe Configuration
@@ -102,6 +104,7 @@ SENDGRID_FROM_NAME="T2MS"
 - **TWILIO_ACCOUNT_SID**: Your Twilio Account SID (from Twilio Console)
 - **TWILIO_AUTH_TOKEN**: Your Twilio Auth Token (from Twilio Console)
 - **TWILIO_PHONE_NUMBER**: Your Twilio phone number (format: +1234567890)
+- **TWILIO_AFFILIATE_PHONE_NUMBER** (optional): A second Twilio number used only for affiliate/partner or demo inbound SMS. Must match the number’s E.164 value in Twilio (e.g. `+14244978398`). Configure that number’s **Messaging** webhook URL to the same path as your main line: `{NEXT_PUBLIC_APP_URL}/api/twilio`. Inbound texts to this number are saved to `affiliate_inbound_sms` and shown under **Admin → Affiliate SMS**; they are not routed to customer sites.
 - **TWILIO_VERIFY_SERVICE_SID**: Twilio Verify Service SID (for OTP)
 
 #### Stripe
