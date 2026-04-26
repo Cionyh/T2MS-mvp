@@ -278,6 +278,21 @@ model AffiliateInboundSms {
   @@map("affiliate_inbound_sms")
 }
 
+// Admin-managed Twilio destination numbers used by /api/twilio routing.
+model InboundTwilioNumber {
+  id              String   @id @default(cuid())
+  phone           String
+  normalizedPhone String   @unique
+  label           String?
+  purpose         String   @default("MAIN") // MAIN | AFFILIATE
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("inbound_twilio_number")
+}
+
 model Subscription {
   id                   String    @id
   plan                 String

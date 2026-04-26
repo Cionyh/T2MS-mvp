@@ -61,6 +61,14 @@ function normalizePhoneForCompare(phone: string | undefined): string | null {
   return d;
 }
 
+type InboundTwilioNumberRow = {
+  id: string;
+  phone: string;
+  normalizedPhone: string;
+  purpose: string;
+  isActive: boolean;
+};
+
 /** When true, skip the two success SMS after posting (API confirmation + TwiML reply). Set to false to restore. */
 const DISABLE_POST_SUCCESS_REPLY_SMS = true;
 
@@ -84,11 +92,31 @@ export async function POST(req: NextRequest) {
     console.log("📨 Parsed SMS To:", to);
     console.log("📨 Parsed SMS Body:", body);
 
-    // Affiliate number: no Twilio client needed; always return valid TwiML (never JSON).
-    const affiliateConfigured = process.env.TWILIO_AFFILIATE_PHONE_NUMBER?.trim();
     const toNorm = normalizePhoneForCompare(to);
+    const managedInbound = await prisma.$queryRaw<InboundTwilioNumberRow[]>`
+      SELECT id, phone, "normalizedPhone", purpose, "isActive"
+      FROM "inbound_twilio_number"
+      WHERE "isActive" = true
+    `;
+    const matchedInbound = toNorm
+      ? managedInbound.find((n: InboundTwilioNumberRow) => n.normalizedPhone === toNorm)
+      : undefined;
+
+    // Backward-compatible fallback to env variable while admins migrate to DB-managed numbers.
+    const affiliateConfigured = process.env.TWILIO_AFFILIATE_PHONE_NUMBER?.trim();
     const affiliateNorm = normalizePhoneForCompare(affiliateConfigured);
-    if (affiliateConfigured && affiliateNorm && toNorm === affiliateNorm) {
+    const isAffiliateDestination =
+      matchedInbound?.purpose === "AFFILIATE" ||
+      Boolean(affiliateConfigured && affiliateNorm && toNorm === affiliateNorm);
+
+    // If DB-managed numbers exist, ignore inbound traffic to unknown "To" numbers.
+    if (managedInbound.length > 0 && !matchedInbound) {
+      console.warn("⚠️ Inbound SMS to unconfigured destination number", { to, toNorm });
+      return twimlResponse();
+    }
+
+    // Affiliate number: no Twilio client needed; always return valid TwiML (never JSON).
+    if (isAffiliateDestination) {
       if (!from) {
         console.warn("⚠️ Affiliate inbound: missing From");
         return twimlResponse();
