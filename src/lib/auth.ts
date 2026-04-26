@@ -151,7 +151,14 @@ export const auth = betterAuth({
 				first_name: firstName,
 				reset_link: url,
 			});
-			void sendEmail({ to: user.email, subject, html, text });
+			try {
+				await sendEmail({ to: user.email, subject, html, text });
+			} catch (error) {
+				console.error("[Auth] Password reset email failed", {
+					email: user.email,
+					error: error instanceof Error ? error.message : String(error),
+				});
+			}
 		},
 	},
 
