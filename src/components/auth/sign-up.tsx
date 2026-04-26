@@ -150,6 +150,22 @@ const US_STATES = [
   "Wyoming",
 ] as const;
 
+const CANADA_PROVINCES_AND_TERRITORIES = [
+  "Alberta",
+  "British Columbia",
+  "Manitoba",
+  "New Brunswick",
+  "Newfoundland and Labrador",
+  "Northwest Territories",
+  "Nova Scotia",
+  "Nunavut",
+  "Ontario",
+  "Prince Edward Island",
+  "Quebec",
+  "Saskatchewan",
+  "Yukon",
+] as const;
+
 const signUpSchema = z.object({
   firstName: z.string().min(2, { message: "First name must be at least 2 characters." }),
   lastName: z.string().min(2, { message: "Last name must be at least 2 characters." }),
@@ -199,12 +215,19 @@ export function SignUp() {
   });
   const selectedCountry = form.watch("country");
   const isUSSelected = selectedCountry === "United States";
+  const isCanadaSelected = selectedCountry === "Canada";
+  const useRegionDropdown = isUSSelected || isCanadaSelected;
+  const regionOptions = isUSSelected
+    ? US_STATES
+    : isCanadaSelected
+      ? CANADA_PROVINCES_AND_TERRITORIES
+      : [];
 
   useEffect(() => {
-    if (!isUSSelected && form.getValues("state")) {
+    if (!useRegionDropdown && form.getValues("state")) {
       form.setValue("state", "");
     }
-  }, [isUSSelected, form]);
+  }, [useRegionDropdown, form]);
 
   useEffect(() => {
     const queryRef = normalizeReferralCode(searchParams.get("ref"));
@@ -479,20 +502,24 @@ export function SignUp() {
                   render={({ field }) => (
                     <FormItem>
                       <Label htmlFor="state">State / Province</Label>
-                      {isUSSelected ? (
+                      {useRegionDropdown ? (
                         <Select
                           onValueChange={field.onChange}
                           value={field.value || undefined}
                         >
                           <FormControl>
                             <SelectTrigger id="state">
-                              <SelectValue placeholder="Select state" />
+                              <SelectValue
+                                placeholder={
+                                  isCanadaSelected ? "Select province/territory" : "Select state"
+                                }
+                              />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {US_STATES.map((state) => (
-                              <SelectItem key={state} value={state}>
-                                {state}
+                            {regionOptions.map((region) => (
+                              <SelectItem key={region} value={region}>
+                                {region}
                               </SelectItem>
                             ))}
                           </SelectContent>
