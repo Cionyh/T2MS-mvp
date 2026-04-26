@@ -48,13 +48,28 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
       messageId: response?.headers?.["x-message-id"],
     });
   } catch (err: unknown) {
-    const error = err as { response?: { body?: unknown; statusCode?: number } };
+    const e = err as {
+      code?: number;
+      response?: { body?: unknown; statusCode?: number };
+    };
+    const statusCode =
+      e.response?.statusCode ?? (typeof e.code === "number" ? e.code : undefined);
+    let bodyForLog: unknown = e.response?.body;
+    try {
+      if (bodyForLog !== undefined && typeof bodyForLog !== "string") {
+        bodyForLog = JSON.stringify(bodyForLog);
+      }
+    } catch {
+      /* keep raw body */
+    }
+    const keyPrefix = apiKey.slice(0, 3);
     console.error("[SendGrid] Email send failed", {
       to: options.to,
       subject: options.subject,
-      statusCode: error.response?.statusCode,
-      body: error.response?.body,
+      statusCode,
+      body: bodyForLog,
       error: err instanceof Error ? err.message : String(err),
+      keyLooksLikeSendGrid: keyPrefix === "SG.",
     });
     throw err;
   }
