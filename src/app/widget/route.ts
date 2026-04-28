@@ -51,6 +51,9 @@ export async function GET() {
       // Track last message state to detect changes
       let lastMessageContent = null;
       let lastPinnedState = null;
+      let lastMessageType = null;
+      let lastRenderKey = null;
+      let dismissTimeoutId = null;
       
       // Race condition protection: prevent concurrent fetches
       let isFetching = false;
@@ -66,7 +69,22 @@ export async function GET() {
 
     
 
+      function clearDismissTimer() {
+        if (dismissTimeoutId) {
+          clearTimeout(dismissTimeoutId);
+          dismissTimeoutId = null;
+        }
+      }
+
+      function scheduleDismiss(type, dismissAfter) {
+        clearDismissTimer();
+        if (type !== "ticker" && dismissAfter && type !== "fullscreen" && type !== "modal") {
+          dismissTimeoutId = setTimeout(() => removeWidget(), dismissAfter);
+        }
+      }
+
       function removeWidget() {
+        clearDismissTimer();
         const existing = document.getElementById(WIDGET_ID);
         if (existing) existing.remove();
         const overlay = document.getElementById(WIDGET_ID + "-overlay");
@@ -84,6 +102,18 @@ export async function GET() {
         
         // Reset widget shown flag when widget is removed
         window.__T2MS_WIDGET_SHOWN__ = false;
+      }
+
+      function updateWidgetInPlace({ content, type, dismissAfter }) {
+        const existing = document.getElementById(WIDGET_ID);
+        if (!existing) return false;
+
+        const contentDiv = existing.querySelector(".t2ms-content");
+        if (!contentDiv) return false;
+
+        contentDiv.textContent = content || "";
+        scheduleDismiss(type, dismissAfter);
+        return true;
       }
 
       // Retry mechanism with exponential backoff
@@ -169,22 +199,56 @@ export async function GET() {
               removeWidget();
               lastPinnedState = false;
               lastMessageContent = null;
+              lastMessageType = null;
+              lastRenderKey = null;
             }
             return;
           }
 
+          const renderKey = [
+            type || "",
+            bgColor || "",
+            textColor || "",
+            font || "",
+            dismissAfter || 0,
+            JSON.stringify(widgetConfig || {}),
+          ].join("|");
+
           // Check if message content or pinned state changed
           const contentChanged = content !== lastMessageContent;
           const pinnedStateChanged = pinned !== lastPinnedState;
+          const appearanceChanged = renderKey !== lastRenderKey;
+
+          // Update existing widget in place to prevent flicker when only message text changes.
+          if (
+            content &&
+            contentChanged &&
+            window.__T2MS_WIDGET_SHOWN__ &&
+            !pinnedStateChanged &&
+            !appearanceChanged &&
+            type === lastMessageType
+          ) {
+            const updated = updateWidgetInPlace({ content, type, dismissAfter });
+            if (updated) {
+              lastMessageContent = content;
+              lastPinnedState = pinned;
+              return;
+            }
+          }
           
           // Update tracked state
           lastMessageContent = content;
           lastPinnedState = pinned;
+          lastMessageType = type;
+          lastRenderKey = renderKey;
 
           // Render if:
           // 1. Content exists
           // 2. Either content changed OR pinned state changed OR widget not shown yet
-          if (content && (contentChanged || pinnedStateChanged || !window.__T2MS_WIDGET_SHOWN__)) {
+          if (
+            content &&
+            (contentChanged || pinnedStateChanged || appearanceChanged || !window.__T2MS_WIDGET_SHOWN__)
+          ) {
             // Reset flag to allow re-rendering
             window.__T2MS_WIDGET_SHOWN__ = false;
             renderMessage({ content, type, bgColor, textColor, font, dismissAfter, widgetConfig });
@@ -858,9 +922,7 @@ export async function GET() {
       wrapper.appendChild(linkContainer);
     }
 
-    if (type !== "ticker" && dismissAfter && type !== "fullscreen" && type !== "modal") {
-  setTimeout(() => removeWidget(), dismissAfter);
-}
+    scheduleDismiss(type, dismissAfter);
 
     // Add mobile responsive styles
     if (!document.getElementById('t2ms-mobile-styles')) {
