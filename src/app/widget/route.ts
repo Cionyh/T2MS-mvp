@@ -83,7 +83,7 @@ export async function GET() {
         }
       }
 
-      function removeWidget() {
+      function removeWidget(keepShownFlag = false) {
         clearDismissTimer();
         const existing = document.getElementById(WIDGET_ID);
         if (existing) existing.remove();
@@ -100,8 +100,11 @@ export async function GET() {
           window.__t2msEscHandler__ = null;
         }
         
-        // Reset widget shown flag when widget is removed
-        window.__T2MS_WIDGET_SHOWN__ = false;
+        // Reset widget shown flag when widget is removed, unless this is
+        // an internal teardown immediately followed by a re-render.
+        if (!keepShownFlag) {
+          window.__T2MS_WIDGET_SHOWN__ = false;
+        }
       }
 
       function updateWidgetInPlace({ content, type, dismissAfter }) {
@@ -322,7 +325,7 @@ export async function GET() {
           return;
         }
 
-        removeWidget();
+        removeWidget(true);
 
     // Uploaded assets may be stored as root-relative paths (/api/uploads/...). On external sites
     // those would wrongly resolve to the host page origin — always anchor to data-api (API_BASE).
