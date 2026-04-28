@@ -56,7 +56,7 @@ export async function PUT(
       ...(defaultBgColor && { defaultBgColor }),
       ...(defaultTextColor && { defaultTextColor }),
       ...(defaultFont && { defaultFont }),
-      ...(defaultDismissAfter && { defaultDismissAfter }),
+      ...(defaultDismissAfter !== undefined && { defaultDismissAfter }),
       ...(pinned !== undefined && { pinned }),
       ...(widgetConfig !== undefined && { widgetConfig }),
     };

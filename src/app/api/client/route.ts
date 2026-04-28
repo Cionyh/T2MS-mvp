@@ -165,7 +165,7 @@ export async function POST(req: Request) {
         defaultBgColor: "#222",
         defaultTextColor: "#fff",
         defaultFont: "sans-serif",
-        defaultDismissAfter: 5000,
+        defaultDismissAfter: 0,
         pinned: false,
       },
     });

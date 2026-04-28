@@ -71,6 +71,7 @@ import { EmbedDialog } from "./embed-dialog";
 import { IframeDialog } from "./iframe-dialog";
 import { InstallationGuideDialog } from "./installation-guide-dialog"; 
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Info } from "lucide-react";
 import { PhoneNumberManagement } from "./phone-number-management";
 import { Badge } from "@/components/ui/badge";
@@ -153,6 +154,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [editedDefaultTextColor, setEditedDefaultTextColor] = useState("#fff");
   const [editedDefaultFont, setEditedDefaultFont] = useState("sans-serif");
   const [editedDefaultDismissAfter, setEditedDefaultDismissAfter] = useState<number>(5000);
+  const [useDismissAfter, setUseDismissAfter] = useState(false);
 
   // Widget configuration state
   const [logoUrl, setLogoUrl] = useState("");
@@ -240,7 +242,9 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     setEditedDefaultFont(
       FONT_OPTIONS.some((f) => f.value === savedFont) ? savedFont : FONT_OPTIONS[0].value
     );
-    setEditedDefaultDismissAfter(website.defaultDismissAfter ?? 5000);
+    const savedDismissAfter = website.defaultDismissAfter ?? 0;
+    setEditedDefaultDismissAfter(savedDismissAfter > 0 ? savedDismissAfter : 5000);
+    setUseDismissAfter(savedDismissAfter > 0);
     
     // Load widget configuration from JSON
     const widgetConfig = (website as any).widgetConfig || {};
@@ -336,6 +340,10 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         iframeHeight,
       };
 
+      const dismissAfterToSave = useDismissAfter
+        ? Math.max(1, Number(editedDefaultDismissAfter) || 5000)
+        : 0;
+
       const res = await fetch(`/api/client/${websiteId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -347,7 +355,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           defaultBgColor: editedDefaultBgColor,
           defaultTextColor: editedDefaultTextColor,
           defaultFont: editedDefaultFont,
-          defaultDismissAfter: editedDefaultDismissAfter,
+          defaultDismissAfter: dismissAfterToSave,
           widgetConfig,
         }),
       });
@@ -373,7 +381,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 defaultBgColor: editedDefaultBgColor,
                 defaultTextColor: editedDefaultTextColor,
                 defaultFont: editedDefaultFont,
-                defaultDismissAfter: editedDefaultDismissAfter,
+                defaultDismissAfter: dismissAfterToSave,
                 widgetConfig: widgetConfig,
               }
             : site
@@ -1091,6 +1099,22 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             {/* Dismiss After - Only for Banner and Popup Widgets */}
             {(editedDefaultType === "banner" || editedDefaultType === "popup") && (
               <div>
+                <div className="mb-3 flex items-center gap-2">
+                  <Checkbox
+                    id="enable-dismiss-after"
+                    checked={useDismissAfter}
+                    onCheckedChange={(checked) => {
+                      const enabled = checked === true;
+                      setUseDismissAfter(enabled);
+                      if (enabled && (!editedDefaultDismissAfter || editedDefaultDismissAfter <= 0)) {
+                        setEditedDefaultDismissAfter(5000);
+                      }
+                    }}
+                  />
+                  <Label htmlFor="enable-dismiss-after" className="text-sm font-medium">
+                    Enable auto dismiss
+                  </Label>
+                </div>
                 <Label className="mb-2 text-sm font-medium">Dismiss After (ms)</Label>
                 <Input
                   type="number"
@@ -1098,6 +1122,8 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                   onChange={(e) => setEditedDefaultDismissAfter(Number(e.target.value))}
                   placeholder="5000"
                   className="w-full"
+                  disabled={!useDismissAfter}
+                  min={1}
                 />
                 <div className="mt-2 p-3 bg-muted/50 rounded-lg border">
                   <p className="text-xs text-muted-foreground">
