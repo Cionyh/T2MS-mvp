@@ -101,6 +101,28 @@ export async function POST(req: NextRequest) {
     const matchedInbound = toNorm
       ? managedInbound.find((n: InboundTwilioNumberRow) => n.normalizedPhone === toNorm)
       : undefined;
+    console.log("📥 Inbound routing debug", {
+      fromRaw: from,
+      toRaw: to,
+      fromNorm: normalizePhoneForCompare(from),
+      toNorm,
+      managedInboundCount: managedInbound.length,
+      managedInbound: managedInbound.map((n: InboundTwilioNumberRow) => ({
+        id: n.id,
+        phone: n.phone,
+        normalizedPhone: n.normalizedPhone,
+        purpose: n.purpose,
+        isActive: n.isActive,
+      })),
+      matchedInbound: matchedInbound
+        ? {
+            id: matchedInbound.id,
+            phone: matchedInbound.phone,
+            normalizedPhone: matchedInbound.normalizedPhone,
+            purpose: matchedInbound.purpose,
+          }
+        : null,
+    });
 
     // Backward-compatible fallback to env variable while admins migrate to DB-managed numbers.
     const affiliateConfigured = process.env.TWILIO_AFFILIATE_PHONE_NUMBER?.trim();
@@ -206,9 +228,21 @@ export async function POST(req: NextRequest) {
       content = content.substring(6).trim();
     }
 
+    console.log("📤 Sender verification lookup", {
+      from,
+      normalizedFrom: normalizePhoneForCompare(from),
+    });
     const phoneNumbers = await prisma.phoneNumber.findMany({
       where: { phone: from, verified: true },
       include: { client: true },
+    });
+    console.log("📤 Sender verification result", {
+      from,
+      matches: phoneNumbers.length,
+      matchedClientIds: phoneNumbers.map((pn: (typeof phoneNumbers)[number]) => pn.clientId),
+      matchedKeywords: phoneNumbers.map(
+        (pn: (typeof phoneNumbers)[number]) => pn.client?.keyword ?? null
+      ),
     });
 
     if (phoneNumbers.length === 0) {
@@ -262,6 +296,17 @@ export async function POST(req: NextRequest) {
       console.warn("❌ Client has no organization:", client.id);
       return twimlResponse();
     }
+
+    console.log("🧭 Final routing decision", {
+      to,
+      toNorm,
+      from,
+      requireKeyword,
+      parsedKeyword,
+      selectedClientId: client.id,
+      selectedClientKeyword: client.keyword ?? null,
+      messageType: type,
+    });
 
     console.log("📝 Saving message:", {
       content,
