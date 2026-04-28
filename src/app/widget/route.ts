@@ -239,22 +239,6 @@ export async function GET() {
           const contentChanged = content !== lastMessageContent;
           const pinnedStateChanged = pinned !== lastPinnedState;
           const appearanceChanged = renderKey !== lastRenderKey;
-          console.log("T2MS poll decision", {
-            content,
-            type,
-            pinned,
-            dismissAfter,
-            widgetShown: window.__T2MS_WIDGET_SHOWN__,
-            contentChanged,
-            pinnedStateChanged,
-            appearanceChanged,
-            prev: {
-              lastMessageContent,
-              lastPinnedState,
-              lastMessageType,
-              hasLastRenderKey: Boolean(lastRenderKey),
-            },
-          });
 
           // Update existing widget in place to prevent flicker when only message text changes.
           if (
@@ -266,15 +250,9 @@ export async function GET() {
             type === lastMessageType
           ) {
             const updated = updateWidgetInPlace({ content, type, dismissAfter });
-            console.log("T2MS in-place update attempt", {
-              updated,
-              reason:
-                "content changed while pinned/type/appearance remained stable",
-            });
             if (updated) {
               lastMessageContent = content;
               lastPinnedState = pinned;
-              console.log("T2MS in-place update applied");
               return;
             }
           }
@@ -292,21 +270,9 @@ export async function GET() {
             content &&
             (contentChanged || pinnedStateChanged || appearanceChanged || !window.__T2MS_WIDGET_SHOWN__)
           ) {
-            const renderReason = [];
-            if (contentChanged) renderReason.push("contentChanged");
-            if (pinnedStateChanged) renderReason.push("pinnedStateChanged");
-            if (appearanceChanged) renderReason.push("appearanceChanged");
-            if (!window.__T2MS_WIDGET_SHOWN__) renderReason.push("widgetNotShown");
-            console.log("T2MS full render triggered", {
-              renderReason,
-              type,
-              content,
-            });
             // Reset flag to allow re-rendering
             window.__T2MS_WIDGET_SHOWN__ = false;
             renderMessage({ content, type, bgColor, textColor, font, dismissAfter, widgetConfig });
-          } else {
-            console.log("T2MS no render needed this poll");
           }
         } catch (err) {
           console.error("T2MS widget fetch error:", err);

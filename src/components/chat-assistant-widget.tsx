@@ -8,13 +8,9 @@ const CHAT_URL =
   "https://chatassistant.base44.app";
 
 const HIDDEN_PREFIXES = [
-  "/app",
   "/admin",
   "/worker",
   "/accept-invitation",
-  "/sign-in",
-  "/forgot-password",
-  "/reset-password",
   "/onboarding",
 ] as const;
 
