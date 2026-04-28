@@ -116,6 +116,24 @@ export async function GET() {
         return true;
       }
 
+      function stableSerialize(value) {
+        try {
+          if (value === null || typeof value !== "object") {
+            return JSON.stringify(value);
+          }
+          if (Array.isArray(value)) {
+            return "[" + value.map((item) => stableSerialize(item)).join(",") + "]";
+          }
+          var keys = Object.keys(value).sort();
+          var parts = keys.map((key) => {
+            return JSON.stringify(key) + ":" + stableSerialize(value[key]);
+          });
+          return "{" + parts.join(",") + "}";
+        } catch (err) {
+          return "";
+        }
+      }
+
       // Retry mechanism with exponential backoff
       async function fetchMessageWithRetry(maxRetries = 3, retryDelay = 1000) {
         for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -211,7 +229,7 @@ export async function GET() {
             textColor || "",
             font || "",
             dismissAfter || 0,
-            JSON.stringify(widgetConfig || {}),
+            stableSerialize(widgetConfig || {}),
           ].join("|");
 
           // Check if message content or pinned state changed
