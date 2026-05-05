@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = session.user.id;
 
     const body = await req.json();
     const { clientId, smsConsentConfirmed } = body as {
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const access = await verifyOrganizationAccess(session.user.id, client.organizationId);
+    const access = await verifyOrganizationAccess(userId, client.organizationId);
     if (!access.hasAccess) {
       return NextResponse.json({ error: "You do not have access to this site" }, { status: 403 });
     }
@@ -63,12 +64,12 @@ export async function POST(req: NextRequest) {
     async function touchCustomerConsent() {
       const now = new Date();
       let customer = await prisma.customer.findUnique({
-        where: { userId: session.user.id },
+        where: { userId },
       });
       if (!customer) {
         customer = await prisma.customer.create({
           data: {
-            userId: session.user.id,
+            userId,
             smsConsentConfirmedAt: now,
             onboardingCompletedAt: now,
           },
