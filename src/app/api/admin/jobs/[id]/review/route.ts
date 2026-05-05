@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { INSTALL_JOB_STATUS, isValidStatusTransition } from "@/lib/job-status";
+import { sendWidgetLiveEmailForJob } from "@/lib/widget-live-notify";
 
 interface Params {
   id: string;
@@ -114,6 +115,12 @@ export async function POST(
         where: { id: updatedJob.clientId },
         data: { pinned: true },
       }).catch((err) => console.error("[ADMIN_JOBS_REVIEW] Auto-publish site failed:", err));
+    }
+
+    if (action === "approve") {
+      sendWidgetLiveEmailForJob(params.id).catch((err: unknown) =>
+        console.error("[ADMIN_JOBS_REVIEW] Widget Live email failed:", err)
+      );
     }
 
     if (action === "approve" && updatedJob.assignedWorkerId) {
