@@ -13,6 +13,8 @@ import { verifyOrganizationAccess } from "@/lib/organization-helpers";
  * Requires a clientId (existing site) and SMS consent.
  *
  * If an active (non-terminal) job already exists for the site, returns that jobId instead.
+ * Exception: auto-created placeholder jobs (platform "To be confirmed", QUEUED) are upgraded
+ * in place on first submit instead of returning reused.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -56,7 +58,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "You do not have access to this site" }, { status: 403 });
     }
 
-    // Reuse active job if one already exists for this site
+    const baseUrl = client.domain.startsWith("http") ? client.domain : `https://${client.domain}`;
+
+    async function touchCustomerConsent() {
+      const now = new Date();
+      let customer = await prisma.customer.findUnique({
+        where: { userId: session.user.id },
+      });
+      if (!customer) {
+        customer = await prisma.customer.create({
+          data: {
+            userId: session.user.id,
+            smsConsentConfirmedAt: now,
+            onboardingCompletedAt: now,
+          },
+        });
+      } else {
+        await prisma.customer.update({
+          where: { id: customer.id },
+          data: {
+            smsConsentConfirmedAt: now,
+            onboardingCompletedAt: customer.onboardingCompletedAt ?? now,
+          },
+        });
+      }
+      return customer;
+    }
+
+    /** Auto-created when registering a site; should be upgraded on first real submit, not treated as duplicate. */
+    const PLACEHOLDER_PLATFORM = "To be confirmed";
+
+    // Reuse active job if one already exists for this site (except placeholder QUEUED jobs)
     const existingActive = await prisma.installJob.findFirst({
       where: {
         clientId,
@@ -65,35 +97,36 @@ export async function POST(req: NextRequest) {
         },
       },
       orderBy: { createdAt: "desc" },
-      select: { id: true },
+      select: { id: true, platform: true, status: true },
     });
-    if (existingActive?.id) {
+
+    if (existingActive) {
+      const isPlaceholder =
+        existingActive.status === INSTALL_JOB_STATUS.QUEUED &&
+        existingActive.platform === PLACEHOLDER_PLATFORM;
+
+      if (isPlaceholder) {
+        const customer = await touchCustomerConsent();
+        await prisma.installJob.update({
+          where: { id: existingActive.id },
+          data: {
+            customerId: customer.id,
+            platform: "Customer will invite",
+            installType: INSTALL_TYPE.SCRIPT,
+            websiteUrls: [baseUrl],
+            preferredPlacement: null,
+            accessMethod: ACCESS_METHOD.INSTRUCTIONS_ONLY,
+            accessCredentials: JSON.stringify({}),
+            notes: null,
+          },
+        });
+        return NextResponse.json({ jobId: existingActive.id, reused: false });
+      }
+
       return NextResponse.json({ jobId: existingActive.id, reused: true });
     }
 
-    const now = new Date();
-    let customer = await prisma.customer.findUnique({
-      where: { userId: session.user.id },
-    });
-    if (!customer) {
-      customer = await prisma.customer.create({
-        data: {
-          userId: session.user.id,
-          smsConsentConfirmedAt: now,
-          onboardingCompletedAt: now,
-        },
-      });
-    } else {
-      await prisma.customer.update({
-        where: { id: customer.id },
-        data: {
-          smsConsentConfirmedAt: now,
-          onboardingCompletedAt: customer.onboardingCompletedAt ?? now,
-        },
-      });
-    }
-
-    const baseUrl = client.domain.startsWith("http") ? client.domain : `https://${client.domain}`;
+    const customer = await touchCustomerConsent();
     const job = await prisma.installJob.create({
       data: {
         customerId: customer.id,

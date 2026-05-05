@@ -25,8 +25,11 @@ export async function DELETE(
   if (!adminId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   try {
-    const client = await prisma.client.delete({
-      where: { id: params.id },
+    const client = await prisma.$transaction(async (tx) => {
+      await tx.installJob.deleteMany({ where: { clientId: params.id } });
+      return tx.client.delete({
+        where: { id: params.id },
+      });
     });
     return NextResponse.json({ success: true, client });
   } catch (error) {

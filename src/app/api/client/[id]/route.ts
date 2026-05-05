@@ -129,8 +129,9 @@ export async function DELETE(
       );
     }
 
-    await prisma.client.delete({
-      where: { id },
+    await prisma.$transaction(async (tx) => {
+      await tx.installJob.deleteMany({ where: { clientId: id } });
+      await tx.client.delete({ where: { id } });
     });
 
     return NextResponse.json({
