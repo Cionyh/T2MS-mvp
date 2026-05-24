@@ -1,7 +1,7 @@
 // app/components/IframeDialog.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,9 +14,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
-
+import { getEmbedApiBase } from "@/lib/embed-base-url";
+import { IFRAME_EMBED_PRESETS } from "@/lib/widget-iframe-presets";
 
 interface IframeDialogProps {
   open: boolean;
@@ -29,24 +37,38 @@ interface IframeDialogProps {
 }
 
 export function IframeDialog({ open, onOpenChange, clientId, widgetConfig }: IframeDialogProps) {
-  const apiBase = "https://www.t2ms.biz";
+  const [apiBase, setApiBase] = useState("https://www.t2ms.biz");
   const [activeTab, setActiveTab] = useState("iframe");
-  const iframeWidth = widgetConfig?.iframeWidth || "100%";
-  const iframeHeight = widgetConfig?.iframeHeight || "400";
-  
+  const [presetId, setPresetId] = useState("general");
+
+  useEffect(() => {
+    if (open) {
+      setApiBase(getEmbedApiBase());
+    }
+  }, [open]);
+
+  const preset = useMemo(
+    () => IFRAME_EMBED_PRESETS.find((p) => p.id === presetId) ?? IFRAME_EMBED_PRESETS[3],
+    [presetId]
+  );
+
+  const iframeWidth = widgetConfig?.iframeWidth || preset.width;
+  const iframeHeight = widgetConfig?.iframeHeight || preset.height;
+
   const iframeEmbedCode = `<iframe
-  src="${apiBase}/widget/iframe?clientId=${clientId || ''}"
+  src="${apiBase}/widget/iframe?clientId=${clientId || ""}"
   width="${iframeWidth}"
   height="${iframeHeight}"
+  style="border:0;width:${iframeWidth};min-height:80px;max-width:100%;display:block;"
   frameborder="0"
-  scrolling="no"
+  scrolling="auto"
   allowtransparency="true"
+  title="T2MS Announcements"
 ></iframe>`.trim();
 
-  const iframeScriptEmbedCode = `
-<script
+  const iframeScriptEmbedCode = `<script
   src="${apiBase}/widget/iframe-script"
-  data-client-id="${clientId || ''}"
+  data-client-id="${clientId || ""}"
   data-api="${apiBase}"
   defer
 ></script>`.trim();
@@ -71,11 +93,11 @@ export function IframeDialog({ open, onOpenChange, clientId, widgetConfig }: Ifr
   const getTabDescription = () => {
     switch (activeTab) {
       case "iframe":
-        return "Direct iframe embed. Best for restricted platforms like Google Sites, Wix, Squarespace, etc. Adjust the height style as needed.";
+        return `Direct iframe embed. ${preset.note}`;
       case "iframe-script":
         return "Script that injects an iframe. Good for platforms that allow scripts but not direct iframe tags.";
       default:
-        return "Copy and paste this code for Google Sites or platforms that restrict JavaScript.";
+        return preset.note;
     }
   };
 
@@ -89,10 +111,25 @@ export function IframeDialog({ open, onOpenChange, clientId, widgetConfig }: Ifr
       >
         <DialogHeader>
           <DialogTitle>Embed iFrame</DialogTitle>
-          <DialogDescription>
-            {getTabDescription()}
-          </DialogDescription>
+          <DialogDescription>{getTabDescription()}</DialogDescription>
         </DialogHeader>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Platform preset</label>
+          <Select value={presetId} onValueChange={setPresetId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Choose platform" />
+            </SelectTrigger>
+            <SelectContent>
+              {IFRAME_EMBED_PRESETS.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.label} — {p.height}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">{preset.note}</p>
+        </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -102,15 +139,12 @@ export function IframeDialog({ open, onOpenChange, clientId, widgetConfig }: Ifr
 
           <TabsContent value="iframe" className="space-y-4 py-4">
             <div>
-              <label className="text-sm font-medium">iFrame Embed Code</label>
-              <p className="text-xs text-muted-foreground mt-1 mb-2">
-                Direct iframe tag. Best for restricted platforms like Google Sites, Wix, Squarespace, etc.
-              </p>
+              <label className="text-sm font-medium">iFrame embed code</label>
               <Textarea
                 value={iframeEmbedCode}
                 readOnly
-                rows={6}
-                className="font-mono text-sm leading-tight mt-1 bg-background"
+                rows={8}
+                className="font-mono text-sm leading-tight mt-2 bg-background"
                 onClick={(e) => (e.target as HTMLTextAreaElement).select()}
               />
             </div>
@@ -118,15 +152,12 @@ export function IframeDialog({ open, onOpenChange, clientId, widgetConfig }: Ifr
 
           <TabsContent value="iframe-script" className="space-y-4 py-4">
             <div>
-              <label className="text-sm font-medium">iFrame Script Embed Code</label>
-              <p className="text-xs text-muted-foreground mt-1 mb-2">
-                Script that dynamically injects an iframe. Useful when platforms allow scripts but not direct iframe tags.
-              </p>
+              <label className="text-sm font-medium">iFrame script embed code</label>
               <Textarea
                 value={iframeScriptEmbedCode}
                 readOnly
-                rows={4}
-                className="font-mono text-sm leading-tight mt-1 bg-background"
+                rows={5}
+                className="font-mono text-sm leading-tight mt-2 bg-background"
                 onClick={(e) => (e.target as HTMLTextAreaElement).select()}
               />
             </div>
@@ -134,7 +165,7 @@ export function IframeDialog({ open, onOpenChange, clientId, widgetConfig }: Ifr
         </Tabs>
 
         <Button onClick={handleCopy} className="w-full">
-          <Copy className="w-4 h-4 mr-2" /> Copy iFrame Code
+          <Copy className="w-4 h-4 mr-2" /> Copy embed code
         </Button>
 
         <DialogFooter>
@@ -148,4 +179,3 @@ export function IframeDialog({ open, onOpenChange, clientId, widgetConfig }: Ifr
     </Dialog>
   );
 }
-

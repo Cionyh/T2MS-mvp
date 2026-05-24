@@ -15,11 +15,10 @@ import { toast } from "sonner";
 import { Loader2, CreditCard, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-
-const PLAN_OPTIONS = [
-  { id: "starter", name: "Limited Offer Early Bird Special", price: "$14.99/mo", description: "1 website, 100 messages/month, 14-day free trial" },
-  { id: "pro", name: "Limited Offer Standard Price", price: "$29.99/mo", description: "Up to 3 websites, 330 messages/month, 14-day free trial" },
-];
+import {
+  getSelectablePlanOptions,
+  resolvePlanOption,
+} from "@/lib/plan-display";
 
 interface Subscription {
   id: string;
@@ -70,7 +69,13 @@ export default function ChangePlanPage() {
         setInstallAddonSku(addon);
         const current = planFromSub || planFromOnboarding || "free";
         setCurrentPlanId(current);
-        setSelectedPlanId(current === "free" || current === "enterprise" ? "starter" : current);
+        const defaultPlan =
+          current === "free" || current === "enterprise" ? "starter" : current;
+        setSelectedPlanId(
+          getSelectablePlanOptions().some((p) => p.id === defaultPlan)
+            ? defaultPlan
+            : "starter"
+        );
       } catch {
         toast.error("Failed to load plan info");
       } finally {
@@ -126,13 +131,8 @@ export default function ChangePlanPage() {
     );
   }
 
-  const currentPlan =
-    PLAN_OPTIONS.find((p) => p.id === currentPlanId) ??
-    (currentPlanId === "enterprise"
-      ? { id: "enterprise", name: "Enterprise / Teams", price: "Contact us", description: "For large enterprises and teams" }
-      : currentPlanId === "free"
-      ? { id: "free", name: "Free", price: "$0", description: "Get started with limited features" }
-      : PLAN_OPTIONS[0]);
+  const planOptions = getSelectablePlanOptions();
+  const currentPlan = resolvePlanOption(currentPlanId);
 
   return (
     <div className="container mx-auto py-8 max-w-2xl">
@@ -156,7 +156,7 @@ export default function ChangePlanPage() {
           <div>
             <p className="text-sm font-medium text-muted-foreground mb-3">Available plans</p>
             <div className="grid gap-3">
-              {PLAN_OPTIONS.map((plan) => (
+              {planOptions.map((plan) => (
                 <label
                   key={plan.id}
                   className={cn(

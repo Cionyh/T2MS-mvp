@@ -1,6 +1,11 @@
 "use client";
 
-import { Check, ExternalLink, Zap, Layers, Rocket } from "lucide-react";
+import { Check, ExternalLink, Zap, Layers, Rocket, Church } from "lucide-react";
+import {
+  CHURCH_PLAN_FEATURES,
+  getChurchIntroPriceLabel,
+  isChurchPlanEnabled,
+} from "@/lib/church-pricing";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -105,7 +110,25 @@ function FeaturesPreviewDialog({ url }: { url: string }) {
   );
 }
 
+function buildPricingPlans(): PricingPlan[] {
+  const churchPlan: PricingPlan | null = isChurchPlanEnabled()
+    ? {
+        name: "Church Intro",
+        planId: "church",
+        price: getChurchIntroPriceLabel(),
+        description: "Hosted announcement page for churches — introductory pricing.",
+        icon: Church,
+        features: CHURCH_PLAN_FEATURES,
+        highlight: true,
+      }
+    : null;
+
+  return churchPlan ? [churchPlan, ...plans] : plans;
+}
+
 export function PricingSection() {
+  const displayPlans = buildPricingPlans();
+
   return (
     <section id="pricing" className="w-full max-w-6xl mx-auto px-4 md:px-8 py-20">
       <div className="text-center mb-12">
@@ -116,8 +139,15 @@ export function PricingSection() {
         Choose the plan that's right for you -- no hidden fees, no surprises.        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {plans.map((plan) => {
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-8",
+          displayPlans.length >= 4
+            ? "md:grid-cols-2 lg:grid-cols-4"
+            : "md:grid-cols-3"
+        )}
+      >
+        {displayPlans.map((plan) => {
           const Icon = plan.icon;
           const isEnterprise = plan.planId === "enterprise";
           return (

@@ -26,6 +26,7 @@ const navLinks: NavLink[] = [
   { label: 'Home', href: '/' },
   { label: 'How it works', href: '/#how' },
   { label: 'Pricing', href: '/pricing' },
+  { label: 'Demo', href: '/demo' },
   { label: 'FAQs', href: '/#faqs' },
   { label: 'Tutorials' }, // not clickable for now
   { label: 'About', href: '/#about' },

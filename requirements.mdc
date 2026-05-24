@@ -23,6 +23,26 @@ This document consolidates three complementary Phase 2 specifications that toget
 
 ---
 
+## Version 1 — Hosted announcement pages (client-agreed, May 2026)
+
+This Phase 2 specification does **not** replace the separate **Version 1 launch** agreed with the client (hosted standalone pages on `t2ms.live`, optional widget embed, lean scope).
+
+| Topic | Where defined |
+|-------|----------------|
+| Full V1 product scope, milestones, commercial terms | `docs/VERSION_1_FINALIZED_BUILD_SCOPE.md` |
+| Base44 discovery (reuse vs defer) | `docs/BASE44_DISCOVERY_NOTE.md`, `docs/BASE44_DISCOVERY_REPORT.md` |
+| Reference screenshots only | `t2ms-hosted/docs/` (not a second production app) |
+
+**Architecture (non-negotiable for V1 implementation):**
+
+- Build by **extending this repository (`T2MS-mvp`)** — existing widget/fullscreen/display, `Client`, messages, auth, Stripe, Twilio, onboarding.
+- **Do not** implement Version 1 as a separate deployed application in `t2ms-hosted/` unless the client explicitly changes direction.
+- New work: public hosted routes, slug/subdomain on `t2ms.live`, host-based routing, Prisma extensions, two-path onboarding copy.
+
+When V1 hosted-page work conflicts with Phase 2 items below, follow the client-finalized V1 scope document first for launch-critical hosted features.
+
+---
+
 ## Table of Contents
 
 1. [Core Principles](#1-core-principles-non-negotiable)

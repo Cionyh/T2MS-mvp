@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { checkSiteLimit, getOrganizationPlan } from "@/lib/plan-limits";
 import { getActiveOrganization, isPhoneUsedByAnotherUser, normalizeKeyword, isKeywordTakenByUser } from "@/lib/organization-helpers";
 import { INSTALL_JOB_STATUS } from "@/lib/job-status";
+import { isHostedOnlyPath } from "@/lib/setup-path";
 
 /* ----------  POST /api/client  ----------------------------------------- */
 export async function POST(req: Request) {
@@ -154,13 +155,22 @@ export async function POST(req: Request) {
       }
     }
 
+    const onboarding = await prisma.onboarding.findUnique({
+      where: { userId: session.user.id },
+      select: { setupPath: true },
+    });
+    const skipInstallJob = isHostedOnlyPath(onboarding?.setupPath);
+    const mainWebsiteUrl = `https://${normalizedDomain}`;
+
     const client = await prisma.client.create({
       data: {
         name,
         domain: normalizedDomain,
         organizationId,
         keyword,
-        // ✅ Defaults for widget
+        widgetConfig: {
+          companyWebsiteLink: mainWebsiteUrl,
+        },
         defaultType: "banner",
         defaultBgColor: "#222",
         defaultTextColor: "#fff",
@@ -170,7 +180,19 @@ export async function POST(req: Request) {
       },
     });
 
-    // Auto-create an install job (no payment required) so site shows "Installation In Progress"
+    if (skipInstallJob) {
+      return NextResponse.json({
+        id: client.id,
+        defaultType: client.defaultType,
+        defaultBgColor: client.defaultBgColor,
+        defaultTextColor: client.defaultTextColor,
+        defaultFont: client.defaultFont,
+        defaultDismissAfter: client.defaultDismissAfter,
+        pinned: client.pinned,
+      });
+    }
+
+    // Auto-create an install job (embed path) so site shows "Installation In Progress"
     try {
       let customer = await prisma.customer.findUnique({
         where: { userId: session.user.id },

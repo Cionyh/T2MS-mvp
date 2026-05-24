@@ -50,6 +50,41 @@ const plugins: Parameters<typeof betterAuth>[0]["plugins"] = [
   ];
 
 if (stripeClient && process.env.STRIPE_WEBHOOK_SECRET) {
+  const stripeSubscriptionPlans: Array<{
+    name: string
+    priceId: string
+    limits: { websites: number; messages: number; storage: number }
+    freeTrial?: { days: number }
+  }> = [
+    {
+      name: "starter",
+      priceId: process.env.STRIPE_STARTER_PRICE_ID!,
+      limits: { websites: 1, messages: 100, storage: 10 },
+      freeTrial: { days: 14 },
+    },
+    {
+      name: "pro",
+      priceId: process.env.STRIPE_PRO_PRICE_ID!,
+      limits: { websites: 3, messages: 330, storage: 50 },
+      freeTrial: { days: 14 },
+    },
+    {
+      name: "enterprise",
+      priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID!,
+      limits: { websites: -1, messages: -1, storage: 1000 },
+    },
+  ]
+
+  const churchPriceId = process.env.STRIPE_CHURCH_STARTER_PRICE_ID?.trim()
+  if (churchPriceId) {
+    stripeSubscriptionPlans.push({
+      name: "church",
+      priceId: churchPriceId,
+      limits: { websites: 1, messages: 100, storage: 10 },
+      freeTrial: { days: 14 },
+    })
+  }
+
   plugins.push(
     stripe({
       stripeClient,
@@ -57,41 +92,7 @@ if (stripeClient && process.env.STRIPE_WEBHOOK_SECRET) {
       createCustomerOnSignUp: true,
       subscription: {
         enabled: true,
-        plans: [
-          {
-            name: "starter",
-            priceId: process.env.STRIPE_STARTER_PRICE_ID!,
-            limits: {
-              websites: 1,
-              messages: 100,
-              storage: 10
-            },
-            freeTrial: {
-              days: 14
-            }
-          },
-          {
-            name: "pro",
-            priceId: process.env.STRIPE_PRO_PRICE_ID!,
-            limits: {
-              websites: 3,
-              messages: 330,
-              storage: 50
-            },
-            freeTrial: {
-              days: 14
-            }
-          },
-          {
-            name: "enterprise",
-            priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID!,
-            limits: {
-              websites: -1,
-              messages: -1,
-              storage: 1000
-            }
-          }
-        ],
+        plans: stripeSubscriptionPlans,
         authorizeReference: async ({ user, session, referenceId, action }) => {
           if (referenceId === user.id) {
             return true;

@@ -23,8 +23,10 @@ import {
   Loader2,
   MessageCircle,
   ExternalLink,
+  Link2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getHostedPageDomain } from "@/lib/hosted-page/constants";
 import { motion, Variants } from "framer-motion";
 import {
   Dialog,
@@ -75,6 +77,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Info } from "lucide-react";
 import { PhoneNumberManagement } from "./phone-number-management";
 import { Badge } from "@/components/ui/badge";
+import { HostedPageSettings } from "./hosted-page-settings";
 
 // Widget type instructions
 const widgetTypeInstructions = {
@@ -126,6 +129,8 @@ interface Website {
   defaultFont?: string;
   defaultDismissAfter?: number;
   widgetConfig?: any; // JSON object containing widget configuration
+  hostedSlug?: string | null;
+  hostedEnabled?: boolean;
 }
 
 const cardVariants: Variants = {
@@ -653,6 +658,18 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           <p className="text-sm">
             <span className="font-semibold">SMS:</span> <code className="text-xs bg-muted px-1 rounded">{website.keyword}: message</code>
           </p>
+        )}
+        {website.hostedEnabled && website.hostedSlug && (
+          <a
+            href={`https://${website.hostedSlug}.${getHostedPageDomain()}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-amber-700 hover:underline"
+          >
+            <Link2 className="h-3 w-3" />
+            {website.hostedSlug}.{getHostedPageDomain()}
+            <ExternalLink className="h-3 w-3" />
+          </a>
         )}
       </div>
       {website.installJob && (
@@ -1393,6 +1410,16 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 </p>
               </div>
             </div>
+
+            {selectedWebsite && (
+              <>
+                <Separator />
+                <HostedPageSettings
+                  clientId={selectedWebsite.id}
+                  siteName={selectedWebsite.name}
+                />
+              </>
+            )}
 
             {/* SMS Disclaimer */}
             <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-amber-200">
