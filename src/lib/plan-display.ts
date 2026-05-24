@@ -28,7 +28,7 @@ const PRO_OPTION: PlanOption = {
 
 const CHURCH_OPTION: PlanOption = {
   id: CHURCH_PLAN_ID,
-  name: "Church Intro",
+  name: "Hosted Page — Church Intro",
   price: `${getChurchIntroPriceLabel()}/mo`,
   description: "1 hosted page, 100 messages/month, introductory church pricing",
 }

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
+import { getChurchStripePriceId } from "@/lib/church-pricing";
 
 function getStripe(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -10,16 +11,20 @@ function getStripe(): Stripe {
   return new Stripe(key, { apiVersion: "2025-08-27.basil" });
 }
 
+const churchPriceId = getChurchStripePriceId();
+
 const PLAN_PRICE_IDS = [
   process.env.STRIPE_STARTER_PRICE_ID,
   process.env.STRIPE_PRO_PRICE_ID,
   process.env.STRIPE_ENTERPRISE_PRICE_ID,
+  churchPriceId,
 ].filter(Boolean) as string[];
 
 const PRICE_TO_PLAN: Record<string, string> = {
   [process.env.STRIPE_STARTER_PRICE_ID || ""]: "starter",
   [process.env.STRIPE_PRO_PRICE_ID || ""]: "pro",
   [process.env.STRIPE_ENTERPRISE_PRICE_ID || ""]: "enterprise",
+  ...(churchPriceId ? { [churchPriceId]: "church" } : {}),
 };
 
 function getPlanFromPriceId(priceId: string): string {

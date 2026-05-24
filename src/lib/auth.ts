@@ -8,6 +8,7 @@ import { stripe } from "@better-auth/stripe";
 import Stripe from "stripe";
 import { sendEmail } from "@/lib/sendgrid";
 import { renderPasswordResetEmail } from "@/lib/email-templates";
+import { getChurchStripePriceId } from "@/lib/church-pricing";
 
 const db = new PrismaClient();
 
@@ -75,7 +76,7 @@ if (stripeClient && process.env.STRIPE_WEBHOOK_SECRET) {
     },
   ]
 
-  const churchPriceId = process.env.STRIPE_CHURCH_STARTER_PRICE_ID?.trim()
+  const churchPriceId = getChurchStripePriceId()
   if (churchPriceId) {
     stripeSubscriptionPlans.push({
       name: "church",

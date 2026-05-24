@@ -113,7 +113,7 @@ function FeaturesPreviewDialog({ url }: { url: string }) {
 function buildPricingPlans(): PricingPlan[] {
   const churchPlan: PricingPlan | null = isChurchPlanEnabled()
     ? {
-        name: "Church Intro",
+        name: "Hosted Page — Church Intro",
         planId: "church",
         price: getChurchIntroPriceLabel(),
         description: "Hosted announcement page for churches — introductory pricing.",

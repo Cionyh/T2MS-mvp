@@ -958,7 +958,7 @@ function OnboardingContent() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Church className="h-5 w-5 text-amber-600" />
-                  Church Intro
+                  Hosted Page — Church Intro
                 </CardTitle>
                 <div className="mt-1">
                   <span className="text-2xl font-bold text-amber-700">

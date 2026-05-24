@@ -75,6 +75,10 @@ STRIPE_WEBHOOK_SECRET="whsec_your-webhook-secret"
 STRIPE_STARTER_PRICE_ID="price_your-starter-price-id"
 STRIPE_PRO_PRICE_ID="price_1Szn8i1ZWEwBpolW1fMI9TQA"   # Standard subscription (product prod_TxiZhc5CBJxTwO)
 STRIPE_ENTERPRISE_PRICE_ID="price_your-enterprise-price-id"
+# Church / hosted-page plan (optional) — set BOTH so onboarding UI can show the plan in the browser:
+STRIPE_CHURCH_STARTER_PRICE_ID="price_your-church-price-id"
+NEXT_PUBLIC_STRIPE_CHURCH_STARTER_PRICE_ID="price_your-church-price-id"
+NEXT_PUBLIC_CHURCH_INTRO_PRICE_LABEL="$9.99"
 
 # PostHog Analytics (Optional)
 NEXT_PUBLIC_POSTHOG_KEY="your-posthog-key"

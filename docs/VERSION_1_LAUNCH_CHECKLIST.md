@@ -8,7 +8,7 @@ Use this before pointing production traffic at hosted pages on **t2ms.live**.
 - [ ] DNS: wildcard `*.t2ms.live` → app host (Vercel or equivalent)
 - [ ] `NEXT_PUBLIC_APP_URL` set to production app URL (embed snippets)
 - [ ] Optional: `NEXT_PUBLIC_DEMO_HOSTED_SLUGS` for `/demo` example pages
-- [ ] Optional: `STRIPE_CHURCH_STARTER_PRICE_ID` + `NEXT_PUBLIC_CHURCH_INTRO_PRICE_LABEL` for church plan
+- [ ] Optional church/hosted plan: `STRIPE_CHURCH_STARTER_PRICE_ID` and **`NEXT_PUBLIC_STRIPE_CHURCH_STARTER_PRICE_ID`** (same `price_…` value — required for onboarding/pricing UI) + `NEXT_PUBLIC_CHURCH_INTRO_PRICE_LABEL`
 
 ## Database
 
