@@ -15,10 +15,11 @@ import { toast } from "sonner";
 import { Loader2, CreditCard, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import {
-  getSelectablePlanOptions,
-  resolvePlanOption,
-} from "@/lib/plan-display";
+import { getSelectablePlanOptions, resolvePlanOption } from "@/lib/plan-display";
+import { preparePlanCheckout } from "@/lib/prepare-plan-checkout";
+import { CHURCH_PLAN_ID } from "@/lib/church-pricing";
+import { CHURCH_VERIFICATION_VERIFIED } from "@/lib/church-verification";
+import { ChurchVerificationDialog } from "@/components/onboarding/church-verification-dialog";
 
 interface Subscription {
   id: string;
@@ -34,6 +35,8 @@ export default function ChangePlanPage() {
   const [onboardingPlanId, setOnboardingPlanId] = useState<string | null>(null);
   const [installAddonSku, setInstallAddonSku] = useState<string | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("free");
+  const [churchVerifyDialogOpen, setChurchVerifyDialogOpen] = useState(false);
+  const [pendingChurchSwitch, setPendingChurchSwitch] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -85,17 +88,19 @@ export default function ChangePlanPage() {
     fetchData();
   }, [router]);
 
-  const handleSwitchPlan = async () => {
-    if (selectedPlanId === currentPlanId) {
-      toast.info("You're already on this plan.");
-      return;
-    }
-
+  const proceedToSwitchPlan = async () => {
     setActionLoading(true);
     try {
       const session = await client.getSession();
       if (!session?.data?.user?.id) {
         toast.error("Please sign in to continue.");
+        setActionLoading(false);
+        return;
+      }
+
+      const prepared = await preparePlanCheckout(selectedPlanId);
+      if (!prepared.ok) {
+        toast.error(prepared.error || "Failed to prepare plan change.");
         setActionLoading(false);
         return;
       }
@@ -120,6 +125,41 @@ export default function ChangePlanPage() {
       toast.error(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleSwitchPlan = async () => {
+    if (selectedPlanId === currentPlanId) {
+      toast.info("You're already on this plan.");
+      return;
+    }
+
+    if (selectedPlanId === CHURCH_PLAN_ID) {
+      setActionLoading(true);
+      try {
+        const res = await fetch("/api/onboarding/church-verification");
+        const data = await res.json();
+        if (data.status === CHURCH_VERIFICATION_VERIFIED) {
+          await proceedToSwitchPlan();
+          return;
+        }
+        setPendingChurchSwitch(true);
+        setChurchVerifyDialogOpen(true);
+      } catch {
+        toast.error("Unable to check church eligibility.");
+      } finally {
+        setActionLoading(false);
+      }
+      return;
+    }
+
+    await proceedToSwitchPlan();
+  };
+
+  const handleChurchVerified = async () => {
+    if (pendingChurchSwitch) {
+      setPendingChurchSwitch(false);
+      await proceedToSwitchPlan();
     }
   };
 
@@ -212,6 +252,11 @@ export default function ChangePlanPage() {
           </div>
         </CardContent>
       </Card>
+      <ChurchVerificationDialog
+        open={churchVerifyDialogOpen}
+        onOpenChange={setChurchVerifyDialogOpen}
+        onVerified={handleChurchVerified}
+      />
     </div>
   );
 }

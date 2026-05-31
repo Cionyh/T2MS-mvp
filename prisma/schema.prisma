@@ -179,6 +179,10 @@ model Onboarding {
   stripeSubscriptionId String?
   stripePaymentIntentId String?
   setupPath            String?   // "hosted_only" | "embed" — Version 1 two-path onboarding
+  churchOrganizationName   String?
+  churchVerificationStatus String?   // "pending" | "verified" | "rejected"
+  churchVerifiedAt         DateTime?
+  churchPriceLockedUntil   DateTime? // intro price lock (up to 3 years for early adopters)
   completedAt          DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt

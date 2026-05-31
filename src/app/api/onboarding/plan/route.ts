@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { CHURCH_PLAN_ID } from "@/lib/church-pricing";
+import { canSubscribeToChurchPlan } from "@/lib/church-verification";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,6 +23,24 @@ export async function POST(req: NextRequest) {
 
     const plan = planId ?? "free";
     const addon = installAddonSku === "standard" || installAddonSku === "restricted" ? installAddonSku : null;
+
+    if (plan === CHURCH_PLAN_ID) {
+      const onboarding = await prisma.onboarding.findUnique({
+        where: { userId: session.user.id },
+        select: { churchVerificationStatus: true },
+      });
+
+      if (!canSubscribeToChurchPlan(onboarding?.churchVerificationStatus)) {
+        return NextResponse.json(
+          {
+            error:
+              "Church intro pricing requires verified church eligibility. Complete church verification first.",
+            code: "CHURCH_VERIFICATION_REQUIRED",
+          },
+          { status: 403 }
+        );
+      }
+    }
 
     await prisma.onboarding.upsert({
       where: { userId: session.user.id },

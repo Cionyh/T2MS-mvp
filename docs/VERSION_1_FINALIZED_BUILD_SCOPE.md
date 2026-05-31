@@ -152,8 +152,14 @@ Build and ship a **stable, public, shareable** hosted page that:
 
 ### 4.6 Billing and church pricing
 
-- **Stripe review** for Version 1, including **introductory church pricing** (dedicated price, coupon, or checkout path as client decides)
-- Wire selected church intro offer through **checkout and/or onboarding**
+- **Unified monthly plan (V1):** One subscription covers **both** the hosted announcement page and the website widget on the same account/site — no double monthly charge. Onboarding path selection is setup-only.
+- **Install add-on:** Optional one-time fee when a hosted-only customer later requests professional widget installation (existing `/app/install-request` flow).
+- **Church intro pricing** (verified churches / religious organizations during launch):
+  - 14-day free trial
+  - **$7.99/month**
+  - Price locked for up to **3 years** for early church adopters
+  - Admin verification at `/admin/dashboard/church-verifications` (or `CHURCH_INTRO_AUTO_VERIFY` for attestation-only)
+- Wire church intro offer through **checkout and onboarding** with eligibility gating
 - **Stripe / Twilio / SendGrid stabilization** for launch (including addressing webhook reliability on staging/production endpoints)
 
 ### 4.7 Launch readiness

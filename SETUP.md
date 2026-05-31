@@ -78,7 +78,9 @@ STRIPE_ENTERPRISE_PRICE_ID="price_your-enterprise-price-id"
 # Church / hosted-page plan (optional) — set BOTH so onboarding UI can show the plan in the browser:
 STRIPE_CHURCH_STARTER_PRICE_ID="price_your-church-price-id"
 NEXT_PUBLIC_STRIPE_CHURCH_STARTER_PRICE_ID="price_your-church-price-id"
-NEXT_PUBLIC_CHURCH_INTRO_PRICE_LABEL="$9.99"
+NEXT_PUBLIC_CHURCH_INTRO_PRICE_LABEL="$7.99"
+# Optional: auto-verify church attestation at signup (skip admin approval). Default: admin must approve.
+CHURCH_INTRO_AUTO_VERIFY="false"
 
 # PostHog Analytics (Optional)
 NEXT_PUBLIC_POSTHOG_KEY="your-posthog-key"

@@ -6,6 +6,11 @@ import {
   getChurchIntroPriceLabel,
   isChurchPlanEnabled,
 } from "@/lib/church-pricing";
+import {
+  GROWTH_PLAN_FEATURES,
+  STARTER_PLAN_FEATURES,
+  UNIFIED_PLAN_TAGLINE,
+} from "@/lib/plan-features";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,31 +43,18 @@ const plans: PricingPlan[] = [
     name: "Starter Plan",
     planId: "starter",
     price: "$14.99",
-    description: "Everything you need to get started with one website.",
+    description: "One site — hosted page and widget on the same subscription.",
     icon: Zap,
-    features: [
-      "1 Website",
-      "100 Messages per Month",
-      "Professional Widget Installation (Included)",
-      "Priority Support",
-      "14-Day Free Trial",
-    ],
+    features: [...STARTER_PLAN_FEATURES],
     highlight: true,
   },
   {
     name: "Growth Plan",
     planId: "pro",
     price: "$29.99",
-    description: "Scale with multiple websites and team seats.",
+    description: "Scale with multiple sites — hosted page and widget on each.",
     icon: Layers,
-    features: [
-      "Up to 3 Websites",
-      "1–3 Users / Seats",
-      "330 Messages per Month",
-      "Professional Widget Installation (Included)",
-      "Priority Support",
-      "14-Day Free Trial",
-    ],
+    features: [...GROWTH_PLAN_FEATURES],
     highlight: true,
   },
   {
@@ -113,12 +105,12 @@ function FeaturesPreviewDialog({ url }: { url: string }) {
 function buildPricingPlans(): PricingPlan[] {
   const churchPlan: PricingPlan | null = isChurchPlanEnabled()
     ? {
-        name: "Hosted Page — Church Intro",
+        name: "Church Intro Plan",
         planId: "church",
         price: getChurchIntroPriceLabel(),
-        description: "Hosted announcement page for churches — introductory pricing.",
+        description: "Verified churches — intro pricing, price locked up to 3 years.",
         icon: Church,
-        features: CHURCH_PLAN_FEATURES,
+        features: [...CHURCH_PLAN_FEATURES],
         highlight: true,
       }
     : null;
@@ -136,7 +128,8 @@ export function PricingSection() {
           Simple, Transparent Pricing
         </h2>
         <p className="text-lg text-muted-foreground mt-4">
-        Choose the plan that's right for you -- no hidden fees, no surprises.        </p>
+          {UNIFIED_PLAN_TAGLINE} No hidden fees, no surprises.
+        </p>
       </div>
 
       <div

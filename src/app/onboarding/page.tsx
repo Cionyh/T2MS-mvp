@@ -31,6 +31,16 @@ import {
   isChurchPlanEnabled,
 } from "@/lib/church-pricing";
 import {
+  CHURCH_VERIFICATION_VERIFIED,
+} from "@/lib/church-verification";
+import {
+  GROWTH_PLAN_FEATURES,
+  STARTER_PLAN_FEATURES,
+  UNIFIED_PLAN_TAGLINE,
+} from "@/lib/plan-features";
+import { preparePlanCheckout } from "@/lib/prepare-plan-checkout";
+import { ChurchVerificationDialog } from "@/components/onboarding/church-verification-dialog";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -45,23 +55,6 @@ import {
   getStoredCouponCode,
   storeCouponCode,
 } from "@/lib/coupons";
-
-const STARTER_PLAN_FEATURES = [
-  "1 Website",
-  "100 Messages per Month",
-  "Professional Widget Installation (Included)",
-  "Priority Support",
-  "14-Day Free Trial",
-];
-
-const GROWTH_PLAN_FEATURES = [
-  "Up to 3 Websites",
-  "1–3 Users / Seats",
-  "330 Messages per Month",
-  "Professional Widget Installation (Included)",
-  "Priority Support",
-  "14-Day Free Trial",
-];
 
 function OnboardingContent() {
   const router = useRouter();
@@ -109,6 +102,8 @@ function OnboardingContent() {
     planLabel: string;
     durationInMonths: number;
   } | null>(null);
+  const [churchVerifyDialogOpen, setChurchVerifyDialogOpen] = useState(false);
+  const [pendingChurchCheckout, setPendingChurchCheckout] = useState(false);
 
   const PENDING_VERIFY_STORAGE_KEY = "t2ms_onboarding_verify_pending";
   const RESEND_COOLDOWN_SECONDS = 60;
@@ -246,16 +241,12 @@ function OnboardingContent() {
     }
   };
 
-  const handlePaidPlan = async (planId: "starter" | "pro" | "church") => {
+  const proceedToStripeCheckout = async (planId: "starter" | "pro" | "church") => {
     setLoading(planId);
     try {
-      const planRes = await fetch("/api/onboarding/plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, installAddonSku: null }),
-      });
-      if (!planRes.ok) {
-        toast.error("Failed to save plan.");
+      const prepared = await preparePlanCheckout(planId);
+      if (!prepared.ok) {
+        toast.error(prepared.error || "Failed to save plan.");
         setLoading(null);
         return;
       }
@@ -288,6 +279,36 @@ function OnboardingContent() {
       toast.error(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setLoading(null);
+    }
+  };
+
+  const handlePaidPlan = async (planId: "starter" | "pro" | "church") => {
+    if (planId === "church") {
+      setLoading("church");
+      try {
+        const res = await fetch("/api/onboarding/church-verification");
+        const data = await res.json();
+        if (data.status === CHURCH_VERIFICATION_VERIFIED) {
+          await proceedToStripeCheckout("church");
+          return;
+        }
+        setPendingChurchCheckout(true);
+        setChurchVerifyDialogOpen(true);
+      } catch {
+        toast.error("Unable to check church eligibility.");
+      } finally {
+        setLoading(null);
+      }
+      return;
+    }
+
+    await proceedToStripeCheckout(planId);
+  };
+
+  const handleChurchVerified = async () => {
+    if (pendingChurchCheckout) {
+      setPendingChurchCheckout(false);
+      await proceedToStripeCheckout("church");
     }
   };
 
@@ -866,7 +887,7 @@ function OnboardingContent() {
               How do you want to use T2MS?
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Choose your primary setup. You can add the other option later from your dashboard.
+              Choose how you want to get started. {UNIFIED_PLAN_TAGLINE} You can add the other option later from your dashboard.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 gap-6">
@@ -936,9 +957,7 @@ function OnboardingContent() {
             Simple, Transparent Pricing
           </h1>
           <p className="mt-2 text-muted-foreground">
-            {isHostedOnlyPath
-              ? "Hosted page plan — share your live link on t2ms.live."
-              : "Choose the plan that's right for you — no hidden fees, no surprises."}
+            {UNIFIED_PLAN_TAGLINE} Choose the plan that fits your needs — no hidden fees.
           </p>
           {couponSummary ? (
             <div className="mx-auto mt-4 max-w-xl rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
@@ -958,7 +977,7 @@ function OnboardingContent() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Church className="h-5 w-5 text-amber-600" />
-                  Hosted Page — Church Intro
+                  Church Intro Plan
                 </CardTitle>
                 <div className="mt-1">
                   <span className="text-2xl font-bold text-amber-700">
@@ -967,7 +986,7 @@ function OnboardingContent() {
                   <span className="text-muted-foreground">/month</span>
                 </div>
                 <CardDescription className="text-sm">
-                  Hosted announcement page for churches — introductory pricing.
+                  Verified churches — intro pricing with price locked up to 3 years.
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-1 min-h-0 overflow-y-auto">
@@ -1008,7 +1027,7 @@ function OnboardingContent() {
                 <span className="text-muted-foreground">/month</span>
               </div>
               <CardDescription className="text-sm">
-                Everything you need to get started with one website.
+                One site — hosted page and widget included.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 min-h-0 overflow-y-auto">
@@ -1113,6 +1132,11 @@ function OnboardingContent() {
             </CardFooter>
           </Card>
         </div>
+        <ChurchVerificationDialog
+          open={churchVerifyDialogOpen}
+          onOpenChange={setChurchVerifyDialogOpen}
+          onVerified={handleChurchVerified}
+        />
       </div>
     </div>
   );

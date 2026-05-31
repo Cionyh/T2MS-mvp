@@ -1,9 +1,9 @@
 import {
-  CHURCH_PLAN_FEATURES,
   CHURCH_PLAN_ID,
   getChurchIntroPriceLabel,
   isChurchPlanEnabled,
 } from "@/lib/church-pricing"
+import { CHURCH_PLAN_FEATURES, STARTER_PLAN_FEATURES } from "@/lib/plan-features"
 
 export type PlanOption = {
   id: string
@@ -14,23 +14,23 @@ export type PlanOption = {
 
 const STARTER_OPTION: PlanOption = {
   id: "starter",
-  name: "Limited Offer Early Bird Special",
+  name: "Starter Plan",
   price: "$14.99/mo",
-  description: "1 website, 100 messages/month, 14-day free trial",
+  description: "1 site — hosted page & widget, 100 messages/month, 14-day trial",
 }
 
 const PRO_OPTION: PlanOption = {
   id: "pro",
-  name: "Limited Offer Standard Price",
+  name: "Growth Plan",
   price: "$29.99/mo",
-  description: "Up to 3 websites, 330 messages/month, 14-day free trial",
+  description: "Up to 3 sites — hosted page & widget on each, 330 messages/month",
 }
 
 const CHURCH_OPTION: PlanOption = {
   id: CHURCH_PLAN_ID,
-  name: "Hosted Page — Church Intro",
+  name: "Church Intro Plan",
   price: `${getChurchIntroPriceLabel()}/mo`,
-  description: "1 hosted page, 100 messages/month, introductory church pricing",
+  description: "Verified churches — hosted page & widget, intro price locked 3 years",
 }
 
 const ENTERPRISE_OPTION: PlanOption = {
@@ -79,4 +79,4 @@ export function formatPlanLabel(planId: string): string {
   return resolvePlanOption(planId).name
 }
 
-export { CHURCH_PLAN_FEATURES, isChurchPlanEnabled, getChurchIntroPriceLabel }
+export { CHURCH_PLAN_FEATURES, STARTER_PLAN_FEATURES, isChurchPlanEnabled, getChurchIntroPriceLabel }

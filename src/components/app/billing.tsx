@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { CreditCard, Calendar, Users, Globe, MessageSquare, HardDrive } from "lucide-react";
 import { PLAN_LIMITS } from "@/lib/plan-limits";
 import { formatPlanLabel } from "@/lib/plan-display";
+import { preparePlanCheckout } from "@/lib/prepare-plan-checkout";
 import Link from "next/link";
 
 interface Subscription {
@@ -39,6 +40,7 @@ const planLimits: Record<string, PlanLimits> = PLAN_LIMITS;
 export function BillingSection() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [onboardingPlanId, setOnboardingPlanId] = useState<string | null>(null);
+  const [churchPriceLockedUntil, setChurchPriceLockedUntil] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const syncAttempted = useRef(false);
@@ -101,11 +103,15 @@ export function BillingSection() {
 
   const fetchOnboardingPlan = async () => {
     try {
-      const res = await fetch("/api/onboarding/status");
+      const res = await fetch("/api/onboarding");
       if (!res.ok) return;
       const data = await res.json();
-      if (data.planId && data.planId !== "free") {
-        setOnboardingPlanId(data.planId);
+      const onboarding = data.onboarding;
+      if (onboarding?.planId && onboarding.planId !== "free") {
+        setOnboardingPlanId(onboarding.planId);
+      }
+      if (onboarding?.churchPriceLockedUntil) {
+        setChurchPriceLockedUntil(onboarding.churchPriceLockedUntil);
       }
     } catch {
       // Ignore
@@ -229,6 +235,12 @@ export function BillingSection() {
         setActionLoading(null);
         return;
       }
+      const prepared = await preparePlanCheckout(onboardingPlanId);
+      if (!prepared.ok) {
+        toast.error(prepared.error || "Failed to prepare checkout");
+        setActionLoading(null);
+        return;
+      }
       const { data, error } = await client.subscription.upgrade({
         plan: onboardingPlanId,
         referenceId: session.data.user.id,
@@ -324,6 +336,11 @@ export function BillingSection() {
                   "Free Plan"
                 )}
               </p>
+              {currentPlan === "church" && churchPriceLockedUntil && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Intro price locked until {formatDate(churchPriceLockedUntil)}
+                </p>
+              )}
             </div>
             <Badge className={getStatusColor(activeSubscription?.status || (paymentPending ? "past_due" : "free"))}>
               {activeSubscription?.status || (paymentPending ? "Payment pending" : "free")}

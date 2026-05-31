@@ -1,5 +1,7 @@
 export const CHURCH_PLAN_ID = "church" as const
 
+export const CHURCH_INTRO_PRICE_AMOUNT = 7.99
+
 /**
  * Church / hosted-page Stripe price ID.
  * Server: STRIPE_CHURCH_STARTER_PRICE_ID
@@ -17,13 +19,10 @@ export function isChurchPlanEnabled(): boolean {
 }
 
 export function getChurchIntroPriceLabel(): string {
-  return process.env.NEXT_PUBLIC_CHURCH_INTRO_PRICE_LABEL?.trim() || "$9.99"
+  return (
+    process.env.NEXT_PUBLIC_CHURCH_INTRO_PRICE_LABEL?.trim() ||
+    `$${CHURCH_INTRO_PRICE_AMOUNT.toFixed(2)}`
+  )
 }
 
-export const CHURCH_PLAN_FEATURES = [
-  "1 Hosted announcement page",
-  "Shareable link (no widget install required)",
-  "100 Messages per month",
-  "Introductory church pricing",
-  "14-Day Free Trial",
-]
+export { CHURCH_PLAN_FEATURES } from "@/lib/plan-features"

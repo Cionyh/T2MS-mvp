@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
-import { getChurchStripePriceId } from "@/lib/church-pricing";
+import { getChurchStripePriceId, CHURCH_PLAN_ID } from "@/lib/church-pricing";
+import { getChurchPriceLockUntil } from "@/lib/church-verification";
 
 function getStripe(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -140,6 +141,34 @@ export async function POST() {
           },
         });
       }
+
+      if (plan === CHURCH_PLAN_ID) {
+        const priceLockedUntil = getChurchPriceLockUntil(new Date());
+        await prisma.onboarding.upsert({
+          where: { userId },
+          create: {
+            userId,
+            planId: CHURCH_PLAN_ID,
+            churchPriceLockedUntil: priceLockedUntil,
+          },
+          update: {
+            planId: CHURCH_PLAN_ID,
+            churchPriceLockedUntil: priceLockedUntil,
+          },
+        });
+
+        try {
+          await stripe.subscriptions.update(sub.id, {
+            metadata: {
+              church_intro: "true",
+              price_lock_until: priceLockedUntil.toISOString(),
+            },
+          });
+        } catch (metaErr) {
+          console.warn("[subscription/sync] church metadata update failed:", metaErr);
+        }
+      }
+
       synced++;
     }
 
