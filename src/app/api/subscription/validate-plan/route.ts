@@ -4,6 +4,7 @@ import { headers } from "next/headers"
 import { prisma } from "@/lib/prisma"
 import { CHURCH_PLAN_ID } from "@/lib/church-pricing"
 import { canSubscribeToChurchPlan } from "@/lib/church-verification"
+import { validateStripePlanConfigured } from "@/lib/stripe-config"
 
 /**
  * POST /api/subscription/validate-plan
@@ -24,6 +25,14 @@ export async function POST(req: Request) {
 
     if (!planId) {
       return NextResponse.json({ error: "planId is required" }, { status: 400 })
+    }
+
+    const priceCheck = validateStripePlanConfigured(planId)
+    if (!priceCheck.ok) {
+      return NextResponse.json(
+        { error: priceCheck.error, code: priceCheck.code },
+        { status: 400 }
+      )
     }
 
     if (planId === CHURCH_PLAN_ID) {

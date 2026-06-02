@@ -7,9 +7,8 @@ import { organization } from "better-auth/plugins";
 import { stripe } from "@better-auth/stripe";
 import { sendEmail } from "@/lib/sendgrid";
 import { renderPasswordResetEmail } from "@/lib/email-templates";
-import { getChurchStripePriceId } from "@/lib/church-pricing";
 import {
-  getStripePriceIds,
+  buildBetterAuthStripePlans,
   getStripeWebhookSecret,
   tryGetStripeServerClient,
 } from "@/lib/stripe-config";
@@ -19,7 +18,7 @@ const db = new PrismaClient();
 // Only create Stripe client when key is set (avoids build failure when env is missing)
 const stripeClient = tryGetStripeServerClient();
 const stripeWebhookSecret = getStripeWebhookSecret();
-const stripePriceIds = getStripePriceIds();
+const stripeSubscriptionPlans = buildBetterAuthStripePlans();
 
 const plugins: Parameters<typeof betterAuth>[0]["plugins"] = [
     admin(),
@@ -54,42 +53,7 @@ const plugins: Parameters<typeof betterAuth>[0]["plugins"] = [
     }),
   ];
 
-if (stripeClient && stripeWebhookSecret) {
-  const stripeSubscriptionPlans: Array<{
-    name: string
-    priceId: string
-    limits: { websites: number; messages: number; storage: number }
-    freeTrial?: { days: number }
-  }> = [
-    {
-      name: "starter",
-      priceId: stripePriceIds.starter!,
-      limits: { websites: 1, messages: 100, storage: 10 },
-      freeTrial: { days: 14 },
-    },
-    {
-      name: "pro",
-      priceId: stripePriceIds.pro!,
-      limits: { websites: 3, messages: 330, storage: 50 },
-      freeTrial: { days: 14 },
-    },
-    {
-      name: "enterprise",
-      priceId: stripePriceIds.enterprise!,
-      limits: { websites: -1, messages: -1, storage: 1000 },
-    },
-  ]
-
-  const churchPriceId = getChurchStripePriceId()
-  if (churchPriceId) {
-    stripeSubscriptionPlans.push({
-      name: "church",
-      priceId: churchPriceId,
-      limits: { websites: 1, messages: 100, storage: 10 },
-      freeTrial: { days: 14 },
-    })
-  }
-
+if (stripeClient && stripeWebhookSecret && stripeSubscriptionPlans.length > 0) {
   plugins.push(
     stripe({
       stripeClient,
