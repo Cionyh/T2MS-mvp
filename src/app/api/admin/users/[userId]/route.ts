@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import Stripe from "stripe";
-
-function getStripe(): Stripe | null {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) return null;
-  return new Stripe(key, { apiVersion: "2025-08-27.basil" });
-}
+import { tryGetStripeServerClient } from "@/lib/stripe-config";
 
 type Params = { params: Promise<{ userId: string }> };
 
@@ -59,7 +53,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       },
       select: { id: true, stripeSubscriptionId: true },
     });
-    const stripe = getStripe();
+    const stripe = tryGetStripeServerClient();
     for (const sub of userSubscriptions) {
       const stripeSubId = sub.stripeSubscriptionId;
       if (!stripeSubId || typeof stripeSubId !== "string") continue;

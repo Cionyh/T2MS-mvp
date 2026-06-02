@@ -2,29 +2,24 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import Stripe from "stripe";
 import { getChurchStripePriceId, CHURCH_PLAN_ID } from "@/lib/church-pricing";
 import { getChurchPriceLockUntil } from "@/lib/church-verification";
-
-function getStripe(): Stripe {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
-  return new Stripe(key, { apiVersion: "2025-08-27.basil" });
-}
+import { getStripePriceIds, getStripeServerClient } from "@/lib/stripe-config";
 
 const churchPriceId = getChurchStripePriceId();
+const stripePriceIds = getStripePriceIds();
 
 const PLAN_PRICE_IDS = [
-  process.env.STRIPE_STARTER_PRICE_ID,
-  process.env.STRIPE_PRO_PRICE_ID,
-  process.env.STRIPE_ENTERPRISE_PRICE_ID,
+  stripePriceIds.starter,
+  stripePriceIds.pro,
+  stripePriceIds.enterprise,
   churchPriceId,
 ].filter(Boolean) as string[];
 
 const PRICE_TO_PLAN: Record<string, string> = {
-  [process.env.STRIPE_STARTER_PRICE_ID || ""]: "starter",
-  [process.env.STRIPE_PRO_PRICE_ID || ""]: "pro",
-  [process.env.STRIPE_ENTERPRISE_PRICE_ID || ""]: "enterprise",
+  [stripePriceIds.starter || ""]: "starter",
+  [stripePriceIds.pro || ""]: "pro",
+  [stripePriceIds.enterprise || ""]: "enterprise",
   ...(churchPriceId ? { [churchPriceId]: "church" } : {}),
 };
 
@@ -46,7 +41,7 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const stripe = getStripe();
+    const stripe = getStripeServerClient();
     const userId = session.user.id;
 
     let stripeCustomerId: string | null = null;

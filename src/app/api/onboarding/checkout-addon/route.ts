@@ -2,15 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import Stripe from "stripe";
-
-function getStripe(): Stripe {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) {
-    throw new Error("STRIPE_SECRET_KEY is not configured");
-  }
-  return new Stripe(key, { apiVersion: "2025-08-27.basil" });
-}
+import { getStripeServerClient } from "@/lib/stripe-config";
 
 const INSTALL_ADDON_AMOUNTS: Record<string, { amount: number; name: string }> = {
   standard: { amount: 999, name: "Standard website install (script embed)" },
@@ -62,7 +54,7 @@ export async function POST(req: NextRequest) {
     const success = successUrl ?? `${origin}/onboarding?step=3`;
     const cancel = cancelUrl ?? `${origin}/onboarding?step=1`;
 
-    const stripe = getStripe();
+    const stripe = getStripeServerClient();
     const stripeSession = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: session.user.email ?? undefined,

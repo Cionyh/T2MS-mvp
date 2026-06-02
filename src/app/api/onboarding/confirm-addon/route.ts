@@ -2,15 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import Stripe from "stripe";
-
-function getStripe(): Stripe {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) {
-    throw new Error("STRIPE_SECRET_KEY is not configured");
-  }
-  return new Stripe(key, { apiVersion: "2025-08-27.basil" });
-}
+import { getStripeServerClient } from "@/lib/stripe-config";
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,7 +24,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const stripe = getStripe();
+    const stripe = getStripeServerClient();
     const stripeSession = await stripe.checkout.sessions.retrieve(
       sessionId,
       { expand: ["payment_intent"] }

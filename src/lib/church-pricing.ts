@@ -1,17 +1,17 @@
+import { getPublicChurchStripePriceId, getStripePriceIds } from "@/lib/stripe-config"
+
 export const CHURCH_PLAN_ID = "church" as const
 
 export const CHURCH_INTRO_PRICE_AMOUNT = 7.99
 
 /**
- * Church / hosted-page Stripe price ID.
- * Server: STRIPE_CHURCH_STARTER_PRICE_ID
- * Client (onboarding, pricing UI): NEXT_PUBLIC_STRIPE_CHURCH_STARTER_PRICE_ID — required for the card to show in the browser.
+ * Church / hosted-page Stripe price ID (mode-aware via LIVE_MODE).
+ * Live: STRIPE_CHURCH_STARTER_PRICE_ID / NEXT_PUBLIC_STRIPE_CHURCH_STARTER_PRICE_ID
+ * Test: STRIPE_TEST_CHURCH_STARTER_PRICE_ID / NEXT_PUBLIC_STRIPE_TEST_CHURCH_STARTER_PRICE_ID
  */
 export function getChurchStripePriceId(): string | undefined {
-  const id =
-    process.env.STRIPE_CHURCH_STARTER_PRICE_ID?.trim() ||
-    process.env.NEXT_PUBLIC_STRIPE_CHURCH_STARTER_PRICE_ID?.trim()
-  return id || undefined
+  const ids = getStripePriceIds()
+  return ids.church || getPublicChurchStripePriceId()
 }
 
 export function isChurchPlanEnabled(): boolean {
