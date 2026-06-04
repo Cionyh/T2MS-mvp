@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
           name: true,
           role: true,
           banned: true,
+          createdAt: true,
         },
       }),
       prisma.user.count({ where }),
@@ -56,6 +57,7 @@ export async function GET(req: NextRequest) {
         name: u.name,
         role: u.role === "admin" ? "admin" : "user",
         banned: u.banned === true,
+        createdAt: u.createdAt.toISOString(),
       })),
       pagination: {
         total,

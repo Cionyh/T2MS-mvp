@@ -66,6 +66,7 @@ type User = {
   name: string;
   role: "admin" | "user";
   banned?: boolean;
+  createdAt: string;
 };
 
 export default function AdminDashboard() {
@@ -371,6 +372,9 @@ export default function AdminDashboard() {
                     <TableHead className="whitespace-nowrap min-w-[100px]">
                       Banned
                     </TableHead>
+                    <TableHead className="whitespace-nowrap min-w-[120px]">
+                      Registered
+                    </TableHead>
                     <TableHead className="whitespace-nowrap min-w-[180px]">
                       Actions
                     </TableHead>
@@ -394,6 +398,11 @@ export default function AdminDashboard() {
                         ) : (
                           <Badge variant="outline">No</Badge>
                         )}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap min-w-[120px] text-muted-foreground">
+                        {user.createdAt
+                          ? format(new Date(user.createdAt), "MMM d, yyyy")
+                          : "—"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap min-w-[180px]">
                         <div className="flex flex-wrap gap-2">
