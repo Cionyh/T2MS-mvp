@@ -42,6 +42,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { signOut, client } from "@/lib/auth-client";
+import { AuthGetSessionResult, isImpersonating } from "@/lib/auth-types";
 import { toast } from "sonner"; 
 
 const navItems = [
@@ -55,7 +56,7 @@ const navItems = [
 
 type ClientDashboardLayoutProps = {
   children: ReactNode;
-  session: any;
+  session: AuthGetSessionResult;
 };
 
 export default function ClientDashboardLayout({
@@ -69,11 +70,11 @@ export default function ClientDashboardLayout({
   const [currentPlan, setCurrentPlan] = useState<string>("free");
   const [planStatus, setPlanStatus] = useState<string>("");
   const [stoppingImpersonation, setStoppingImpersonation] = useState(false);
-  const isImpersonating = Boolean(session?.session?.impersonatedBy);
+  const impersonating = isImpersonating(session);
 
   useEffect(() => {
     // Admin users cannot use the client app — unless impersonating a user
-    if (session?.user?.role === "admin" && !session?.session?.impersonatedBy) {
+    if (session?.user?.role === "admin" && !isImpersonating(session)) {
       router.replace("/admin/dashboard");
       return;
     }
@@ -180,7 +181,7 @@ export default function ClientDashboardLayout({
         )}
       />
 
-      {isImpersonating && (
+      {impersonating && (
         <div className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-amber-600/40 bg-amber-500 px-4 py-2 text-sm font-medium text-amber-950">
           <span>
             Viewing as {session?.user?.name || session?.user?.email}
