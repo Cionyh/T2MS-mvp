@@ -1,0 +1,4 @@
+- when working on components directory use only tailwindcss for styling. And also since tailwindcss v4 is native, do not try to create tailwind.config.js file. Every custom styles will be declared on globals.css
+- when working on completing code, always check my requirements.mdc file if the code is aligned with the requirements of the project
+- never touch the codes and logics of my auth flows
+- don't import things which are not in my code base

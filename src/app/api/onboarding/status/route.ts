@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getActiveSubscriptionWhere } from "@/lib/subscriptions";
+import { isHostedOnlyPath } from "@/lib/setup-path";
 
 export async function GET() {
   try {
@@ -48,6 +49,9 @@ export async function GET() {
         needsPhoneVerification: false,
         hasVerifiedPhone: true,
         needsInstallSetup: false,
+        needsHostedSetup: false,
+        needsPathSelection: false,
+        setupPath: onboarding?.setupPath ?? null,
         firstClientId: null,
       });
     }
@@ -55,12 +59,19 @@ export async function GET() {
       orgIds.length > 0
         ? await prisma.client.findMany({
             where: { organizationId: { in: orgIds } },
-            select: { id: true },
+            select: {
+              id: true,
+              hostedSlug: true,
+              hostedEnabled: true,
+            },
             orderBy: { createdAt: "asc" },
           })
         : [];
     const hasRegisteredSite = clients.length > 0;
-    const firstClientId = clients[0]?.id ?? null;
+    const firstClient = clients[0] ?? null;
+    const firstClientId = firstClient?.id ?? null;
+    const setupPath = onboarding?.setupPath ?? null;
+    const hostedOnly = isHostedOnlyPath(setupPath);
 
     // Check if any client has at least one verified phone number
     const verifiedPhoneCount =
@@ -74,9 +85,15 @@ export async function GET() {
         : 0;
     const hasVerifiedPhone = verifiedPhoneCount > 0;
 
-    // Install setup: first client's install job still has default platform "To be confirmed" → user must submit install form
+    // Install setup: embed path only — install job still "To be confirmed"
     let needsInstallSetup = false;
-    if (hasPaidPlan && hasRegisteredSite && hasVerifiedPhone && firstClientId) {
+    if (
+      hasPaidPlan &&
+      hasRegisteredSite &&
+      hasVerifiedPhone &&
+      firstClientId &&
+      !hostedOnly
+    ) {
       const installJob = await prisma.installJob.findFirst({
         where: { clientId: firstClientId },
         orderBy: { createdAt: "desc" },
@@ -85,10 +102,23 @@ export async function GET() {
       needsInstallSetup = installJob?.platform === "To be confirmed";
     }
 
-    // Completed when: completedAt set AND (if paid) has site, verified phone, AND install setup submitted
+    // Hosted setup: hosted-only path — slug chosen and page published
+    let needsHostedSetup = false;
+    if (hasPaidPlan && hasRegisteredSite && hasVerifiedPhone && hostedOnly && firstClient) {
+      needsHostedSetup =
+        !firstClient.hostedSlug?.trim() || !firstClient.hostedEnabled;
+    }
+
+    const needsPathSelection = !setupPath && !onboarding?.completedAt;
+
+    // Completed when: completedAt set AND (if paid) site + phone + path-specific setup done
     const completed =
       !!onboarding?.completedAt &&
-      (!hasPaidPlan || (hasRegisteredSite && hasVerifiedPhone && !needsInstallSetup));
+      (!hasPaidPlan ||
+        (hasRegisteredSite &&
+          hasVerifiedPhone &&
+          !needsInstallSetup &&
+          !needsHostedSetup));
 
     // Paid users must register a site before onboarding is considered complete
     const needsSiteRegistration =
@@ -109,6 +139,9 @@ export async function GET() {
       needsPhoneVerification,
       hasVerifiedPhone,
       needsInstallSetup,
+      needsHostedSetup,
+      needsPathSelection,
+      setupPath,
       firstClientId,
     });
   } catch (error) {

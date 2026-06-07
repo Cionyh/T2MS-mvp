@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Ticket,
   Phone,
+  Church,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +54,7 @@ const navItems = [
   { label: "Messages", href: "/admin/dashboard/messages", icon: MessageSquare },
   { label: "Inbound Numbers", href: "/admin/dashboard/inbound-numbers", icon: Phone },
   { label: "Subscriptions", href: "/admin/dashboard/subscriptions", icon: CreditCard },
+  { label: "Church Verifications", href: "/admin/dashboard/church-verifications", icon: Church },
   { label: "Coupon Codes", href: "/admin/dashboard/coupons", icon: Ticket },
   { label: "Analytics", href: "/admin/dashboard/analytics", icon: BarChart3 },
   { label: "Jobs", href: "/admin/dashboard/jobs", icon: ClipboardList },

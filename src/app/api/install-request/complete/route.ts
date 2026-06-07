@@ -3,18 +3,10 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { INSTALL_JOB_STATUS, ACCESS_METHOD } from "@/lib/job-status";
-import Stripe from "stripe";
+import { getStripeServerClient } from "@/lib/stripe-config";
 
 const REQUIRED_CONSENT_TEXT =
   "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
-
-function getStripe(): Stripe {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) {
-    throw new Error("STRIPE_SECRET_KEY is not configured");
-  }
-  return new Stripe(key, { apiVersion: "2025-08-27.basil" });
-}
 
 /**
  * PATCH /api/install-request/complete
@@ -63,7 +55,7 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const stripe = getStripe();
+    const stripe = getStripeServerClient();
     const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
     if (stripeSession.payment_status !== "paid") {
       return NextResponse.json(

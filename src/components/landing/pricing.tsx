@@ -1,6 +1,16 @@
 "use client";
 
-import { Check, ExternalLink, Zap, Layers, Rocket } from "lucide-react";
+import { Check, ExternalLink, Zap, Layers, Rocket, Church } from "lucide-react";
+import {
+  CHURCH_PLAN_FEATURES,
+  getChurchIntroPriceLabel,
+  isChurchPlanEnabled,
+} from "@/lib/church-pricing";
+import {
+  GROWTH_PLAN_FEATURES,
+  STARTER_PLAN_FEATURES,
+  UNIFIED_PLAN_TAGLINE,
+} from "@/lib/plan-features";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,31 +43,18 @@ const plans: PricingPlan[] = [
     name: "Starter Plan",
     planId: "starter",
     price: "$14.99",
-    description: "Everything you need to get started with one website.",
+    description: "One site — hosted page and widget on the same subscription.",
     icon: Zap,
-    features: [
-      "1 Website",
-      "100 Messages per Month",
-      "Professional Widget Installation (Included)",
-      "Priority Support",
-      "14-Day Free Trial",
-    ],
+    features: [...STARTER_PLAN_FEATURES],
     highlight: true,
   },
   {
     name: "Growth Plan",
     planId: "pro",
     price: "$29.99",
-    description: "Scale with multiple websites and team seats.",
+    description: "Scale with multiple sites — hosted page and widget on each.",
     icon: Layers,
-    features: [
-      "Up to 3 Websites",
-      "1–3 Users / Seats",
-      "330 Messages per Month",
-      "Professional Widget Installation (Included)",
-      "Priority Support",
-      "14-Day Free Trial",
-    ],
+    features: [...GROWTH_PLAN_FEATURES],
     highlight: true,
   },
   {
@@ -105,7 +102,25 @@ function FeaturesPreviewDialog({ url }: { url: string }) {
   );
 }
 
+function buildPricingPlans(): PricingPlan[] {
+  const churchPlan: PricingPlan | null = isChurchPlanEnabled()
+    ? {
+        name: "Church Intro Plan",
+        planId: "church",
+        price: getChurchIntroPriceLabel(),
+        description: "Verified churches — intro pricing, price locked up to 3 years.",
+        icon: Church,
+        features: [...CHURCH_PLAN_FEATURES],
+        highlight: true,
+      }
+    : null;
+
+  return churchPlan ? [churchPlan, ...plans] : plans;
+}
+
 export function PricingSection() {
+  const displayPlans = buildPricingPlans();
+
   return (
     <section id="pricing" className="w-full max-w-6xl mx-auto px-4 md:px-8 py-20">
       <div className="text-center mb-12">
@@ -113,11 +128,19 @@ export function PricingSection() {
           Simple, Transparent Pricing
         </h2>
         <p className="text-lg text-muted-foreground mt-4">
-        Choose the plan that's right for you -- no hidden fees, no surprises.        </p>
+          {UNIFIED_PLAN_TAGLINE} No hidden fees, no surprises.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {plans.map((plan) => {
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-8",
+          displayPlans.length >= 4
+            ? "md:grid-cols-2 lg:grid-cols-4"
+            : "md:grid-cols-3"
+        )}
+      >
+        {displayPlans.map((plan) => {
           const Icon = plan.icon;
           const isEnterprise = plan.planId === "enterprise";
           return (

@@ -19,7 +19,8 @@ import {
   Settings,
   ArrowRight,
   Star,
-  Download
+  Download,
+  ExternalLink,
 } from "lucide-react";
 import { DotPattern } from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
@@ -139,6 +140,16 @@ export default function LearnMorePage() {
                   >
                     Register Your Site
                     <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link href="/demo">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="px-8 py-4 text-lg border-2 border-primary gap-2"
+                  >
+                    View live demo
+                    <ExternalLink className="h-4 w-4" />
                   </Button>
                 </Link>
                 <a 
@@ -368,8 +379,18 @@ export default function LearnMorePage() {
                     className="px-8 py-4 text-lg border-2 border-primary"
                   >
                     View All Plans
-          </Button>
-        </Link>
+                  </Button>
+                </Link>
+                <Link href="/demo">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="px-8 py-4 text-lg border-2 border-muted-foreground/30 gap-2"
+                  >
+                    View live demo
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
               <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Star className="h-4 w-4 text-yellow-500" />

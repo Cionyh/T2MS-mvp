@@ -16,9 +16,30 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { client } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { Loader2, Zap, Layers, Rocket, Check, Globe, Phone } from "lucide-react";
+import { Loader2, Zap, Layers, Rocket, Check, Globe, Phone, Link2, Code2, Church } from "lucide-react";
 import { PhoneNumberManagement } from "@/components/app/phone-number-management";
 import { OnboardingInstallSetupForm } from "@/components/onboarding-install-setup-form";
+import { OnboardingHostedSetupForm } from "@/components/onboarding-hosted-setup-form";
+import {
+  SETUP_PATH_EMBED,
+  SETUP_PATH_HOSTED_ONLY,
+  type OnboardingSetupPath,
+} from "@/lib/setup-path";
+import {
+  CHURCH_PLAN_FEATURES,
+  getChurchIntroPriceLabel,
+  isChurchPlanEnabled,
+} from "@/lib/church-pricing";
+import {
+  CHURCH_VERIFICATION_VERIFIED,
+} from "@/lib/church-verification";
+import {
+  GROWTH_PLAN_FEATURES,
+  STARTER_PLAN_FEATURES,
+  UNIFIED_PLAN_TAGLINE,
+} from "@/lib/plan-features";
+import { preparePlanCheckout } from "@/lib/prepare-plan-checkout";
+import { ChurchVerificationDialog } from "@/components/onboarding/church-verification-dialog";
 import {
   Dialog,
   DialogContent,
@@ -35,23 +56,6 @@ import {
   storeCouponCode,
 } from "@/lib/coupons";
 
-const STARTER_PLAN_FEATURES = [
-  "1 Website",
-  "100 Messages per Month",
-  "Professional Widget Installation (Included)",
-  "Priority Support",
-  "14-Day Free Trial",
-];
-
-const GROWTH_PLAN_FEATURES = [
-  "Up to 3 Websites",
-  "1–3 Users / Seats",
-  "330 Messages per Month",
-  "Professional Widget Installation (Included)",
-  "Priority Support",
-  "14-Day Free Trial",
-];
-
 function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -61,11 +65,15 @@ function OnboardingContent() {
   const [status, setStatus] = useState<{
     completed: boolean;
     planId?: string | null;
+    setupPath?: string | null;
+    needsPathSelection?: boolean;
     needsSiteRegistration?: boolean;
     needsPhoneVerification?: boolean;
     needsInstallSetup?: boolean;
+    needsHostedSetup?: boolean;
     firstClientId?: string | null;
   } | null>(null);
+  const [pathSaving, setPathSaving] = useState(false);
   const [phoneStepClientId, setPhoneStepClientId] = useState<string | null>(null);
   const [registerForm, setRegisterForm] = useState({
     name: "",
@@ -84,6 +92,8 @@ function OnboardingContent() {
   const [resendCooldownSeconds, setResendCooldownSeconds] = useState(0);
   const [isResending, setIsResending] = useState(false);
   const [installSetupClientId, setInstallSetupClientId] = useState<string | null>(null);
+  const [hostedSetupClientId, setHostedSetupClientId] = useState<string | null>(null);
+  const [hostedSetupSiteName, setHostedSetupSiteName] = useState("");
   const [installSetupWebsiteUrl, setInstallSetupWebsiteUrl] = useState<string>("");
   const [installSetupLoading, setInstallSetupLoading] = useState(false);
   const [couponRedeeming, setCouponRedeeming] = useState(false);
@@ -92,6 +102,8 @@ function OnboardingContent() {
     planLabel: string;
     durationInMonths: number;
   } | null>(null);
+  const [churchVerifyDialogOpen, setChurchVerifyDialogOpen] = useState(false);
+  const [pendingChurchCheckout, setPendingChurchCheckout] = useState(false);
 
   const PENDING_VERIFY_STORAGE_KEY = "t2ms_onboarding_verify_pending";
   const RESEND_COOLDOWN_SECONDS = 60;
@@ -108,6 +120,9 @@ function OnboardingContent() {
       setStatusLoaded(true);
       if (data.needsInstallSetup && data.firstClientId && !installSetupClientId) {
         setInstallSetupClientId(data.firstClientId);
+      }
+      if (data.needsHostedSetup && data.firstClientId && !hostedSetupClientId) {
+        setHostedSetupClientId(data.firstClientId);
       }
     } catch {
       setStatusLoaded(true);
@@ -206,16 +221,32 @@ function OnboardingContent() {
 
   // After Stripe success: show register-site step (do NOT call complete until site is registered)
 
-  const handlePaidPlan = async (planId: "starter" | "pro") => {
-    setLoading(planId);
+  const handleSetupPath = async (setupPath: OnboardingSetupPath) => {
+    setPathSaving(true);
     try {
-      const planRes = await fetch("/api/onboarding/plan", {
+      const res = await fetch("/api/onboarding/setup-path", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, installAddonSku: null }),
+        body: JSON.stringify({ setupPath }),
       });
-      if (!planRes.ok) {
-        toast.error("Failed to save plan.");
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to save setup path");
+      }
+      await refreshStatus();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setPathSaving(false);
+    }
+  };
+
+  const proceedToStripeCheckout = async (planId: "starter" | "pro" | "church") => {
+    setLoading(planId);
+    try {
+      const prepared = await preparePlanCheckout(planId);
+      if (!prepared.ok) {
+        toast.error(prepared.error || "Failed to save plan.");
         setLoading(null);
         return;
       }
@@ -251,11 +282,44 @@ function OnboardingContent() {
     }
   };
 
+  const handlePaidPlan = async (planId: "starter" | "pro" | "church") => {
+    if (planId === "church") {
+      setLoading("church");
+      try {
+        const res = await fetch("/api/onboarding/church-verification");
+        const data = await res.json();
+        if (data.status === CHURCH_VERIFICATION_VERIFIED) {
+          await proceedToStripeCheckout("church");
+          return;
+        }
+        setPendingChurchCheckout(true);
+        setChurchVerifyDialogOpen(true);
+      } catch {
+        toast.error("Unable to check church eligibility.");
+      } finally {
+        setLoading(null);
+      }
+      return;
+    }
+
+    await proceedToStripeCheckout(planId);
+  };
+
+  const handleChurchVerified = async () => {
+    if (pendingChurchCheckout) {
+      setPendingChurchCheckout(false);
+      await proceedToStripeCheckout("church");
+    }
+  };
+
   const handleEnterpriseContact = () => {
     window.location.href = "mailto:sales@t2ms.biz";
   };
 
-  const isStarterPlan = status?.planId === "starter";
+  const isStarterPlan =
+    status?.planId === "starter" || status?.planId === "church";
+  const isHostedOnlyPath = status?.setupPath === SETUP_PATH_HOSTED_ONLY;
+  const churchPlanEnabled = isChurchPlanEnabled();
 
   const handleRegisterSite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -376,7 +440,6 @@ function OnboardingContent() {
         throw new Error(err.error || "Invalid verification code");
       }
 
-      toast.success("Phone verified! Next, complete the install setup.");
       sessionStorage.removeItem(PENDING_VERIFY_STORAGE_KEY);
       const clientIdToRedirect = pendingVerifyClientId;
       setVerifyCodeDialogOpen(false);
@@ -386,7 +449,13 @@ function OnboardingContent() {
       setPendingVerifyPhone("");
       setVerifyCode("");
       if (clientIdToRedirect) {
-        setInstallSetupClientId(clientIdToRedirect);
+        if (isHostedOnlyPath) {
+          toast.success("Phone verified! Set up your hosted page.");
+          setHostedSetupClientId(clientIdToRedirect);
+        } else {
+          toast.success("Phone verified! Next, complete the install setup.");
+          setInstallSetupClientId(clientIdToRedirect);
+        }
       } else {
         router.replace("/app");
       }
@@ -425,8 +494,13 @@ function OnboardingContent() {
   const handlePhoneVerified = async () => {
     setLoading("complete");
     try {
-      toast.success("Phone verified! Next, complete the install setup.");
-      setInstallSetupClientId(phoneVerificationClientId);
+      if (isHostedOnlyPath) {
+        toast.success("Phone verified! Set up your hosted page.");
+        setHostedSetupClientId(phoneVerificationClientId);
+      } else {
+        toast.success("Phone verified! Next, complete the install setup.");
+        setInstallSetupClientId(phoneVerificationClientId);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -445,9 +519,19 @@ function OnboardingContent() {
     statusLoaded &&
     (phoneStepClientId !== null || status?.needsPhoneVerification === true) &&
     phoneVerificationClientId !== null &&
-    !installSetupClientId;
+    !installSetupClientId &&
+    !hostedSetupClientId;
 
-  const showInstallSetupStep = statusLoaded && installSetupClientId !== null;
+  const showInstallSetupStep =
+    statusLoaded && installSetupClientId !== null && !hostedSetupClientId;
+
+  const showHostedSetupStep = statusLoaded && hostedSetupClientId !== null;
+
+  const showPathSelectionStep =
+    statusLoaded &&
+    status?.needsPathSelection === true &&
+    !successParam &&
+    !status?.needsSiteRegistration;
 
   // When on install setup step, fetch client domain for the form
   useEffect(() => {
@@ -468,6 +552,19 @@ function OnboardingContent() {
       .finally(() => setInstallSetupLoading(false));
   }, [installSetupClientId]);
 
+  useEffect(() => {
+    if (!hostedSetupClientId) return;
+    fetch("/api/client")
+      .then((r) => r.json())
+      .then((clients: Array<{ id: string; name: string }>) => {
+        const c = Array.isArray(clients)
+          ? clients.find((x) => x.id === hostedSetupClientId)
+          : null;
+        setHostedSetupSiteName(c?.name ?? "Your site");
+      })
+      .catch(() => setHostedSetupSiteName("Your site"));
+  }, [hostedSetupClientId]);
+
   if (!statusLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/30">
@@ -484,6 +581,28 @@ function OnboardingContent() {
           Applying coupon and skipping payment...
         </div>
       </div>
+    );
+  }
+
+  if (showHostedSetupStep && hostedSetupClientId) {
+    return (
+      <OnboardingHostedSetupForm
+        clientId={hostedSetupClientId}
+        siteName={hostedSetupSiteName}
+        onSuccess={async () => {
+          try {
+            await fetch("/api/onboarding/complete", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({}),
+            });
+          } catch {
+            // redirect anyway
+          }
+          setHostedSetupClientId(null);
+          router.replace("/app/sites");
+        }}
+      />
     );
   }
 
@@ -759,6 +878,77 @@ function OnboardingContent() {
     );
   }
 
+  if (showPathSelectionStep) {
+    return (
+      <div className="min-h-screen bg-muted/30 py-12 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
+              How do you want to use T2MS?
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              Choose how you want to get started. {UNIFIED_PLAN_TAGLINE} You can add the other option later from your dashboard.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-6">
+            <Card
+              className="cursor-pointer border-2 hover:border-amber-600/60 transition-colors"
+              onClick={() => !pathSaving && handleSetupPath(SETUP_PATH_HOSTED_ONLY)}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Link2 className="h-5 w-5 text-amber-600" />
+                  Hosted announcement page
+                </CardTitle>
+                <CardDescription>
+                  Get a shareable link on t2ms.live — no widget install required.
+                </CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <Button
+                  className="w-full !bg-amber-600 hover:!bg-amber-700 !text-white"
+                  disabled={pathSaving}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSetupPath(SETUP_PATH_HOSTED_ONLY);
+                  }}
+                >
+                  {pathSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Continue"}
+                </Button>
+              </CardFooter>
+            </Card>
+            <Card
+              className="cursor-pointer border-2 hover:border-amber-600/60 transition-colors"
+              onClick={() => !pathSaving && handleSetupPath(SETUP_PATH_EMBED)}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Code2 className="h-5 w-5 text-amber-600" />
+                  Widget on my website
+                </CardTitle>
+                <CardDescription>
+                  Embed a banner or widget on your existing site (Wix, Squarespace, etc.).
+                </CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <Button
+                  className="w-full !bg-amber-600 hover:!bg-amber-700 !text-white"
+                  disabled={pathSaving}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSetupPath(SETUP_PATH_EMBED);
+                  }}
+                >
+                  {pathSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Continue"}
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-muted/30 py-12 px-4">
       <div className="max-w-5xl mx-auto">
@@ -767,7 +957,7 @@ function OnboardingContent() {
             Simple, Transparent Pricing
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Choose the plan that&apos;s right for you — no hidden fees, no surprises.
+            {UNIFIED_PLAN_TAGLINE} Choose the plan that fits your needs — no hidden fees.
           </p>
           {couponSummary ? (
             <div className="mx-auto mt-4 max-w-xl rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
@@ -777,7 +967,54 @@ function OnboardingContent() {
           ) : null}
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 items-stretch">
+        <div
+          className={`grid gap-6 items-stretch ${
+            churchPlanEnabled ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"
+          }`}
+        >
+          {churchPlanEnabled && (
+            <Card className="flex flex-col border-2 border-amber-600 shadow-md min-h-0">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Church className="h-5 w-5 text-amber-600" />
+                  Church Intro Plan
+                </CardTitle>
+                <div className="mt-1">
+                  <span className="text-2xl font-bold text-amber-700">
+                    {getChurchIntroPriceLabel()}
+                  </span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+                <CardDescription className="text-sm">
+                  Verified churches — intro pricing with price locked up to 3 years.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 min-h-0 overflow-y-auto">
+                <ul className="space-y-2">
+                  {CHURCH_PLAN_FEATURES.map((feature) => (
+                    <li key={feature} className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 shrink-0 text-amber-600" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter className="flex-shrink-0 border-t border-amber-600/30 flex flex-col gap-2 pt-4 pb-2 mt-0">
+                <Button
+                  className="w-full min-h-11 font-medium !bg-amber-600 hover:!bg-amber-700 !text-white"
+                  onClick={() => handlePaidPlan("church")}
+                  disabled={!!loading}
+                >
+                  {loading === "church" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Get Started"
+                  )}
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+
           {/* Starter Plan – uses STRIPE_STARTER_PRICE_ID */}
           <Card className="flex flex-col border-2 border-amber-600/50 shadow-md min-h-0">
             <CardHeader>
@@ -790,7 +1027,7 @@ function OnboardingContent() {
                 <span className="text-muted-foreground">/month</span>
               </div>
               <CardDescription className="text-sm">
-                Everything you need to get started with one website.
+                One site — hosted page and widget included.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 min-h-0 overflow-y-auto">
@@ -895,6 +1132,11 @@ function OnboardingContent() {
             </CardFooter>
           </Card>
         </div>
+        <ChurchVerificationDialog
+          open={churchVerifyDialogOpen}
+          onOpenChange={setChurchVerifyDialogOpen}
+          onVerified={handleChurchVerified}
+        />
       </div>
     </div>
   );

@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // This will automatically create an organization if user doesn't have one
+    // This dwill automatically create an organization if user doesn't have one
     const organizationId = await getActiveOrganization();
 
     if (!organizationId) {

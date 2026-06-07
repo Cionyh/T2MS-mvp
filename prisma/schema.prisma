@@ -178,6 +178,11 @@ model Onboarding {
   installAddonStatus   String?   // "paid" | "refunded" | "disputed" | null
   stripeSubscriptionId String?
   stripePaymentIntentId String?
+  setupPath            String?   // "hosted_only" | "embed" — Version 1 two-path onboarding
+  churchOrganizationName   String?
+  churchVerificationStatus String?   // "pending" | "verified" | "rejected"
+  churchVerifiedAt         DateTime?
+  churchPriceLockedUntil   DateTime? // intro price lock (up to 3 years for early adopters)
   completedAt          DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
@@ -250,6 +255,12 @@ model Client {
 
   // Widget configuration settings
   widgetConfig Json? @default("{}") // JSON object containing all widget customization settings
+
+  // Version 1: public hosted announcement page (t2ms.live /p/{slug})
+  hostedSlug        String?   @unique
+  hostedEnabled     Boolean   @default(false)
+  hostedIntroText   String?
+  hostedPublishedAt DateTime?
 
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt

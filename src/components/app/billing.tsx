@@ -8,6 +8,10 @@ import { Separator } from "@/components/ui/separator";
 import { client } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { CreditCard, Calendar, Users, Globe, MessageSquare, HardDrive } from "lucide-react";
+import { PLAN_LIMITS } from "@/lib/plan-limits";
+import { formatPlanLabel } from "@/lib/plan-display";
+import { preparePlanCheckout } from "@/lib/prepare-plan-checkout";
+import Link from "next/link";
 
 interface Subscription {
   id: string;
@@ -31,16 +35,12 @@ interface PlanLimits {
   storage: number;
 }
 
-const planLimits: Record<string, PlanLimits> = {
-  free: { websites: 10, messages: 1000, storage: 10 },
-  starter: { websites: 1, messages: 100, storage: 10 },
-  pro: { websites: 3, messages: 330, storage: 50 },
-  enterprise: { websites: -1, messages: -1, storage: 1000 }
-};
+const planLimits: Record<string, PlanLimits> = PLAN_LIMITS;
 
 export function BillingSection() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [onboardingPlanId, setOnboardingPlanId] = useState<string | null>(null);
+  const [churchPriceLockedUntil, setChurchPriceLockedUntil] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const syncAttempted = useRef(false);
@@ -103,11 +103,15 @@ export function BillingSection() {
 
   const fetchOnboardingPlan = async () => {
     try {
-      const res = await fetch("/api/onboarding/status");
+      const res = await fetch("/api/onboarding");
       if (!res.ok) return;
       const data = await res.json();
-      if (data.planId && data.planId !== "free") {
-        setOnboardingPlanId(data.planId);
+      const onboarding = data.onboarding;
+      if (onboarding?.planId && onboarding.planId !== "free") {
+        setOnboardingPlanId(onboarding.planId);
+      }
+      if (onboarding?.churchPriceLockedUntil) {
+        setChurchPriceLockedUntil(onboarding.churchPriceLockedUntil);
       }
     } catch {
       // Ignore
@@ -231,6 +235,12 @@ export function BillingSection() {
         setActionLoading(null);
         return;
       }
+      const prepared = await preparePlanCheckout(onboardingPlanId);
+      if (!prepared.ok) {
+        toast.error(prepared.error || "Failed to prepare checkout");
+        setActionLoading(null);
+        return;
+      }
       const { data, error } = await client.subscription.upgrade({
         plan: onboardingPlanId,
         referenceId: session.data.user.id,
@@ -288,9 +298,14 @@ export function BillingSection() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold">Billing & Subscription</h2>
-        <p className="text-muted-foreground">Manage your subscription and billing information</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold">Billing & Subscription</h2>
+          <p className="text-muted-foreground">Manage your subscription and billing information</p>
+        </div>
+        <Button variant="outline" asChild>
+          <Link href="/app/change-plan">Change plan</Link>
+        </Button>
       </div>
 
       {/* Current Plan Overview */}
@@ -304,7 +319,7 @@ export function BillingSection() {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-semibold capitalize">{currentPlan}</h3>
+              <h3 className="text-xl font-semibold">{formatPlanLabel(currentPlan)}</h3>
               <p className="text-muted-foreground">
                 {activeSubscription ? (
                   <>
@@ -321,6 +336,11 @@ export function BillingSection() {
                   "Free Plan"
                 )}
               </p>
+              {currentPlan === "church" && churchPriceLockedUntil && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Intro price locked until {formatDate(churchPriceLockedUntil)}
+                </p>
+              )}
             </div>
             <Badge className={getStatusColor(activeSubscription?.status || (paymentPending ? "past_due" : "free"))}>
               {activeSubscription?.status || (paymentPending ? "Payment pending" : "free")}
@@ -424,7 +444,7 @@ export function BillingSection() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              You selected the <strong className="capitalize">{onboardingPlanId}</strong> plan during onboarding.
+              You selected the <strong>{formatPlanLabel(onboardingPlanId!)}</strong> plan during onboarding.
               Complete payment to activate your subscription and unlock plan limits.
             </p>
             <div className="flex flex-wrap gap-2">

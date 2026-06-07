@@ -32,6 +32,10 @@ export async function GET() {
         installAddonSku: onboarding.installAddonSku,
         installAddonStatus: onboarding.installAddonStatus,
         completedAt: onboarding.completedAt,
+        churchOrganizationName: onboarding.churchOrganizationName,
+        churchVerificationStatus: onboarding.churchVerificationStatus,
+        churchVerifiedAt: onboarding.churchVerifiedAt,
+        churchPriceLockedUntil: onboarding.churchPriceLockedUntil,
       },
     });
   } catch (error: unknown) {

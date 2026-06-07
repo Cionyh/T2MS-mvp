@@ -5,16 +5,20 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin } from "better-auth/plugins";
 import { organization } from "better-auth/plugins";
 import { stripe } from "@better-auth/stripe";
-import Stripe from "stripe";
 import { sendEmail } from "@/lib/sendgrid";
 import { renderPasswordResetEmail } from "@/lib/email-templates";
+import {
+  buildBetterAuthStripePlans,
+  getStripeWebhookSecret,
+  tryGetStripeServerClient,
+} from "@/lib/stripe-config";
 
 const db = new PrismaClient();
 
 // Only create Stripe client when key is set (avoids build failure when env is missing)
-const stripeClient = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" })
-  : null;
+const stripeClient = tryGetStripeServerClient();
+const stripeWebhookSecret = getStripeWebhookSecret();
+const stripeSubscriptionPlans = buildBetterAuthStripePlans();
 
 const plugins: Parameters<typeof betterAuth>[0]["plugins"] = [
     admin(),
@@ -49,49 +53,15 @@ const plugins: Parameters<typeof betterAuth>[0]["plugins"] = [
     }),
   ];
 
-if (stripeClient && process.env.STRIPE_WEBHOOK_SECRET) {
+if (stripeClient && stripeWebhookSecret && stripeSubscriptionPlans.length > 0) {
   plugins.push(
     stripe({
       stripeClient,
-      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+      stripeWebhookSecret,
       createCustomerOnSignUp: true,
       subscription: {
         enabled: true,
-        plans: [
-          {
-            name: "starter",
-            priceId: process.env.STRIPE_STARTER_PRICE_ID!,
-            limits: {
-              websites: 1,
-              messages: 100,
-              storage: 10
-            },
-            freeTrial: {
-              days: 14
-            }
-          },
-          {
-            name: "pro",
-            priceId: process.env.STRIPE_PRO_PRICE_ID!,
-            limits: {
-              websites: 3,
-              messages: 330,
-              storage: 50
-            },
-            freeTrial: {
-              days: 14
-            }
-          },
-          {
-            name: "enterprise",
-            priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID!,
-            limits: {
-              websites: -1,
-              messages: -1,
-              storage: 1000
-            }
-          }
-        ],
+        plans: stripeSubscriptionPlans,
         authorizeReference: async ({ user, session, referenceId, action }) => {
           if (referenceId === user.id) {
             return true;

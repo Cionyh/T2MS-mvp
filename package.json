@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
+    "dev:turbo": "next dev --turbopack",
+    "dev:clean": "rm -rf .next && next dev",
     "build": "prisma migrate deploy && prisma generate && next build",
     "start": "next start",
     "db:fix-subscription": "prisma db execute --file prisma/fix-subscription-columns.sql --schema prisma/schema.prisma",

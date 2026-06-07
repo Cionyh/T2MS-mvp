@@ -70,11 +70,32 @@ TWILIO_AFFILIATE_PHONE_NUMBER="+14244978398"
 TWILIO_VERIFY_SERVICE_SID="your-twilio-verify-service-sid"
 
 # Stripe Configuration
-STRIPE_SECRET_KEY="sk_test_your-stripe-secret-key"
+# LIVE_MODE=ON  → uses existing production vars below (no rename required)
+# LIVE_MODE=OFF → uses STRIPE_TEST_* vars for staging / test checkout
+LIVE_MODE="OFF"
+NEXT_PUBLIC_LIVE_MODE="OFF"
+
+# Production (existing names — used when LIVE_MODE=ON)
+STRIPE_SECRET_KEY="sk_live_your-stripe-secret-key"
 STRIPE_WEBHOOK_SECRET="whsec_your-webhook-secret"
 STRIPE_STARTER_PRICE_ID="price_your-starter-price-id"
-STRIPE_PRO_PRICE_ID="price_1Szn8i1ZWEwBpolW1fMI9TQA"   # Standard subscription (product prod_TxiZhc5CBJxTwO)
+STRIPE_PRO_PRICE_ID="price_1Szn8i1ZWEwBpolW1fMI9TQA"
 STRIPE_ENTERPRISE_PRICE_ID="price_your-enterprise-price-id"
+STRIPE_CHURCH_STARTER_PRICE_ID="price_your-church-price-id"
+NEXT_PUBLIC_STRIPE_CHURCH_STARTER_PRICE_ID="price_your-church-price-id"
+
+# Staging / test only (used when LIVE_MODE=OFF)
+STRIPE_TEST_SECRET_KEY="sk_test_your-stripe-secret-key"
+STRIPE_TEST_WEBHOOK_SECRET="whsec_your-test-webhook-secret"
+STRIPE_TEST_STARTER_PRICE_ID="price_test_starter"
+STRIPE_TEST_PRO_PRICE_ID="price_test_pro"
+STRIPE_TEST_ENTERPRISE_PRICE_ID="price_test_enterprise"
+STRIPE_TEST_CHURCH_STARTER_PRICE_ID="price_test_church"
+NEXT_PUBLIC_STRIPE_TEST_CHURCH_STARTER_PRICE_ID="price_test_church"
+
+NEXT_PUBLIC_CHURCH_INTRO_PRICE_LABEL="$7.99"
+# Optional: auto-verify church attestation at signup (skip admin approval). Default: admin must approve.
+CHURCH_INTRO_AUTO_VERIFY="false"
 
 # PostHog Analytics (Optional)
 NEXT_PUBLIC_POSTHOG_KEY="your-posthog-key"
@@ -112,11 +133,11 @@ SENDGRID_FROM_NAME="T2MS"
 **Twilio warning 12200 (invalid XML):** Usually means Twilio received **HTML** (wrong URL / redirect) or a **JSON** error body. The app responds with valid TwiML for `/api/twilio`; use the canonical **`https://www.../api/twilio`** URL in Twilio and redeploy so error paths also return empty `<Response/>` instead of JSON.
 
 #### Stripe
-- **STRIPE_SECRET_KEY**: Your Stripe secret key (starts with `sk_test_` for test mode)
-- **STRIPE_WEBHOOK_SECRET**: Webhook secret from Stripe dashboard
-- **STRIPE_STARTER_PRICE_ID**: Stripe Price ID for Starter plan (Early Bird)
-- **STRIPE_PRO_PRICE_ID**: Stripe Price ID for Pro plan (Standard subscription). Product ID: `prod_TxiZhc5CBJxTwO` — use the recurring price ID from this product.
-- **STRIPE_ENTERPRISE_PRICE_ID**: Stripe Price ID for Enterprise plan
+- **LIVE_MODE**: `ON` = production Stripe vars (existing names). `OFF` = `STRIPE_TEST_*` vars.
+- **NEXT_PUBLIC_LIVE_MODE**: Mirror of `LIVE_MODE` for church plan card visibility in the browser.
+- **When LIVE_MODE=ON** (production): `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_STARTER_PRICE_ID`, `STRIPE_PRO_PRICE_ID`, `STRIPE_ENTERPRISE_PRICE_ID`, `STRIPE_CHURCH_STARTER_PRICE_ID`, `NEXT_PUBLIC_STRIPE_CHURCH_STARTER_PRICE_ID`
+- **When LIVE_MODE=OFF** (staging): `STRIPE_TEST_SECRET_KEY`, `STRIPE_TEST_WEBHOOK_SECRET`, `STRIPE_TEST_STARTER_PRICE_ID`, `STRIPE_TEST_PRO_PRICE_ID`, `STRIPE_TEST_ENTERPRISE_PRICE_ID`, `STRIPE_TEST_CHURCH_STARTER_PRICE_ID`, `NEXT_PUBLIC_STRIPE_TEST_CHURCH_STARTER_PRICE_ID`
+- Point Stripe webhooks at the matching secret for the active mode (`STRIPE_WEBHOOK_SECRET` vs `STRIPE_TEST_WEBHOOK_SECRET`).
 
 #### PostHog (Optional)
 - **NEXT_PUBLIC_POSTHOG_KEY**: PostHog project API key

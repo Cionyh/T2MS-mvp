@@ -23,11 +23,34 @@ This document consolidates three complementary Phase 2 specifications that toget
 
 ---
 
+## Version 1 — Hosted announcement pages (client-agreed, May 2026)
+
+This Phase 2 specification does **not** replace the separate **Version 1 launch** agreed with the client (hosted standalone pages on `t2ms.live`, optional widget embed, lean scope).
+
+| Topic | Where defined |
+|-------|----------------|
+| Full V1 product scope, milestones, commercial terms | `docs/VERSION_1_FINALIZED_BUILD_SCOPE.md` |
+| V1 billing rules (unified plan, church intro, install add-on) | This document — [Section 3.4](#34-version-1-billing-rules-client-agreed-may-2026) |
+| Base44 discovery (reuse vs defer) | `docs/BASE44_DISCOVERY_NOTE.md`, `docs/BASE44_DISCOVERY_REPORT.md` |
+| Reference screenshots only | `t2ms-hosted/docs/` (not a second production app) |
+
+**Architecture (non-negotiable for V1 implementation):**
+
+- Build by **extending this repository (`T2MS-mvp`)** — existing widget/fullscreen/display, `Client`, messages, auth, Stripe, Twilio, onboarding.
+- **Do not** implement Version 1 as a separate deployed application in `t2ms-hosted/` unless the client explicitly changes direction.
+- New work: public hosted routes, slug/subdomain on `t2ms.live`, host-based routing, Prisma extensions, two-path onboarding copy.
+
+When V1 hosted-page work conflicts with Phase 2 items below, follow the client-finalized V1 scope document first for launch-critical hosted features.
+
+**Version 1 design goal (billing & onboarding):** Keep pricing and onboarding as **simple and low-friction** as possible for launch.
+
+---
+
 ## Table of Contents
 
 1. [Core Principles](#1-core-principles-non-negotiable)
 2. [Clarification: Onboarding vs Install Add-On vs Install Setup](#2-clarification-onboarding-vs-install-add-on-vs-install-setup)
-3. [Customer Signup + Billing Flow](#3-customer-signup--billing-flow)
+3. [Customer Signup + Billing Flow](#3-customer-signup--billing-flow) — includes [3.4 Version 1 Billing Rules](#34-version-1-billing-rules-client-agreed-may-2026)
 4. [Customer Onboarding + SMS Consent Gate](#4-customer-onboarding--sms-consent-gate)
 5. [Access Method Rules](#5-access-method-rules-worker-guardrails)
 6. [Reminder Email Automation](#6-reminder-email-automation)
@@ -90,9 +113,10 @@ This document consolidates three complementary Phase 2 specifications that toget
 
 **Onboarding** = the flow a new customer goes through **after signup**. It can include:
 
-1. **Plan selection** – Choose monthly subscription (e.g. Starter, Pro, Enterprise).
-2. **Optional install add-on** – Choose whether to buy the one-time paid install service (see [Install add-on](#22-install-add-on) below).
-3. **If they bought the add-on:** complete **install setup** (the form with website URLs, platform, install type, access method, etc.) and **SMS consent**. When that is done, we create an **Install Job** (queued for a worker).
+1. **Plan selection** – Choose monthly subscription (e.g. Starter, Pro, Enterprise, or Church intro for eligible verified churches — see [Section 3.4](#34-version-1-billing-rules-client-agreed-may-2026)).
+2. **Setup path (Version 1)** – Choose how to get started: **hosted link only** or **widget embed**. This is a **setup preference**, not a separate monthly product; one subscription includes both capabilities on the same site.
+3. **Optional install add-on** – Choose whether to buy the one-time paid install service (see [Install add-on](#22-install-add-on) below).
+4. **If they bought the add-on:** complete **install setup** (the form with website URLs, platform, install type, access method, etc.) and **SMS consent**. When that is done, we create an **Install Job** (queued for a worker).
 
 So: onboarding is the overall “get the customer set up” flow; the **install setup form** and **SMS consent** are specific steps inside that flow when the customer has the install add-on.
 
@@ -104,7 +128,7 @@ The **install add-on** is an **optional one-time paid product** (not part of the
 - **Restricted platform install** (Google Sites / iframe): $39.99 one-time  
 - **Website creation / branding / multi-page build**: EXCLUDED from Phase 2 (separate future module)
 
-- Offered **during or immediately after signup** (or at checkout).
+- Offered **during or immediately after signup** (or at checkout), **or later from the dashboard** when a hosted-only customer requests widget installation (Version 1 — see [Section 3.4.2](#342-install-add-on--hosted-only-customers-upgrading-to-widget)).
 - If the customer pays for it, they are prompted to **“Complete Setup”** (install setup + SMS consent).
 - Billing stores: `install_addon_sku`, `install_addon_status` (paid | refunded | disputed), etc.
 
@@ -134,6 +158,8 @@ During signup or immediately after checkout, customer selects:
 - Monthly subscription
 - **Optional install add-on** (see [Section 2.2](#22-install-add-on))
 
+**Version 1 launch:** See [Section 3.4](#34-version-1-billing-rules-client-agreed-may-2026) for unified plan (hosted + widget), church intro pricing, and hosted-only → widget upgrade rules.
+
 #### Install Pricing Tiers:
 - **Standard website install** (script embed): $19.99 one-time
 - **Restricted platform install** (Google Sites / iframe): $39.99 one-time
@@ -157,6 +183,41 @@ Store:
 Sent on successful payment:
 - Receipt
 - "Complete Setup" CTA linking to onboarding
+
+### 3.4 Version 1 Billing Rules (client-agreed, May 2026)
+
+These rules apply to the **Version 1 launch** and take precedence over any conflicting Phase 2 billing assumptions. Source: client (Ciony Holloway), May 2026.
+
+#### 3.4.1 Unified monthly plan — hosted page + widget
+
+- **One monthly subscription** covers **both**:
+  - the **hosted announcement page / shareable link** (`t2ms.live`), **and**
+  - the **widget embed** on the same site/business.
+- There is **no double charge** for using hosted page and widget together on the **same account/site**.
+- Onboarding path selection (**hosted link only** vs **widget embed**) controls **setup flow only**, not which product the customer is buying. Copy and plan features must reflect a single subscription with both capabilities available on the same site.
+
+#### 3.4.2 Install add-on — hosted-only customers upgrading to widget
+
+- The **install add-on** remains an **optional one-time paid product** (see [Section 2.2](#22-install-add-on)), separate from the monthly subscription.
+- If a customer starts on the **hosted-only** onboarding path and later wants a **widget installed on their existing website**, they may purchase the install/setup add-on **at that time** (via dashboard / install-request flow).
+- The monthly plan does **not** need to change when they add a widget later; only the one-time install fee applies when they request professional installation.
+
+#### 3.4.3 Church introductory pricing (launch period)
+
+Church pricing applies **only** to **verified churches / religious organizations** during the **introductory launch period**.
+
+| Term | Value |
+|------|-------|
+| Free trial | **14 days** |
+| Monthly price | **$7.99/month** |
+| Price lock | Locked for **up to 3 years** for early church adopters |
+| Eligibility | Verified church / religious organization during intro launch phase |
+
+**Implementation notes (non-functional requirements):**
+
+- Church checkout/plan must be **gated** so only verified eligible organizations can subscribe at the intro rate (verification mechanism TBD — e.g. admin approval, attestation + review).
+- Stripe must use a dedicated **$7.99/mo** price with **14-day trial**; price-lock for 3 years must be enforced via Stripe configuration and/or customer metadata (e.g. grandfathered price ID, subscription metadata, launch cutoff date).
+- Plan marketing copy must **not** present hosted page and widget as separate paid monthly products for church (or general) plans.
 
 ---
 

@@ -191,6 +191,7 @@ export function SignUp() {
   const [activeReferralCode, setActiveReferralCode] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
   const [couponValidating, setCouponValidating] = useState(false);
+  const [consentError, setConsentError] = useState<string | null>(null);
   const [validatedCoupon, setValidatedCoupon] = useState<{
     code: string;
     plan: string;
@@ -284,15 +285,17 @@ export function SignUp() {
   };
 
   const onSubmit = async (values: z.infer<typeof signUpSchema>) => {
-    // Frontend validation for mandatory checkboxes
-    if (!smsOptIn) {
-      toast.error("You must consent to agree to the SMS Terms & Conditions to continue.");
+    if (!smsOptIn || !termsAccepted) {
+      const message = !smsOptIn && !termsAccepted
+        ? "Check both required boxes: SMS consent and Terms of Use."
+        : !smsOptIn
+          ? "You must consent to the SMS Terms & Conditions to continue."
+          : "You must accept the Terms of Use, Privacy Policy, and SMS Terms to continue.";
+      setConsentError(message);
+      toast.error(message);
       return;
     }
-    if (!termsAccepted) {
-      toast.error("You must accept the terms and conditions to continue.");
-      return;
-    }
+    setConsentError(null);
 
     setLoading(true);
     try {
@@ -322,7 +325,7 @@ export function SignUp() {
         }
       }
 
-      await signUp.email({
+      const { data, error } = await signUp.email({
         email: values.email,
         password: values.password,
         name: `${values.firstName} ${values.lastName}`,
@@ -331,27 +334,44 @@ export function SignUp() {
         businessCategory: values.businessCategory || undefined,
         referralCode: validReferralCode,
         callbackURL: "/onboarding",
-        fetchOptions: {
-          onResponse: () => {
-            setLoading(false);
-          },
-          onRequest: () => {
-            setLoading(true);
-          },
-          onError: (ctx) => {
-            toast.error(ctx.error.message);
-          },
-          onSuccess: async () => {
-            if (validReferralCode) {
-              storeReferralCode(null);
-            }
-            router.push("/onboarding");
-          },
-        },
       });
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred during sign-up.");
+
+      if (error) {
+        const message =
+          error.message ||
+          (error.status === 422
+            ? "An account with this email may already exist. Try signing in instead."
+            : "Could not create your account. Please try again.");
+        toast.error(message);
+        return;
+      }
+
+      if (!data) {
+        toast.error("Could not create your account. Please try again.");
+        return;
+      }
+
+      if (validReferralCode) {
+        storeReferralCode(null);
+      }
+      router.push("/onboarding");
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An error occurred during sign-up."
+      );
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const onInvalid = () => {
+    toast.error("Please fix the highlighted fields above.");
+    const firstKey = Object.keys(form.formState.errors)[0];
+    if (firstKey) {
+      const el = document.querySelector(`[name="${firstKey}"]`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   };
 
@@ -368,7 +388,7 @@ export function SignUp() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="grid gap-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <FormField
@@ -642,7 +662,10 @@ export function SignUp() {
               <div className="flex items-center space-x-2">
                 <Checkbox
                   checked={smsOptIn}
-                  onCheckedChange={(checked) => setSmsOptIn(checked === true)}
+                  onCheckedChange={(checked) => {
+                    setSmsOptIn(checked === true);
+                    if (checked) setConsentError(null);
+                  }}
                   className="border-black dark:border-neutral-400 [&[data-state=checked]]:border-primary"
                   style={!smsOptIn ? { border: "1px solid black" } : undefined}
                 />
@@ -684,7 +707,10 @@ export function SignUp() {
               <div className="flex items-center space-x-2">
                 <Checkbox
                   checked={termsAccepted}
-                  onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                  onCheckedChange={(checked) => {
+                    setTermsAccepted(checked === true);
+                    if (checked) setConsentError(null);
+                  }}
                   className="border-black dark:border-neutral-400 [&[data-state=checked]]:border-primary"
                   style={!termsAccepted ? { border: "1px solid black" } : undefined}
                 />
@@ -741,10 +767,20 @@ export function SignUp() {
               </Dialog>
             </div>
 
+            {consentError ? (
+              <p className="text-sm text-destructive" role="alert">
+                {consentError}
+              </p>
+            ) : !smsOptIn || !termsAccepted ? (
+              <p className="text-xs text-muted-foreground">
+                Both checkboxes above are required before you can create an account.
+              </p>
+            ) : null}
+
             <Button
               type="submit"
               className="w-full rounded-[3em] text-foreground"
-              disabled={loading}
+              disabled={loading || !smsOptIn || !termsAccepted}
             >
               {loading ? (
                 <Loader2 size={16} className="animate-spin" />

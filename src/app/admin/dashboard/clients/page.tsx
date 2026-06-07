@@ -66,6 +66,7 @@ type User = {
   name: string;
   role: "admin" | "user";
   banned?: boolean;
+  createdAt: string;
 };
 
 export default function AdminDashboard() {
@@ -159,8 +160,8 @@ export default function AdminDashboard() {
 		setIsLoading(`impersonate-${id}`);
 		try {
 			await client.admin.impersonateUser({ userId: id });
-			toast.success("Impersonated user");
-			router.push("/dashboard");
+			toast.success("Now viewing as this user");
+			router.push("/app");
 		} catch (error: any) {
 			toast.error(error.message || "Failed to impersonate user");
 		} finally {
@@ -371,6 +372,9 @@ export default function AdminDashboard() {
                     <TableHead className="whitespace-nowrap min-w-[100px]">
                       Banned
                     </TableHead>
+                    <TableHead className="whitespace-nowrap min-w-[120px]">
+                      Registered
+                    </TableHead>
                     <TableHead className="whitespace-nowrap min-w-[180px]">
                       Actions
                     </TableHead>
@@ -394,6 +398,11 @@ export default function AdminDashboard() {
                         ) : (
                           <Badge variant="outline">No</Badge>
                         )}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap min-w-[120px] text-muted-foreground">
+                        {user.createdAt
+                          ? format(new Date(user.createdAt), "MMM d, yyyy")
+                          : "—"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap min-w-[180px]">
                         <div className="flex flex-wrap gap-2">
@@ -454,6 +463,31 @@ export default function AdminDashboard() {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
+                          )}
+                          {user.role !== "admin" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleImpersonateUser(user.id)}
+                              disabled={isLoading === `impersonate-${user.id}` || user.banned}
+                              title={
+                                user.banned
+                                  ? "Cannot impersonate a banned user"
+                                  : "Login as this user"
+                              }
+                            >
+                              {isLoading === `impersonate-${user.id}` ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span className="sr-only">Logging in…</span>
+                                </>
+                              ) : (
+                                <>
+                                  <UserCircle className="h-4 w-4" />
+                                  Login as
+                                </>
+                              )}
+                            </Button>
                           )}
                           <Button
                             variant="outline"

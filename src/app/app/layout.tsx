@@ -16,8 +16,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     headers: await headers(),
   });
 
-  // Admins must never see the customer app shell — redirect before any /app page renders (avoids flash)
-  if (session?.user?.role === "admin") {
+  // Admins must never see the customer app shell — unless impersonating a user
+  if (session?.user?.role === "admin" && !session?.session?.impersonatedBy) {
     redirect("/admin/dashboard");
   }
 
