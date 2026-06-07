@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import ClientDashboardLayout from "./client-layout";
 import { auth } from "@/lib/auth";
+import { isImpersonating } from "@/lib/auth-types";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -17,7 +18,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   });
 
   // Admins must never see the customer app shell — unless impersonating a user
-  if (session?.user?.role === "admin" && !session?.session?.impersonatedBy) {
+  if (session?.user?.role === "admin" && !isImpersonating(session)) {
     redirect("/admin/dashboard");
   }
 
