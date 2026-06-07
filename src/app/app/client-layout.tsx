@@ -41,7 +41,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { signOut, client } from "@/lib/auth-client"; 
+import { signOut, client } from "@/lib/auth-client";
+import { toast } from "sonner"; 
 
 const navItems = [
   { label: "Dashboard", href: "/app", icon: LayoutDashboard },
@@ -67,10 +68,12 @@ export default function ClientDashboardLayout({
   const [openSignOutDialog, setOpenSignOutDialog] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<string>("free");
   const [planStatus, setPlanStatus] = useState<string>("");
+  const [stoppingImpersonation, setStoppingImpersonation] = useState(false);
+  const isImpersonating = Boolean(session?.session?.impersonatedBy);
 
   useEffect(() => {
-    // Admin users cannot use the client app — redirect to admin dashboard
-    if (session?.user?.role === "admin") {
+    // Admin users cannot use the client app — unless impersonating a user
+    if (session?.user?.role === "admin" && !session?.session?.impersonatedBy) {
       router.replace("/admin/dashboard");
       return;
     }
@@ -138,6 +141,21 @@ export default function ClientDashboardLayout({
     }
   };
 
+  const handleStopImpersonating = async () => {
+    setStoppingImpersonation(true);
+    try {
+      await client.admin.stopImpersonating();
+      toast.success("Returned to admin account");
+      router.push("/admin/dashboard/clients");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to stop impersonating"
+      );
+    } finally {
+      setStoppingImpersonation(false);
+    }
+  };
+
   // Function to get user initials from full name
   const getUserInitials = (fullName: string) => {
     if (!fullName) return "U";
@@ -161,6 +179,24 @@ export default function ClientDashboardLayout({
           "[mask-image:radial-gradient(10000px_circle_at_center,white,transparent)]"
         )}
       />
+
+      {isImpersonating && (
+        <div className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-amber-600/40 bg-amber-500 px-4 py-2 text-sm font-medium text-amber-950">
+          <span>
+            Viewing as {session?.user?.name || session?.user?.email}
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="border-amber-800/30 bg-amber-50 text-amber-950 hover:bg-amber-100"
+            onClick={handleStopImpersonating}
+            disabled={stoppingImpersonation}
+          >
+            {stoppingImpersonation ? "Returning…" : "Stop impersonating"}
+          </Button>
+        </div>
+      )}
 
       {/* Top Nav */}
       <header className="sticky top-0 z-40 w-full border-b bg-background px-4 py-3 flex justify-between items-center">

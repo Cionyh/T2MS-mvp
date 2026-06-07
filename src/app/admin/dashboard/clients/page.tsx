@@ -160,8 +160,8 @@ export default function AdminDashboard() {
 		setIsLoading(`impersonate-${id}`);
 		try {
 			await client.admin.impersonateUser({ userId: id });
-			toast.success("Impersonated user");
-			router.push("/dashboard");
+			toast.success("Now viewing as this user");
+			router.push("/app");
 		} catch (error: any) {
 			toast.error(error.message || "Failed to impersonate user");
 		} finally {
@@ -463,6 +463,25 @@ export default function AdminDashboard() {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
+                          )}
+                          {user.role !== "admin" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleImpersonateUser(user.id)}
+                              disabled={isLoading === `impersonate-${user.id}` || user.banned}
+                              title={
+                                user.banned
+                                  ? "Cannot impersonate a banned user"
+                                  : "Login as this user"
+                              }
+                            >
+                              {isLoading === `impersonate-${user.id}` ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <UserCircle className="h-4 w-4" />
+                              )}
+                            </Button>
                           )}
                           <Button
                             variant="outline"
