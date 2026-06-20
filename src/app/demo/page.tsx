@@ -95,9 +95,12 @@ export default function DemoPage() {
         </section>
 
         <p className="text-xs text-muted-foreground text-center">
-          Configure demo slugs with{" "}
+          Demo pages{" "}
+          <code className="bg-muted px-1 rounded">demo-church</code> and{" "}
+          <code className="bg-muted px-1 rounded">demo-business</code> work out of
+          the box. Override with{" "}
           <code className="bg-muted px-1 rounded">NEXT_PUBLIC_DEMO_HOSTED_SLUGS</code>{" "}
-          (comma-separated) in production.
+          for custom live demo accounts.
         </p>
       </main>
     </div>

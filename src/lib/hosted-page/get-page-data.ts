@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { getStaticDemoPageData } from "./demo-pages"
 import type { HostedPageData, WidgetConfigJson } from "./types"
 
 function parseWidgetConfig(raw: unknown): WidgetConfigJson {
@@ -31,7 +32,9 @@ export async function getHostedPageBySlug(
     },
   })
 
-  if (!client?.hostedSlug) return null
+  if (!client?.hostedSlug) {
+    return getStaticDemoPageData(slug)
+  }
 
   const widgetConfig = parseWidgetConfig(client.widgetConfig)
 

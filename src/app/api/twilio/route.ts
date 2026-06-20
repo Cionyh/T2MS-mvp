@@ -285,10 +285,22 @@ export async function POST(req: NextRequest) {
     }
 
     if (!requireKeyword) {
-      content = body;
-      if (body.startsWith("popup:")) {
+      // Single-site: keep parsed content when prefix looks like accidental routing
+      // (e.g. "1: message" from misreading "+1 (424)…" or "KEYWORD: message").
+      const prefixBeforeColon =
+        colonIndex > 0 ? body.slice(0, colonIndex).trim() : "";
+      const looksLikeRoutingPrefix =
+        prefixBeforeColon.length > 0 &&
+        /^[A-Za-z0-9_]{1,50}$/.test(prefixBeforeColon);
+
+      if (!looksLikeRoutingPrefix) {
+        content = body;
+        if (body.startsWith("popup:")) {
+          type = "popup";
+          content = body.substring(6).trim();
+        }
+      } else if (prefixBeforeColon.toLowerCase() === "popup") {
         type = "popup";
-        content = body.substring(6).trim();
       }
     }
 

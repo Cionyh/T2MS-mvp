@@ -261,6 +261,7 @@ model Client {
   hostedEnabled     Boolean   @default(false)
   hostedIntroText   String?
   hostedPublishedAt DateTime?
+  hostedWelcomeEmailSentAt DateTime?
 
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt

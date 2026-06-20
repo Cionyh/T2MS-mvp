@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { getT2msSmsDisplayNumber } from "@/lib/sms-display";
 
 interface InstallationGuideDialogProps {
   open: boolean;
@@ -39,7 +40,11 @@ export function InstallationGuideDialog({
           <li>Add our installer to your platform using the instructions below.</li>
           <li>Once access is granted, our team will install the widget on your site.</li>
           <li>
-            Send SMS on <span className="font-semibold text-foreground">1 (424) 484-8267</span> from your verified number to place messages on the widget.
+            Send SMS to{" "}
+            <span className="font-semibold text-foreground">
+              {getT2msSmsDisplayNumber()}
+            </span>{" "}
+            from your verified number to place messages on the widget.
           </li>
         </ol>
 

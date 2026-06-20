@@ -18,4 +18,6 @@ export type HostedPageData = {
   defaultTextColor: string
   defaultFont: string
   widgetConfig: WidgetConfigJson
+  /** Built-in showcase page — no live SMS polling */
+  isStaticDemo?: boolean
 }

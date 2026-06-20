@@ -1,4 +1,5 @@
 import { getHostedPageDomain } from "@/lib/hosted-page/constants"
+import { BUILTIN_DEMO_SLUGS } from "@/lib/hosted-page/demo-pages"
 
 export type DemoExample = {
   slug: string
@@ -24,20 +25,25 @@ export function getDemoExamples(): DemoExample[] {
     })
   }
 
-  return [
-    {
-      slug: "demo-church",
-      label: "Church announcement",
-      description: "Simple hosted page for outreach and weekly updates.",
-      style: "church",
-    },
-    {
-      slug: "demo-business",
-      label: "Business announcement",
-      description: "Hours, promotions, and live updates without a widget install.",
-      style: "business",
-    },
-  ]
+  return BUILTIN_DEMO_SLUGS.map((slug, i) => {
+    const slugStr = slug as string
+    return {
+      slug: slugStr,
+      label:
+        slug === "demo-church"
+          ? "Church announcement"
+          : slug === "demo-business"
+            ? "Business announcement"
+            : slugStr.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+      description:
+        slug === "demo-church"
+          ? "Simple hosted page for outreach and weekly updates."
+          : slug === "demo-business"
+            ? "Hours, promotions, and live updates without a widget install."
+            : `Live example at ${slugStr}.${domain}`,
+      style: (i === 0 ? "church" : "business") as DemoExample["style"],
+    }
+  })
 }
 
 export function getPrimaryDemoSlug(): string {

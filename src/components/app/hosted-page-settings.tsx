@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Loader2, ExternalLink, Copy } from "lucide-react"
 import { toast } from "sonner"
 import { getHostedPageDomain } from "@/lib/hosted-page/constants"
+import { slugFromSiteName } from "@/lib/hosted-page/slug"
 
 type HostedPageSettingsProps = {
   clientId: string
@@ -40,6 +41,7 @@ export function HostedPageSettings({
     "idle" | "checking" | "available" | "taken" | "invalid"
   >("idle")
   const [suggestions, setSuggestions] = useState<string[]>([])
+  const [slugSuggestedFromName, setSlugSuggestedFromName] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -47,17 +49,31 @@ export function HostedPageSettings({
       const res = await fetch(`/api/client/${clientId}/hosted`)
       if (!res.ok) throw new Error("Failed to load hosted page settings")
       const data = await res.json()
-      setSlugInput(data.hostedSlug ?? "")
+      if (data.hostedSlug) {
+        setSlugInput(data.hostedSlug)
+        setSlugSuggestedFromName(false)
+        setSlugStatus("available")
+      } else {
+        const suggested = slugFromSiteName(siteName)
+        if (suggested) {
+          setSlugInput(suggested)
+          setSlugSuggestedFromName(true)
+          setSlugStatus("idle")
+        } else {
+          setSlugInput("")
+          setSlugSuggestedFromName(false)
+          setSlugStatus("idle")
+        }
+      }
       setIntroText(data.hostedIntroText ?? "")
       setEnabled(data.hostedEnabled ?? false)
       setPublicUrls(data.publicUrls ?? null)
-      setSlugStatus(data.hostedSlug ? "available" : "idle")
     } catch {
       toast.error("Could not load hosted page settings")
     } finally {
       setLoading(false)
     }
-  }, [clientId])
+  }, [clientId, siteName])
 
   useEffect(() => {
     load()
@@ -158,18 +174,32 @@ export function HostedPageSettings({
 
       <div className="space-y-2">
         <Label htmlFor="hosted-slug">Page URL name</Label>
+        <p className="text-xs text-muted-foreground">
+          This becomes your public web address — the link you share with
+          visitors (e.g.{" "}
+          <span className="font-mono">your-name.{domain}</span>).
+        </p>
         <div className="flex items-center gap-2">
           <Input
             id="hosted-slug"
             value={slugInput}
-            onChange={(e) => setSlugInput(e.target.value)}
-            placeholder="my-church"
+            onChange={(e) => {
+              setSlugInput(e.target.value)
+              setSlugSuggestedFromName(false)
+            }}
+            placeholder="your-organization"
             className="flex-1"
           />
           <span className="text-sm text-muted-foreground shrink-0">
             .{domain}
           </span>
         </div>
+        {slugSuggestedFromName && slugInput && (
+          <p className="text-xs text-muted-foreground">
+            Suggested from &quot;{siteName}&quot; — edit if you&apos;d like a
+            different address.
+          </p>
+        )}
         {slugStatus === "checking" && (
           <p className="text-xs text-muted-foreground">Checking availability…</p>
         )}
