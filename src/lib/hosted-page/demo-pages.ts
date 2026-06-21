@@ -5,6 +5,12 @@ export const BUILTIN_DEMO_SLUGS = ["demo-church", "demo-business"] as const
 
 export type BuiltinDemoSlug = (typeof BUILTIN_DEMO_SLUGS)[number]
 
+/** Public paths for built-in demo logos (served from /public/images/demo). */
+export const DEMO_LOGO_PATHS = {
+  church: "/images/demo/church-logo.svg",
+  bakery: "/images/demo/bakery-logo.svg",
+} as const
+
 const STATIC_DEMO_PAGES: Record<BuiltinDemoSlug, HostedPageData> = {
   "demo-church": {
     clientId: "static-demo-church",
@@ -18,6 +24,7 @@ const STATIC_DEMO_PAGES: Record<BuiltinDemoSlug, HostedPageData> = {
     defaultTextColor: "#ffffff",
     defaultFont: "Georgia, serif",
     widgetConfig: {
+      logoUrl: DEMO_LOGO_PATHS.church,
       companyWebsiteLink: "https://t2ms.biz",
       fontSize: 18,
     },
@@ -35,6 +42,7 @@ const STATIC_DEMO_PAGES: Record<BuiltinDemoSlug, HostedPageData> = {
     defaultTextColor: "#fff8f0",
     defaultFont: "sans-serif",
     widgetConfig: {
+      logoUrl: DEMO_LOGO_PATHS.bakery,
       companyWebsiteLink: "https://t2ms.biz",
       fontSize: 18,
     },
