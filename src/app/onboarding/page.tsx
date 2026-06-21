@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useCallback } from "react";
+import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -106,7 +106,10 @@ function OnboardingContent() {
   const [pendingChurchCheckout, setPendingChurchCheckout] = useState(false);
 
   const PENDING_VERIFY_STORAGE_KEY = "t2ms_onboarding_verify_pending";
+  const ONBOARDING_PLAN_STORAGE_KEY = "t2ms_onboarding_plan";
   const RESEND_COOLDOWN_SECONDS = 60;
+  const churchPlanAutoStarted = useRef(false);
+  const planParam = searchParams.get("plan");
 
   const refreshStatus = useCallback(async () => {
     try {
@@ -532,6 +535,48 @@ function OnboardingContent() {
     status?.needsPathSelection === true &&
     !successParam &&
     !status?.needsSiteRegistration;
+
+  useEffect(() => {
+    if (!statusLoaded || churchPlanAutoStarted.current || !churchPlanEnabled) return;
+
+    const storedPlan =
+      typeof window !== "undefined"
+        ? sessionStorage.getItem(ONBOARDING_PLAN_STORAGE_KEY)
+        : null;
+    const targetPlan = planParam || storedPlan;
+    if (targetPlan !== "church") return;
+
+    if (
+      showRegisterSiteStep ||
+      showPhoneVerificationStep ||
+      showInstallSetupStep ||
+      showHostedSetupStep ||
+      showPathSelectionStep ||
+      successParam === "1" ||
+      couponRedeeming
+    ) {
+      return;
+    }
+
+    churchPlanAutoStarted.current = true;
+    try {
+      sessionStorage.removeItem(ONBOARDING_PLAN_STORAGE_KEY);
+    } catch {
+      // ignore storage errors
+    }
+    void handlePaidPlan("church");
+  }, [
+    churchPlanEnabled,
+    couponRedeeming,
+    planParam,
+    showHostedSetupStep,
+    showInstallSetupStep,
+    showPathSelectionStep,
+    showPhoneVerificationStep,
+    showRegisterSiteStep,
+    statusLoaded,
+    successParam,
+  ]);
 
   // When on install setup step, fetch client domain for the form
   useEffect(() => {
