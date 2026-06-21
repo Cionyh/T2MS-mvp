@@ -59,7 +59,9 @@ export function OnboardingHostedSetupForm({
           Set up your hosted page
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Choose your public link on t2ms.live. You can change branding anytime in site settings.
+          Choose your public web address on t2ms.live — this is the link
+          visitors will open in a browser to see your announcements. You can
+          change branding anytime in site settings.
         </p>
       </div>
       <Card className="w-full max-w-lg">

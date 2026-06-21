@@ -49,6 +49,27 @@ export function validateHostedSlug(input: string): SlugValidationResult {
   return { ok: true, slug }
 }
 
+/** Derive a valid hosted slug from an organization / site name. */
+export function slugFromSiteName(siteName: string): string | null {
+  const base = normalizeHostedSlug(siteName)
+  if (!base) return null
+
+  const direct = validateHostedSlug(base)
+  if (direct.ok) return direct.slug
+
+  if (base.length < HOSTED_SLUG_MIN_LENGTH) {
+    for (const suffix of ["-page", "-live", "-hq"]) {
+      const candidate = `${base}${suffix}`.slice(0, HOSTED_SLUG_MAX_LENGTH)
+      const validated = validateHostedSlug(candidate)
+      if (validated.ok) return validated.slug
+    }
+  }
+
+  const truncated = base.slice(0, HOSTED_SLUG_MAX_LENGTH)
+  const trimmed = validateHostedSlug(truncated)
+  return trimmed.ok ? trimmed.slug : null
+}
+
 /** Suggest available alternatives when a slug is taken. */
 export function suggestHostedSlugs(baseInput: string, count = 3): string[] {
   const base = normalizeHostedSlug(baseInput)

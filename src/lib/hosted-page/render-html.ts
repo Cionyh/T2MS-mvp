@@ -22,6 +22,7 @@ export function renderHostedPageHtml(
     defaultTextColor,
     defaultFont,
     widgetConfig,
+    isStaticDemo,
   } = data
 
   const logoUrl = widgetConfig.logoUrl || ""
@@ -37,9 +38,11 @@ export function renderHostedPageHtml(
       ? `<p class="t2ms-intro">${escapeHtml(presetText)}</p>`
       : ""
 
-  const logoBlock = logoUrl
-    ? `<div class="t2ms-logo-wrap"><img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(name)} logo" class="t2ms-logo" /></div>`
+  const logoImg = logoUrl
+    ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(name)} logo" class="t2ms-logo" />`
     : ""
+
+  const headerBlock = `<header class="t2ms-header">${logoImg}<h1 class="t2ms-title">${escapeHtml(name)}</h1></header>`
 
   const attachBlock = attachImage
     ? `<div class="t2ms-attach"><img src="${escapeHtml(attachImage)}" alt="" /></div>`
@@ -82,17 +85,28 @@ export function renderHostedPageHtml(
       width: 100%;
       text-align: center;
     }
-    .t2ms-logo-wrap { margin-bottom: 16px; }
+    .t2ms-header {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
     .t2ms-logo {
-      max-width: 120px;
-      max-height: 80px;
+      max-width: 80px;
+      max-height: 64px;
       object-fit: contain;
+      flex-shrink: 0;
     }
     .t2ms-title {
       font-size: clamp(1.5rem, 4vw, 2rem);
       font-weight: 700;
-      margin-bottom: 12px;
+      margin-bottom: 0;
       line-height: 1.2;
+      text-align: left;
     }
     .t2ms-intro {
       font-size: 1rem;
@@ -150,8 +164,7 @@ export function renderHostedPageHtml(
 </head>
 <body>
   <main class="t2ms-page">
-    ${logoBlock}
-    <h1 class="t2ms-title">${escapeHtml(name)}</h1>
+    ${headerBlock}
     ${introBlock}
     <section class="t2ms-announcement" aria-live="polite">
       <div id="t2ms-message" class="t2ms-message">${escapeHtml(messageContent)}</div>
@@ -159,8 +172,11 @@ export function renderHostedPageHtml(
     </section>
   </main>
   ${returnLinkBlock}
-  <p class="t2ms-powered">Powered by Text2MySite™</p>
-  <script>
+  <p class="t2ms-powered">Powered by Text2MySite™${isStaticDemo ? " · Demo page" : ""}</p>
+  ${
+    isStaticDemo
+      ? ""
+      : `<script>
     (function() {
       var clientId = ${JSON.stringify(clientId)};
       var apiBase = ${JSON.stringify(apiBase)};
@@ -180,7 +196,8 @@ export function renderHostedPageHtml(
       }
       setInterval(poll, 15000);
     })();
-  </script>
+  </script>`
+  }
 </body>
 </html>`
 }

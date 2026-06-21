@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { verifyClientAccess } from "@/lib/organization-helpers"
 import { getHostedPageDomain } from "@/lib/hosted-page/constants"
 import { validateHostedSlug } from "@/lib/hosted-page/slug"
+import { sendHostedWelcomeEmailForClient } from "@/lib/hosted-welcome-notify"
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -79,6 +80,19 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedIntroText?: string | null
     }
 
+    const existing = await prisma.client.findUnique({
+      where: { id },
+      select: {
+        hostedSlug: true,
+        hostedPublishedAt: true,
+        hostedEnabled: true,
+      },
+    })
+
+    if (!existing) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 })
+    }
+
     const updateData: {
       hostedSlug?: string | null
       hostedEnabled?: boolean
@@ -125,17 +139,13 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     if (hostedEnabled !== undefined) {
       updateData.hostedEnabled = Boolean(hostedEnabled)
       if (updateData.hostedEnabled) {
-        const current = await prisma.client.findUnique({
-          where: { id },
-          select: { hostedSlug: true, hostedPublishedAt: true },
-        })
-        if (!current?.hostedSlug && !updateData.hostedSlug) {
+        if (!existing.hostedSlug && !updateData.hostedSlug) {
           return NextResponse.json(
             { error: "Choose a page URL name before enabling the hosted page." },
             { status: 400 }
           )
         }
-        if (!current?.hostedPublishedAt) {
+        if (!existing.hostedPublishedAt) {
           updateData.hostedPublishedAt = new Date()
         }
       }
@@ -159,6 +169,17 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
           subdomain: `https://${slug}.${getHostedPageDomain()}`,
         }
       : null
+
+    const isFirstPublish =
+      !existing.hostedPublishedAt &&
+      updated.hostedEnabled &&
+      Boolean(updated.hostedSlug)
+
+    if (isFirstPublish) {
+      sendHostedWelcomeEmailForClient(id, session.user.id).catch((err) =>
+        console.error("[client/hosted PATCH] Hosted welcome email failed:", err)
+      )
+    }
 
     return NextResponse.json({
       message: "Hosted page settings saved",

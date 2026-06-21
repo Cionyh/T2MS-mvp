@@ -21,12 +21,15 @@ import {
   EyeOff,
   Copy,
   Loader2,
-  MessageCircle,
   ExternalLink,
   Link2,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getHostedPageDomain } from "@/lib/hosted-page/constants";
+import { getT2msSmsDisplayNumber } from "@/lib/sms-display";
+import { SETUP_PATH_EMBED } from "@/lib/setup-path";
+import { PostByTextCallout } from "./post-by-text-callout";
 import { motion, Variants } from "framer-motion";
 import {
   Dialog,
@@ -191,6 +194,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [plan, setPlan] = useState<string>("");
+  const [setupPath, setSetupPath] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -198,6 +202,14 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       .then((r) => r.json())
       .then((data) => setPlan(data?.plan ?? "free"))
       .catch(() => setPlan("free"));
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch("/api/onboarding/status")
+      .then((r) => r.json())
+      .then((data) => setSetupPath(data.setupPath ?? null))
+      .catch(() => setSetupPath(null));
   }, [userId]);
 
   useEffect(() => {
@@ -223,10 +235,34 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     const installChoice = searchParams.get("installChoice");
     const clientId = searchParams.get("clientId");
     if (installChoice === "1" && clientId) {
-      toast.success("Site Registered Successfully");
+      toast.success("Site registered — open install instructions to finish setup.");
       window.history.replaceState({}, "", "/app/sites");
+      setInstallationGuideClientId(clientId);
+      setInstallationGuideOpen(true);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!installationGuideClientId || websites.length === 0) return;
+    const site = websites.find((w) => w.id === installationGuideClientId);
+    if (site) setInstallationGuideSiteName(site.name);
+  }, [installationGuideClientId, websites]);
+
+  const openInstallationGuide = (website: Website) => {
+    setInstallationGuideClientId(website.id);
+    setInstallationGuideSiteName(website.name);
+    setInstallationGuideOpen(true);
+  };
+
+  const pendingWidgetInstallSites = websites.filter(
+    (w) =>
+      w.installJob &&
+      w.installJob.status !== "COMPLETED" &&
+      w.installJob.status !== "CANCELLED"
+  );
+  const showWidgetActivationBanner =
+    setupPath === SETUP_PATH_EMBED && pendingWidgetInstallSites.length > 0;
+  const primaryPendingInstallSite = pendingWidgetInstallSites[0];
 
   const handleNewSiteClick = () => {
     router.push("/app/build");
@@ -496,14 +532,49 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           )}
         </div>
       </div>
-      <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-600/40 bg-amber-50/80 dark:bg-amber-950/30 dark:border-amber-500/40 px-4 py-3">
-        <MessageCircle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" />
-        <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
-          {plan === "starter"
-            ? "Text 1 (424) 484-8267 from your verified number. Just send your message to post to your site."
-            : "Text 1 (424) 484-8267 from your verified number. Use KEYWORD: your message (e.g. BAKERY: Fresh croissants today) to post to the right site."}
-        </p>
-      </div>
+      <PostByTextCallout plan={plan} className="mb-6 flex items-start gap-3 rounded-lg border border-amber-600/40 bg-amber-50/80 dark:bg-amber-950/30 dark:border-amber-500/40 px-4 py-3" />
+
+      {showWidgetActivationBanner && primaryPendingInstallSite && (
+        <div className="mb-6 flex flex-col gap-3 rounded-lg border border-blue-600/30 bg-blue-50/80 dark:bg-blue-950/30 dark:border-blue-500/40 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex gap-3">
+            <Wrench className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <div className="space-y-1 text-sm text-blue-950 dark:text-blue-100">
+              <p className="font-semibold">Complete widget installation</p>
+              <p>
+                Add <strong>install@t2ms.biz</strong> to your website platform
+                so our team can install the widget on{" "}
+                <strong>{primaryPendingInstallSite.name}</strong>.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="border-blue-600/40"
+              onClick={() => openInstallationGuide(primaryPendingInstallSite)}
+            >
+              View install instructions
+            </Button>
+            {primaryPendingInstallSite.installJob?.status === "QUEUED" &&
+              primaryPendingInstallSite.installJob.platform === "To be confirmed" && (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="!bg-blue-600 hover:!bg-blue-700 !text-white"
+                  onClick={() =>
+                    router.push(
+                      `/app/install-request?clientId=${primaryPendingInstallSite.id}`
+                    )
+                  }
+                >
+                  Submit install form
+                </Button>
+              )}
+          </div>
+        </div>
+      )}
 
       {websites.length === 0 ? (
         <div className="text-muted-foreground">No websites registered yet.</div>
@@ -523,11 +594,13 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   <div className="flex items-center space-x-3">
     <CardTitle className="text-lg font-medium">{website.name}</CardTitle>
 
-    {/* Published switch with badge */}
-    <div className="flex items-center space-x-2">
-      <Switch
-        checked={website.pinned ?? false}
-        onCheckedChange={async (checked) => {
+    {/* Widget visibility — does not affect hosted page */}
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex items-center space-x-2">
+        <span className="text-xs text-muted-foreground hidden sm:inline">Widget</span>
+        <Switch
+          checked={website.pinned ?? false}
+          onCheckedChange={async (checked) => {
           const hasInstallInProgress =
             website.installJob &&
             website.installJob.status !== "COMPLETED" &&
@@ -536,7 +609,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           // Customers cannot publish/unpublish until installation is complete
           if (hasInstallInProgress) {
             toast.error(
-              "Installation is still in progress. You can publish this site once installation is completed."
+              "Installation is still in progress. You can publish the widget once installation is completed."
             );
             return;
           }
@@ -550,7 +623,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
 
             if (!res.ok) {
               const errorData = await res.json();
-              throw new Error(errorData.error || "Failed to update published state");
+              throw new Error(errorData.error || "Failed to update widget visibility");
             }
 
             // Update state locally
@@ -560,14 +633,14 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               )
             );
 
-            toast.success(`Site ${checked ? "published" : "unpublished"}`);
+            toast.success(`Widget ${checked ? "live on your website" : "hidden"}`);
           } catch (error: any) {
-            console.error("Error updating published state:", error);
-            toast.error(error.message || "Failed to update published state");
+            console.error("Error updating widget visibility:", error);
+            toast.error(error.message || "Failed to update widget visibility");
           }
         }}
-      />
-      {(() => {
+        />
+        {(() => {
         const hasInstallInProgress =
           website.installJob &&
           website.installJob.status !== "COMPLETED" &&
@@ -586,7 +659,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               ? "Install form not submitted"
               : "Installation In Progress: 80%";
         } else {
-          label = website.pinned ? "Published" : "Unpublished";
+          label = website.pinned ? "Widget live" : "Widget hidden";
         }
 
         return (
@@ -595,6 +668,18 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           </span>
         );
       })()}
+      </div>
+      {website.hostedSlug && (
+        <span
+          className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+            website.hostedEnabled
+              ? "bg-green-500/90 text-foreground"
+              : "bg-muted text-muted-foreground"
+          }`}
+        >
+          {website.hostedEnabled ? "Hosted page live" : "Hosted page off"}
+        </span>
+      )}
     </div>
   </div>
 
@@ -737,8 +822,9 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           <span className="text-muted-foreground text-sm ml-2">No phone numbers</span>
         )}
       </div>
-      <p className="flex items-center space-x-2">
-        <span className="font-semibold">Client ID:</span>
+      <p className="flex items-center space-x-2 flex-wrap gap-y-1">
+        <span className="font-semibold">Client ID</span>
+        <span className="text-xs text-muted-foreground">(widget embed only — not for texting)</span>
         <span className="font-mono text-sm">
           {showClientId[website.id] ? website.id : `${website.id.slice(0, 6)}...`}
         </span>
@@ -812,6 +898,12 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             <SheetDescription className="text-sm sm:text-base">
               Update your website settings and widget preferences.
             </SheetDescription>
+            <p className="text-xs text-muted-foreground rounded-md border border-border bg-muted/40 px-3 py-2 mt-2">
+              Most settings below are for the website widget. Hosted-page-only
+              customers can skip to &quot;Hosted announcement page&quot; at the
+              bottom — widget settings are not required for a shareable hosted
+              link.
+            </p>
           </SheetHeader>
           
           <div className="space-y-6">
@@ -846,9 +938,18 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                   maxLength={50}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  To post via text: <strong>{editedKeyword || "KEYWORD"}: your message</strong>
+                  To post via text to{" "}
+                  <strong>{getT2msSmsDisplayNumber()}</strong>, send:{" "}
+                  <strong>{editedKeyword || "KEYWORD"}: your message</strong>
                 </p>
               </div>
+            )}
+            {plan === "starter" && (
+              <p className="text-xs text-muted-foreground rounded-md border border-amber-200/60 bg-amber-50/50 dark:bg-amber-950/20 px-3 py-2">
+                To post via text, send your message to{" "}
+                <strong>{getT2msSmsDisplayNumber()}</strong> from your verified
+                number — no keyword or number prefix needed.
+              </p>
             )}
             
             {/* Phone Numbers Section - Managed separately */}
