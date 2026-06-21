@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Main Street Bakery">
+  <circle cx="60" cy="60" r="56" fill="#fff8f0" opacity="0.15"/>
+  <circle cx="60" cy="60" r="56" fill="none" stroke="#fff8f0" stroke-width="3" opacity="0.4"/>
+  <path fill="#f5deb3" stroke="#d4a574" stroke-width="2" d="M28 68c8-18 24-28 32-28s24 10 32 28H28z"/>
+  <path fill="#e8c49a" d="M36 68c6-12 16-18 24-18s18 6 24 18H36z"/>
+  <ellipse cx="60" cy="74" rx="34" ry="8" fill="#c4956a" opacity="0.5"/>
+  <path fill="none" stroke="#fff8f0" stroke-width="3" stroke-linecap="round" d="M44 52c4-8 8-12 16-12s12 4 16 12"/>
+</svg>
