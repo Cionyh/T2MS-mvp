@@ -3,8 +3,55 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { tryGetStripeServerClient } from "@/lib/stripe-config";
+import { USER_ROLE } from "@/lib/user-roles";
 
 type Params = { params: Promise<{ userId: string }> };
+
+const ASSIGNABLE_ROLES = new Set<string>([
+  USER_ROLE.USER,
+  USER_ROLE.ADMIN,
+  USER_ROLE.AFFILIATE,
+]);
+
+/**
+ * PATCH /api/admin/users/[userId]
+ * Update a user's role (admin only).
+ */
+export async function PATCH(req: NextRequest, { params }: Params) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user?.id || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { userId } = await params;
+    const body = await req.json();
+    const role = typeof body.role === "string" ? body.role : "";
+
+    if (!userId || !ASSIGNABLE_ROLES.has(role)) {
+      return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { role },
+      select: { id: true, email: true, name: true, role: true },
+    });
+
+    return NextResponse.json({ user: updated });
+  } catch (error) {
+    console.error("[ADMIN_UPDATE_USER_ROLE]", error);
+    return NextResponse.json({ error: "Failed to update user role" }, { status: 500 });
+  }
+}
 
 /**
  * DELETE /api/admin/users/[userId]
