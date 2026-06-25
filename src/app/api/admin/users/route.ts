@@ -55,7 +55,12 @@ export async function GET(req: NextRequest) {
         id: u.id,
         email: u.email,
         name: u.name,
-        role: u.role === "admin" ? "admin" : "user",
+        role:
+          u.role === "admin"
+            ? "admin"
+            : u.role === "affiliate"
+              ? "affiliate"
+              : "user",
         banned: u.banned === true,
         createdAt: u.createdAt.toISOString(),
       })),

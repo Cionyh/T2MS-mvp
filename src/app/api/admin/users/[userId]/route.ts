@@ -38,9 +38,9 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    if (user.role === "admin") {
+    if (user.role === "admin" || user.role === "affiliate") {
       return NextResponse.json(
-        { error: "Admin user cannot be deleted." },
+        { error: "This user cannot be deleted from here." },
         { status: 400 }
       );
     }

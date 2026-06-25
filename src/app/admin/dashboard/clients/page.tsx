@@ -64,7 +64,7 @@ type User = {
   id: string;
   email: string;
   name: string;
-  role: "admin" | "user";
+  role: "admin" | "user" | "affiliate";
   banned?: boolean;
   createdAt: string;
 };
@@ -252,8 +252,8 @@ export default function AdminDashboard() {
                   <Label className="mb-4" htmlFor="role">Role</Label>
                   <Select
                     value={newUser.role}
-                    onValueChange={(value: "admin" | "user") =>
-                        setNewUser({ ...newUser, role: value as "user" })
+                    onValueChange={(value: "admin" | "user" | "affiliate") =>
+                        setNewUser({ ...newUser, role: value })
                     }
                   >
                     <SelectTrigger className="w-full">
@@ -262,6 +262,7 @@ export default function AdminDashboard() {
                     <SelectContent>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="affiliate">Affiliate</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -406,7 +407,7 @@ export default function AdminDashboard() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap min-w-[180px]">
                         <div className="flex flex-wrap gap-2">
-                          {user.role !== "admin" && (
+                          {user.role !== "admin" && user.role !== "affiliate" && (
                           <AlertDialog
                             open={deleteConfirmUserId === user.id}
                             onOpenChange={(open) => {
@@ -464,7 +465,7 @@ export default function AdminDashboard() {
                             </AlertDialogContent>
                           </AlertDialog>
                           )}
-                          {user.role !== "admin" && (
+                          {user.role !== "admin" && user.role !== "affiliate" && (
                             <Button
                               variant="outline"
                               size="sm"

@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dialog";
 import { signOut, client } from "@/lib/auth-client";
 import { AuthGetSessionResult, isImpersonating } from "@/lib/auth-types";
+import { isAffiliateRole } from "@/lib/user-roles";
 import { toast } from "sonner"; 
 
 const navItems = [
@@ -76,6 +77,11 @@ export default function ClientDashboardLayout({
     // Admin users cannot use the client app — unless impersonating a user
     if (session?.user?.role === "admin" && !isImpersonating(session)) {
       router.replace("/admin/dashboard");
+      return;
+    }
+
+    if (isAffiliateRole(session?.user?.role)) {
+      router.replace("/affiliate/dashboard");
       return;
     }
 

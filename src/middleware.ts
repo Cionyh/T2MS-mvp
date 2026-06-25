@@ -3,7 +3,7 @@ import { getSessionCookie } from "better-auth/cookies"
 import { getHostedPageDomain } from "@/lib/hosted-page/constants"
 import { normalizeHostedSlug } from "@/lib/hosted-page/slug"
 
-const PROTECTED_PREFIXES = ["/app", "/admin/dashboard", "/onboarding"]
+const PROTECTED_PREFIXES = ["/app", "/admin/dashboard", "/affiliate", "/onboarding"]
 
 function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(
