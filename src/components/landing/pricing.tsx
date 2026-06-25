@@ -31,6 +31,8 @@ type PricingPlan = {
   icon: LucideIcon;
   features: string[];
   highlight: boolean;
+  offerBadge?: string;
+  highlightedFeature?: string;
   powerfulFeatures?: {
     title: string;
     subtitle: string;
@@ -47,6 +49,8 @@ const plans: PricingPlan[] = [
     icon: Zap,
     features: [...STARTER_PLAN_FEATURES],
     highlight: true,
+    offerBadge: "Special Offer",
+    highlightedFeature: "Hosted announcement page on t2ms.live",
   },
   {
     name: "Growth Plan",
@@ -147,12 +151,22 @@ export function PricingSection() {
             <div
               key={plan.name}
               className={cn(
-                "border border-muted-foreground/20 rounded-2xl p-6 flex flex-col",
+                "relative overflow-hidden border border-muted-foreground/20 rounded-2xl p-6 flex flex-col",
                 "transition-transform hover:scale-[1.02]",
-                plan.highlight && "border-primary"
+                plan.highlight && "border-primary",
+                plan.offerBadge && "ring-2 ring-primary/20"
               )}
             >
-              <div className="flex items-center gap-3 mb-4">
+              {plan.offerBadge ? (
+                <div
+                  className="pointer-events-none absolute -left-9 top-5 z-10 w-36 rotate-[-45deg] bg-amber-500 py-1 text-center text-[11px] font-bold uppercase tracking-wide text-amber-950 shadow-md"
+                  aria-hidden
+                >
+                  {plan.offerBadge}
+                </div>
+              ) : null}
+
+              <div className={cn("flex items-center gap-3 mb-4", plan.offerBadge && "pt-2")}>
                 <Icon className="h-6 w-6 text-primary" />
                 <h3 className="text-2xl font-bold">{plan.name}</h3>
               </div>
@@ -171,12 +185,33 @@ export function PricingSection() {
               </p>
 
               <ul className="space-y-3 flex-1">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-primary shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
+                {plan.features.map((feature) => {
+                  const isFeatured = plan.highlightedFeature === feature;
+                  return (
+                    <li
+                      key={feature}
+                      className={cn(
+                        "flex items-start gap-2",
+                        isFeatured &&
+                          "relative rounded-md border-y border-amber-400/70 bg-amber-50/80 px-2 py-2 dark:bg-amber-950/30"
+                      )}
+                    >
+                      <Check
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          isFeatured ? "text-amber-600 dark:text-amber-400" : "text-primary"
+                        )}
+                      />
+                      <span
+                        className={cn(
+                          isFeatured && "font-semibold text-foreground"
+                        )}
+                      >
+                        {feature}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
 
               {plan.powerfulFeatures ? (

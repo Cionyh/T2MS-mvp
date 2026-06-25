@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { isAffiliateRole } from "@/lib/user-roles";
 
 export const metadata = {
   title: "Admin | T2MS",
@@ -32,6 +33,10 @@ export default async function DashboardLayout({
         {children}
       </ClientDashboardLayout>
     );
+  }
+
+  if (isAffiliateRole(session.user.role)) {
+    return redirect("/affiliate/dashboard");
   }
 
   // Teammate/worker: allow login from admin page but redirect to worker dashboard

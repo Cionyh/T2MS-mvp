@@ -6,5 +6,5 @@ import type { Prisma } from "@prisma/client";
  */
 export const adminAnalyticsClientUserWhere: Prisma.UserWhereInput = {
   worker: { is: null },
-  OR: [{ role: null }, { role: { not: "admin" } }],
+  OR: [{ role: null }, { role: { notIn: ["admin", "affiliate"] } }],
 };
