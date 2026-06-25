@@ -69,15 +69,22 @@ type User = {
   createdAt: string;
 };
 
+type NewUserForm = {
+  email: string;
+  password: string;
+  name: string;
+  role: User["role"];
+};
+
 export default function AdminDashboard() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({
+  const [newUser, setNewUser] = useState<NewUserForm>({
     email: "",
     password: "",
     name: "",
-    role: "user" as const,
+    role: "user",
   });
   const [isLoading, setIsLoading] = useState<string | undefined>();
   const [isBanDialogOpen, setIsBanDialogOpen] = useState(false);
@@ -103,12 +110,38 @@ export default function AdminDashboard() {
 		e.preventDefault();
 		setIsLoading("create");
 		try {
+			const authRole =
+				newUser.role === "affiliate" ? "user" : newUser.role;
+
 			await client.admin.createUser({
 				email: newUser.email,
 				password: newUser.password,
 				name: newUser.name,
-				role: newUser.role,
+				role: authRole,
 			});
+
+			if (newUser.role === "affiliate") {
+				const lookup = await fetch(
+					`/api/admin/users?q=${encodeURIComponent(newUser.email)}&limit=1`
+				);
+				const lookupData = await lookup.json();
+				const createdUserId = lookupData?.users?.[0]?.id as string | undefined;
+
+				if (!createdUserId) {
+					throw new Error("User created but affiliate role could not be assigned.");
+				}
+
+				const roleRes = await fetch(`/api/admin/users/${createdUserId}`, {
+					method: "PATCH",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ role: "affiliate" }),
+				});
+				const roleData = roleRes.ok ? null : await roleRes.json().catch(() => ({}));
+				if (!roleRes.ok) {
+					throw new Error(roleData?.error || "Failed to assign affiliate role");
+				}
+			}
+
 			toast.success("User created successfully");
 			setNewUser({ email: "", password: "", name: "", role: "user" });
 			setIsDialogOpen(false);
@@ -252,7 +285,7 @@ export default function AdminDashboard() {
                   <Label className="mb-4" htmlFor="role">Role</Label>
                   <Select
                     value={newUser.role}
-                    onValueChange={(value: "admin" | "user" | "affiliate") =>
+                    onValueChange={(value: User["role"]) =>
                         setNewUser({ ...newUser, role: value })
                     }
                   >

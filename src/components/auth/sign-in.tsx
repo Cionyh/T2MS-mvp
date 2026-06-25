@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { getSession } from "@/lib/auth-client";
+import { getSession, signIn } from "@/lib/auth-client";
 import { getDashboardPathForRole } from "@/lib/user-roles";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
