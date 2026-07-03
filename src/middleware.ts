@@ -11,7 +11,7 @@ function isProtectedPath(pathname: string): boolean {
   )
 }
 
-function rewriteHostedSubdomain(request: NextRequest): NextResponse | null {
+function rewriteHostedDomain(request: NextRequest): NextResponse | null {
   const hostHeader = request.headers.get("host")?.toLowerCase() ?? ""
   const host = hostHeader.split(":")[0]
   const hostedDomain = getHostedPageDomain()
@@ -20,7 +20,14 @@ function rewriteHostedSubdomain(request: NextRequest): NextResponse | null {
     return null
   }
 
+  // Apex / www: unlisted announcement marketing page for t2ms.live
   if (host === hostedDomain || host === `www.${hostedDomain}`) {
+    const { pathname } = request.nextUrl
+    if (pathname === "/" || pathname === "") {
+      const url = request.nextUrl.clone()
+      url.pathname = "/announce"
+      return NextResponse.rewrite(url)
+    }
     return null
   }
 
@@ -37,7 +44,7 @@ function rewriteHostedSubdomain(request: NextRequest): NextResponse | null {
 }
 
 export async function middleware(request: NextRequest) {
-  const hostedRewrite = rewriteHostedSubdomain(request)
+  const hostedRewrite = rewriteHostedDomain(request)
   if (hostedRewrite) {
     return hostedRewrite
   }
