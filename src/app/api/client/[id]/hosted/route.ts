@@ -31,6 +31,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         hostedSlug: true,
         hostedEnabled: true,
         hostedIntroText: true,
+        hostedFooterText: true,
         hostedPublishedAt: true,
       },
     })
@@ -74,10 +75,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     }
 
     const body = await req.json()
-    const { hostedSlug, hostedEnabled, hostedIntroText } = body as {
+    const { hostedSlug, hostedEnabled, hostedIntroText, hostedFooterText } = body as {
       hostedSlug?: string | null
       hostedEnabled?: boolean
       hostedIntroText?: string | null
+      hostedFooterText?: string | null
     }
 
     const existing = await prisma.client.findUnique({
@@ -97,6 +99,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedSlug?: string | null
       hostedEnabled?: boolean
       hostedIntroText?: string | null
+      hostedFooterText?: string | null
       hostedPublishedAt?: Date | null
     } = {}
 
@@ -104,6 +107,12 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       const trimmed =
         typeof hostedIntroText === "string" ? hostedIntroText.trim() : ""
       updateData.hostedIntroText = trimmed ? trimmed.slice(0, 500) : null
+    }
+
+    if (hostedFooterText !== undefined) {
+      const trimmed =
+        typeof hostedFooterText === "string" ? hostedFooterText.trim() : ""
+      updateData.hostedFooterText = trimmed ? trimmed.slice(0, 1000) : null
     }
 
     if (hostedSlug !== undefined) {
@@ -158,6 +167,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         hostedSlug: true,
         hostedEnabled: true,
         hostedIntroText: true,
+        hostedFooterText: true,
         hostedPublishedAt: true,
       },
     })

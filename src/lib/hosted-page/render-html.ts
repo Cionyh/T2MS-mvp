@@ -9,6 +9,10 @@ function escapeHtml(text: string): string {
     .replace(/'/g, "&#039;")
 }
 
+function formatPlainTextBlock(text: string): string {
+  return escapeHtml(text).replace(/\n/g, "<br />")
+}
+
 export function renderHostedPageHtml(
   data: HostedPageData,
   apiBase: string
@@ -17,6 +21,7 @@ export function renderHostedPageHtml(
     clientId,
     name,
     hostedIntroText,
+    hostedFooterText,
     messageContent,
     defaultBgColor,
     defaultTextColor,
@@ -29,7 +34,6 @@ export function renderHostedPageHtml(
   const backgroundImageUrl = widgetConfig.backgroundImageUrl || ""
   const attachImage = widgetConfig.attachImage || ""
   const presetText = widgetConfig.presetText || ""
-  const mainWebsite = widgetConfig.companyWebsiteLink || ""
   const fontSize = widgetConfig.fontSize || 18
 
   const introBlock = hostedIntroText
@@ -48,8 +52,8 @@ export function renderHostedPageHtml(
     ? `<div class="t2ms-attach"><img src="${escapeHtml(attachImage)}" alt="" /></div>`
     : ""
 
-  const returnLinkBlock = mainWebsite
-    ? `<footer class="t2ms-footer"><a class="t2ms-return" href="${escapeHtml(mainWebsite)}" target="_blank" rel="noopener noreferrer">Return to Main Website</a></footer>`
+  const footerTextBlock = hostedFooterText
+    ? `<footer class="t2ms-footer"><div class="t2ms-footer-text">${formatPlainTextBlock(hostedFooterText)}</div></footer>`
     : ""
 
   const bgStyle = backgroundImageUrl
@@ -142,19 +146,13 @@ export function renderHostedPageHtml(
       width: 100%;
       text-align: center;
     }
-    .t2ms-return {
-      display: inline-block;
-      padding: 12px 24px;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.15);
-      color: inherit;
-      text-decoration: none;
-      font-weight: 600;
+    .t2ms-footer-text {
       font-size: 0.95rem;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      transition: background 0.2s;
+      line-height: 1.6;
+      opacity: 0.95;
+      max-width: 36rem;
+      margin: 0 auto;
     }
-    .t2ms-return:hover { background: rgba(255, 255, 255, 0.25); }
     .t2ms-powered {
       margin-top: 12px;
       font-size: 0.75rem;
@@ -171,7 +169,7 @@ export function renderHostedPageHtml(
       ${attachBlock}
     </section>
   </main>
-  ${returnLinkBlock}
+  ${footerTextBlock}
   <p class="t2ms-powered">Powered by Text2MySite™${isStaticDemo ? " · Demo page" : ""}</p>
   ${
     isStaticDemo

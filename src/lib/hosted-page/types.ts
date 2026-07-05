@@ -13,6 +13,7 @@ export type HostedPageData = {
   name: string
   hostedSlug: string
   hostedIntroText: string | null
+  hostedFooterText: string | null
   messageContent: string
   defaultBgColor: string
   defaultTextColor: string

@@ -27,6 +27,7 @@ export const RESERVED_HOSTED_SLUGS = new Set([
   "p",
   "hosted",
   "demo",
+  "announce",
   "null",
   "undefined",
 ])

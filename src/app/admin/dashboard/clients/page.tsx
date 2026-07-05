@@ -31,10 +31,14 @@ import {
   RefreshCw,
   UserCircle,
   Calendar as CalendarIcon,
+  Gift,
+  ArrowRightLeft,
+  FlaskConical,
 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -59,6 +63,8 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useGrantCompAccess } from "@/lib/hooks/useAdminSubscriptions";
 
 type User = {
   id: string;
@@ -66,6 +72,8 @@ type User = {
   name: string;
   role: "admin" | "user" | "affiliate";
   banned?: boolean;
+  registeredFromSandbox?: boolean;
+  migratedToLiveAt?: string | null;
   createdAt: string;
 };
 
@@ -74,6 +82,14 @@ type NewUserForm = {
   password: string;
   name: string;
   role: User["role"];
+};
+
+const EMPTY_GRANT_FORM = {
+  email: "",
+  userId: "",
+  plan: "starter" as "starter" | "pro" | "church",
+  durationInMonths: "3",
+  cancelExistingBilling: true,
 };
 
 export default function AdminDashboard() {
@@ -95,6 +111,14 @@ export default function AdminDashboard() {
   });
   const [deleteConfirmUserId, setDeleteConfirmUserId] = useState<string | null>(null);
   const [deleteConfirmUserName, setDeleteConfirmUserName] = useState<string>("");
+  const [grantDialogOpen, setGrantDialogOpen] = useState(false);
+  const [grantForm, setGrantForm] = useState(EMPTY_GRANT_FORM);
+  const [migrateUserId, setMigrateUserId] = useState<string | null>(null);
+  const [migrateUserName, setMigrateUserName] = useState("");
+  const [markSandboxUserId, setMarkSandboxUserId] = useState<string | null>(null);
+  const [markSandboxUserName, setMarkSandboxUserName] = useState("");
+
+  const grantCompAccess = useGrantCompAccess();
 
   const { data, isLoading: isUsersLoading } = useQuery({
     queryKey: ["admin-users-clients"],
@@ -226,12 +250,117 @@ export default function AdminDashboard() {
 		}
 	};
 
+	const openGrantDialog = (user?: User) => {
+		setGrantForm({
+			email: user?.email ?? "",
+			userId: user?.id ?? "",
+			plan: "starter",
+			durationInMonths: "3",
+			cancelExistingBilling: true,
+		});
+		setGrantDialogOpen(true);
+	};
+
+	const handleGrantComp = () => {
+		const duration = parseInt(grantForm.durationInMonths, 10);
+		if (!grantForm.email.trim() && !grantForm.userId) {
+			toast.error("Enter a user email");
+			return;
+		}
+		if (!Number.isFinite(duration) || duration < 1) {
+			toast.error("Enter a valid duration in months");
+			return;
+		}
+
+		grantCompAccess.mutate(
+			{
+				userId: grantForm.userId || undefined,
+				email: grantForm.email.trim() || undefined,
+				plan: grantForm.plan,
+				durationInMonths: duration,
+				cancelExistingBilling: grantForm.cancelExistingBilling,
+			},
+			{
+				onSuccess: (data) => {
+					setGrantDialogOpen(false);
+					setGrantForm(EMPTY_GRANT_FORM);
+					toast.success(
+						`Complimentary ${data.subscription.planLabel} access granted to ${data.user.email} for ${data.subscription.durationInMonths} month(s).`
+					);
+				},
+				onError: (error) => {
+					toast.error(
+						error instanceof Error
+							? error.message
+							: "Failed to grant complimentary access"
+					);
+				},
+			}
+		);
+	};
+
+	const handleMigrateToLive = async (userId: string) => {
+		setIsLoading(`migrate-${userId}`);
+		try {
+			const res = await fetch(`/api/admin/users/${userId}/migrate-to-live`, {
+				method: "POST",
+			});
+			const data = await res.json();
+			if (!res.ok) {
+				throw new Error(data.error || "Failed to migrate user to live");
+			}
+			toast.success(
+				`${data.email} migrated to live. Test subscriptions were cleared; they can subscribe on production.`
+			);
+			setMigrateUserId(null);
+			setMigrateUserName("");
+			queryClient.invalidateQueries({
+				queryKey: ["admin-users-clients"],
+			});
+		} catch (error: any) {
+			toast.error(error.message || "Failed to migrate user to live");
+		} finally {
+			setIsLoading(undefined);
+		}
+	};
+
+	const handleMarkAsSandbox = async (userId: string) => {
+		setIsLoading(`mark-sandbox-${userId}`);
+		try {
+			const res = await fetch(`/api/admin/users/${userId}/mark-sandbox`, {
+				method: "POST",
+			});
+			const data = await res.json();
+			if (!res.ok) {
+				throw new Error(data.error || "Failed to mark user as sandbox");
+			}
+			toast.success(`${data.email} marked as sandbox`);
+			setMarkSandboxUserId(null);
+			setMarkSandboxUserName("");
+			queryClient.invalidateQueries({
+				queryKey: ["admin-users-clients"],
+			});
+		} catch (error: any) {
+			toast.error(error.message || "Failed to mark user as sandbox");
+		} finally {
+			setIsLoading(undefined);
+		}
+	};
+
 	return (
     <div className="container mx-auto px-4 space-y-4">
       <Toaster richColors />
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
           <CardTitle className="text-2xl">Clients Management</CardTitle>
+          <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="flex items-center justify-center gap-2"
+            onClick={() => openGrantDialog()}
+          >
+            <Gift className="h-4 w-4" /> Grant complimentary access
+          </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="flex items-center justify-center gap-2">
@@ -316,6 +445,7 @@ export default function AdminDashboard() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
           <Dialog open={isBanDialogOpen} onOpenChange={setIsBanDialogOpen}>
             <DialogContent className="max-w-md sm:max-w-lg">
               <DialogHeader>
@@ -406,6 +536,9 @@ export default function AdminDashboard() {
                     <TableHead className="whitespace-nowrap min-w-[100px]">
                       Banned
                     </TableHead>
+                    <TableHead className="whitespace-nowrap min-w-[100px]">
+                      Environment
+                    </TableHead>
                     <TableHead className="whitespace-nowrap min-w-[120px]">
                       Registered
                     </TableHead>
@@ -433,6 +566,15 @@ export default function AdminDashboard() {
                           <Badge variant="outline">No</Badge>
                         )}
                       </TableCell>
+                      <TableCell className="whitespace-nowrap min-w-[100px]">
+                        {user.registeredFromSandbox ? (
+                          <Badge className="bg-amber-600">Sandbox</Badge>
+                        ) : user.migratedToLiveAt ? (
+                          <Badge className="bg-green-600">Live (migrated)</Badge>
+                        ) : (
+                          <Badge variant="outline">Live</Badge>
+                        )}
+                      </TableCell>
                       <TableCell className="whitespace-nowrap min-w-[120px] text-muted-foreground">
                         {user.createdAt
                           ? format(new Date(user.createdAt), "MMM d, yyyy")
@@ -440,6 +582,154 @@ export default function AdminDashboard() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap min-w-[180px]">
                         <div className="flex flex-wrap gap-2">
+                          {!user.registeredFromSandbox &&
+                            !user.migratedToLiveAt &&
+                            user.role !== "admin" && (
+                              <AlertDialog
+                                open={markSandboxUserId === user.id}
+                                onOpenChange={(open) => {
+                                  if (!open) {
+                                    setMarkSandboxUserId(null);
+                                    setMarkSandboxUserName("");
+                                  }
+                                }}
+                              >
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  title="Mark as sandbox"
+                                  onClick={() => {
+                                    setMarkSandboxUserId(user.id);
+                                    setMarkSandboxUserName(
+                                      user.name || user.email
+                                    );
+                                  }}
+                                  disabled={isLoading?.startsWith("mark-sandbox")}
+                                >
+                                  {isLoading === `mark-sandbox-${user.id}` ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <FlaskConical className="h-4 w-4" />
+                                  )}
+                                </Button>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Mark as sandbox?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Flag <strong>{markSandboxUserName}</strong>{" "}
+                                      as a sandbox-registered user. Use this for
+                                      accounts created on staging before auto-flagging
+                                      existed. You can migrate them to live later.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        if (markSandboxUserId) {
+                                          void handleMarkAsSandbox(markSandboxUserId);
+                                        }
+                                      }}
+                                      disabled={
+                                        !!markSandboxUserId &&
+                                        isLoading ===
+                                          `mark-sandbox-${markSandboxUserId}`
+                                      }
+                                    >
+                                      {markSandboxUserId &&
+                                      isLoading ===
+                                        `mark-sandbox-${markSandboxUserId}` ? (
+                                        <>
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          Marking...
+                                        </>
+                                      ) : (
+                                        "Mark as sandbox"
+                                      )}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          {user.registeredFromSandbox && user.role !== "admin" && (
+                            <AlertDialog
+                              open={migrateUserId === user.id}
+                              onOpenChange={(open) => {
+                                if (!open) {
+                                  setMigrateUserId(null);
+                                  setMigrateUserName("");
+                                }
+                              }}
+                            >
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                title="Migrate to live"
+                                onClick={() => {
+                                  setMigrateUserId(user.id);
+                                  setMigrateUserName(user.name || user.email);
+                                }}
+                                disabled={isLoading?.startsWith("migrate")}
+                              >
+                                {isLoading === `migrate-${user.id}` ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <ArrowRightLeft className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Migrate to live?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Move <strong>{migrateUserName}</strong> from sandbox
+                                    to live. Their sites and messages are kept. Test
+                                    Stripe billing and sandbox subscriptions are
+                                    cleared — they will need a live subscription
+                                    (or complimentary access) on production.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      if (migrateUserId) {
+                                        void handleMigrateToLive(migrateUserId);
+                                      }
+                                    }}
+                                    disabled={
+                                      !!migrateUserId &&
+                                      isLoading === `migrate-${migrateUserId}`
+                                    }
+                                  >
+                                    {migrateUserId &&
+                                    isLoading === `migrate-${migrateUserId}` ? (
+                                      <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Migrating...
+                                      </>
+                                    ) : (
+                                      "Migrate to live"
+                                    )}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                          {user.role !== "admin" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              title="Grant complimentary access"
+                              onClick={() => openGrantDialog(user)}
+                              disabled={grantCompAccess.isPending}
+                            >
+                              <Gift className="h-4 w-4" />
+                            </Button>
+                          )}
                           {user.role !== "admin" && user.role !== "affiliate" && (
                           <AlertDialog
                             open={deleteConfirmUserId === user.id}
@@ -581,6 +871,109 @@ export default function AdminDashboard() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={grantDialogOpen} onOpenChange={setGrantDialogOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Grant complimentary access</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Give an existing user free plan access without Stripe billing. Their
+              current subscription can be cancelled automatically.
+            </p>
+            <div>
+              <Label htmlFor="client-grant-email">User email</Label>
+              <Input
+                id="client-grant-email"
+                type="email"
+                placeholder="customer@example.com"
+                value={grantForm.email}
+                onChange={(e) =>
+                  setGrantForm((prev) => ({
+                    ...prev,
+                    email: e.target.value,
+                    userId: "",
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="client-grant-plan">Plan</Label>
+              <Select
+                value={grantForm.plan}
+                onValueChange={(value: "starter" | "pro" | "church") =>
+                  setGrantForm((prev) => ({ ...prev, plan: value }))
+                }
+              >
+                <SelectTrigger id="client-grant-plan">
+                  <SelectValue placeholder="Select plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="starter">Starter</SelectItem>
+                  <SelectItem value="pro">Growth</SelectItem>
+                  <SelectItem value="church">Church</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="client-grant-duration">Duration (months)</Label>
+              <Input
+                id="client-grant-duration"
+                type="number"
+                min={1}
+                max={120}
+                value={grantForm.durationInMonths}
+                onChange={(e) =>
+                  setGrantForm((prev) => ({
+                    ...prev,
+                    durationInMonths: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="flex items-start gap-3 rounded-md border p-3">
+              <Checkbox
+                id="client-grant-cancel-billing"
+                checked={grantForm.cancelExistingBilling}
+                onCheckedChange={(checked) =>
+                  setGrantForm((prev) => ({
+                    ...prev,
+                    cancelExistingBilling: checked === true,
+                  }))
+                }
+              />
+              <div className="space-y-1">
+                <Label htmlFor="client-grant-cancel-billing" className="cursor-pointer">
+                  Cancel existing billing
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Cancels any active Stripe or coupon subscription before
+                  applying complimentary access.
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setGrantDialogOpen(false);
+                setGrantForm(EMPTY_GRANT_FORM);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleGrantComp} disabled={grantCompAccess.isPending}>
+              {grantCompAccess.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Grant access"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

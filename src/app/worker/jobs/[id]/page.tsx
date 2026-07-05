@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, CheckCircle2, Upload, Lock, Unlock, Copy } from "lucide-react";
+import { Loader2, CheckCircle2, Lock, Unlock, Copy } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -177,7 +177,8 @@ interface Job {
   status: string;
   priority: number;
   checklistCompleted: boolean;
-  proofUploaded: boolean;
+  htmlUpdatedConfirmed: boolean;
+  htmlUpdatedConfirmedAt: string | null;
   createdAt: string;
   updatedAt: string;
   client?: {
@@ -195,12 +196,6 @@ interface Job {
       name: string;
     };
   } | null;
-  proofs: Array<{
-    id: string;
-    type: string;
-    fileUrl: string;
-    uploadedAt: string;
-  }>;
 }
 
 interface ChecklistState {
@@ -230,7 +225,7 @@ export default function WorkerJobDetailPage() {
     noLayoutOrConsoleErrors: false,
   });
   const [submittingChecklist, setSubmittingChecklist] = useState(false);
-  const [uploadingProof, setUploadingProof] = useState(false);
+  const [savingHtmlConfirmation, setSavingHtmlConfirmation] = useState(false);
   const [submittingJob, setSubmittingJob] = useState(false);
   const [showCredentials, setShowCredentials] = useState(true);
   const [publishing, setPublishing] = useState(false);
@@ -281,45 +276,36 @@ export default function WorkerJobDetailPage() {
     }
   }
 
-  async function handleProofUpload(type: "desktop" | "mobile" | "message") {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/png,image/jpeg,application/pdf";
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
+  async function handleHtmlConfirmationChange(checked: boolean) {
+    setSavingHtmlConfirmation(true);
+    try {
+      const response = await fetch(`/api/jobs/${jobId}/html-confirmation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmed: checked }),
+      });
 
-      // Validate file size (10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("File size must be less than 10MB");
-        return;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to save confirmation");
       }
 
-      setUploadingProof(true);
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("type", type);
-
-        const response = await fetch(`/api/jobs/${jobId}/proof`, {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Failed to upload proof");
-        }
-
-        toast.success(`${type} proof uploaded successfully!`);
-        fetchJob(); // Refresh job data
-      } catch (error: any) {
-        toast.error(error.message || "Failed to upload proof");
-      } finally {
-        setUploadingProof(false);
-      }
-    };
-    input.click();
+      setJob((prev) =>
+        prev
+          ? {
+              ...prev,
+              htmlUpdatedConfirmed: checked,
+              htmlUpdatedConfirmedAt: checked ? new Date().toISOString() : null,
+            }
+          : prev
+      );
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save confirmation"
+      );
+    } finally {
+      setSavingHtmlConfirmation(false);
+    }
   }
 
   async function handleSubmitForQA() {
@@ -362,11 +348,8 @@ export default function WorkerJobDetailPage() {
 
   const mandatoryChecklistKeys = ["widgetLoadsDesktop", "widgetLoadsMobile", "messagingUIOpens"] as const;
   const allChecklistItemsChecked = mandatoryChecklistKeys.every((k) => checklist[k] === true);
-  const hasDesktopProof = job?.proofs.some((p) => p.type === "desktop");
-  const hasMobileProof = job?.proofs.some((p) => p.type === "mobile");
-  const hasMessageProof = job?.proofs.some((p) => p.type === "message");
-  const allProofsUploaded = hasDesktopProof && hasMobileProof && hasMessageProof;
-  const canSubmit = allChecklistItemsChecked && allProofsUploaded && job?.checklistCompleted;
+  const htmlConfirmed = job?.htmlUpdatedConfirmed === true;
+  const canSubmit = allChecklistItemsChecked && htmlConfirmed && job?.checklistCompleted;
 
   if (loading) {
     return (
@@ -711,64 +694,41 @@ export default function WorkerJobDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Proof Upload */}
+        {/* HTML confirmation */}
         <Card>
           <CardHeader>
-            <CardTitle>Proof Uploads</CardTitle>
-            <CardDescription>
-              Upload screenshots and message proof (Max 10MB each, PNG/JPG/PDF)
-            </CardDescription>
+            <CardTitle>HTML File Upload</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {[
-              { type: "desktop", label: "Desktop Screenshot", required: true },
-              { type: "mobile", label: "Mobile/Responsive Screenshot", required: true },
-              { type: "message", label: "Message Send + Receive Proof", required: true },
-            ].map(({ type, label, required }) => {
-              const proof = job.proofs.find((p) => p.type === type);
-              return (
-                <div key={type} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    {proof ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    ) : (
-                      <div className="h-5 w-5 rounded-full border-2 border-muted-foreground" />
-                    )}
-                    <div>
-                      <Label className="font-medium">{label}</Label>
-                      {required && <span className="text-red-500 ml-1">*</span>}
-                      {proof && (
-                        <p className="text-xs text-muted-foreground">
-                          Uploaded {new Date(proof.uploadedAt).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    variant={proof ? "outline" : "default"}
-                    size="sm"
-                    onClick={() => handleProofUpload(type as any)}
-                    disabled={uploadingProof}
-                  >
-                    {uploadingProof ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : proof ? (
-                      "Replace"
-                    ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload
-                      </>
-                    )}
-                  </Button>
-                </div>
-              );
-            })}
+            <div className="flex items-start gap-3 rounded-lg border p-4">
+              <Checkbox
+                id="html-updated-confirmed"
+                checked={job.htmlUpdatedConfirmed}
+                disabled={savingHtmlConfirmation}
+                onCheckedChange={(value) =>
+                  handleHtmlConfirmationChange(value === true)
+                }
+              />
+              <div className="space-y-1">
+                <Label
+                  htmlFor="html-updated-confirmed"
+                  className="font-medium leading-snug"
+                >
+                  I confirm the customer&apos;s HTML has been updated
+                  <span className="text-red-500 ml-1">*</span>
+                </Label>
+                {job.htmlUpdatedConfirmed && job.htmlUpdatedConfirmedAt && (
+                  <p className="text-xs text-muted-foreground">
+                    Confirmed {format(new Date(job.htmlUpdatedConfirmedAt), "MMM d, yyyy 'at' h:mm a")}
+                  </p>
+                )}
+              </div>
+            </div>
 
-            {job.proofUploaded && (
+            {job.htmlUpdatedConfirmed && (
               <div className="flex items-center gap-2 text-sm text-green-600">
                 <CheckCircle2 className="h-4 w-4" />
-                <span>All required proofs uploaded</span>
+                <span>HTML update confirmed</span>
               </div>
             )}
           </CardContent>
@@ -796,12 +756,12 @@ export default function WorkerJobDetailPage() {
                       <span>QA Checklist completed</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      {allProofsUploaded ? (
+                      {htmlConfirmed ? (
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
                       ) : (
                         <div className="h-4 w-4 rounded-full border-2" />
                       )}
-                      <span>All proofs uploaded</span>
+                      <span>HTML update confirmed</span>
                     </div>
                   </div>
 

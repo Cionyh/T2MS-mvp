@@ -15,6 +15,8 @@ const HIDDEN_PREFIXES = [
   "/sign-in",
   "/signup",
   "/church",
+  "/announce",
+  "/affiliate",
 ] as const;
 
 function shouldHideChat(pathname: string | null): boolean {

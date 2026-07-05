@@ -9,7 +9,6 @@ import {
   RefreshCw,
   ArrowLeft,
   UserCheck,
-  FileText,
   AlertCircle,
   Target,
   Copy,
@@ -71,7 +70,8 @@ interface Job {
   status: string;
   priority: number;
   checklistCompleted: boolean;
-  proofUploaded: boolean;
+  htmlUpdatedConfirmed: boolean;
+  htmlUpdatedConfirmedAt: string | null;
   createdAt: string;
   updatedAt: string;
   client?: {
@@ -94,12 +94,6 @@ interface Job {
       email: string;
     };
   } | null;
-  proofs: Array<{
-    id: string;
-    type: string;
-    fileUrl: string;
-    uploadedAt: string;
-  }>;
 }
 
 interface Worker {
@@ -431,42 +425,29 @@ export default function AdminJobDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Proofs */}
+          {/* HTML confirmation */}
           <Card>
             <CardHeader>
-              <CardTitle>Proof Uploads</CardTitle>
+              <CardTitle>HTML File Upload</CardTitle>
               <CardDescription>
-                {job.proofs.length} file(s) uploaded
-                {job.proofUploaded && (
-                  <CheckCircle2 className="inline ml-2 h-4 w-4 text-green-500" />
-                )}
+                Worker attestation that customer HTML was updated
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {job.proofs.length > 0 ? (
-                <div className="space-y-2">
-                  {job.proofs.map((proof) => (
-                    <div key={proof.id} className="flex items-center justify-between p-2 border rounded">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        <span className="capitalize">{proof.type}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {new Date(proof.uploadedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <a
-                        href={proof.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline text-sm"
-                      >
-                        View
-                      </a>
-                    </div>
-                  ))}
+              {job.htmlUpdatedConfirmed ? (
+                <div className="flex items-center gap-2 text-green-600">
+                  <CheckCircle2 className="h-5 w-5" />
+                  <div>
+                    <p className="font-medium">Confirmed</p>
+                    {job.htmlUpdatedConfirmedAt && (
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(job.htmlUpdatedConfirmedAt).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
                 </div>
               ) : (
-                <p className="text-muted-foreground">No proofs uploaded yet</p>
+                <p className="text-muted-foreground">Not confirmed yet</p>
               )}
             </CardContent>
           </Card>

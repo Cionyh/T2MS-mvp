@@ -49,7 +49,7 @@ interface InstallJob {
   status: string;
   priority: number;
   checklistCompleted: boolean;
-  proofUploaded: boolean;
+  htmlUpdatedConfirmed: boolean;
   createdAt: string;
   updatedAt: string;
   customer: {
@@ -68,9 +68,6 @@ interface InstallJob {
       email: string;
     };
   } | null;
-  _count: {
-    proofs: number;
-  };
 }
 
 export default function AdminJobsPage() {
@@ -287,7 +284,7 @@ export default function AdminJobsPage() {
                 <TableHead>Website URLs</TableHead>
                 <TableHead>Teammember</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Proofs</TableHead>
+                <TableHead>HTML Confirmed</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -348,12 +345,12 @@ export default function AdminJobsPage() {
                   <TableCell>{getStatusBadge(job.status, job.assignedWorker)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {job.proofUploaded ? (
+                      {job.htmlUpdatedConfirmed ? (
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-muted-foreground" />
                       )}
-                      <span>{job._count.proofs}</span>
+                      <span>{job.htmlUpdatedConfirmed ? "Yes" : "No"}</span>
                     </div>
                   </TableCell>
                   <TableCell>
