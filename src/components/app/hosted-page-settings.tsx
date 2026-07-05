@@ -20,6 +20,7 @@ type HostedState = {
   hostedSlug: string | null
   hostedEnabled: boolean
   hostedIntroText: string | null
+  hostedFooterText: string | null
   publicUrls: {
     path: string
     subdomain: string
@@ -35,6 +36,7 @@ export function HostedPageSettings({
   const [saving, setSaving] = useState(false)
   const [slugInput, setSlugInput] = useState("")
   const [introText, setIntroText] = useState("")
+  const [footerText, setFooterText] = useState("")
   const [enabled, setEnabled] = useState(false)
   const [publicUrls, setPublicUrls] = useState<HostedState["publicUrls"]>(null)
   const [slugStatus, setSlugStatus] = useState<
@@ -66,6 +68,7 @@ export function HostedPageSettings({
         }
       }
       setIntroText(data.hostedIntroText ?? "")
+      setFooterText(data.hostedFooterText ?? "")
       setEnabled(data.hostedEnabled ?? false)
       setPublicUrls(data.publicUrls ?? null)
     } catch {
@@ -133,6 +136,7 @@ export function HostedPageSettings({
           hostedSlug: slugInput.trim() || null,
           hostedEnabled: enabled,
           hostedIntroText: introText,
+          hostedFooterText: footerText,
         }),
       })
       const data = await res.json()
@@ -240,6 +244,22 @@ export function HostedPageSettings({
           placeholder="Welcome — see our latest update below."
           rows={2}
           maxLength={500}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="hosted-footer">Page footer text (optional)</Label>
+        <p className="text-xs text-muted-foreground">
+          Shown at the bottom of your hosted page. Use this for a website
+          link, hours, contact info, or any message you want visitors to see.
+        </p>
+        <Textarea
+          id="hosted-footer"
+          value={footerText}
+          onChange={(e) => setFooterText(e.target.value)}
+          placeholder="Visit us at www.example.com"
+          rows={3}
+          maxLength={1000}
         />
       </div>
 

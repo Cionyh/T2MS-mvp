@@ -29,6 +29,8 @@ model User {
   country          String?
   businessCategory String?
   referralCode     String?       @map("referral_code")
+  registeredFromSandbox Boolean   @default(false) @map("registered_from_sandbox")
+  migratedToLiveAt      DateTime? @map("migrated_to_live_at")
 
   members      Member[]
   invitations  Invitation[]
@@ -115,9 +117,11 @@ model InstallJob {
   status             String    @default("QUEUED")
   priority           Int       @default(0)
   assignedWorkerId  String?
-  checklistCompleted Boolean   @default(false)
-  proofUploaded      Boolean   @default(false)
-  createdAt          DateTime  @default(now())
+  checklistCompleted      Boolean   @default(false)
+  proofUploaded           Boolean   @default(false)
+  htmlUpdatedConfirmed    Boolean   @default(false)
+  htmlUpdatedConfirmedAt  DateTime?
+  createdAt               DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   customer           Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   client             Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
@@ -260,6 +264,7 @@ model Client {
   hostedSlug        String?   @unique
   hostedEnabled     Boolean   @default(false)
   hostedIntroText   String?
+  hostedFooterText  String?
   hostedPublishedAt DateTime?
   hostedWelcomeEmailSentAt DateTime?
 

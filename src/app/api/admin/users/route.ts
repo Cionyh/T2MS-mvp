@@ -45,6 +45,8 @@ export async function GET(req: NextRequest) {
           role: true,
           banned: true,
           createdAt: true,
+          registeredFromSandbox: true,
+          migratedToLiveAt: true,
         },
       }),
       prisma.user.count({ where }),
@@ -62,6 +64,8 @@ export async function GET(req: NextRequest) {
               ? "affiliate"
               : "user",
         banned: u.banned === true,
+        registeredFromSandbox: u.registeredFromSandbox === true,
+        migratedToLiveAt: u.migratedToLiveAt?.toISOString() ?? null,
         createdAt: u.createdAt.toISOString(),
       })),
       pagination: {

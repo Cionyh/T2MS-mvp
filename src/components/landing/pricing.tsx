@@ -222,16 +222,8 @@ export function PricingSection() {
                   <p className="text-sm text-muted-foreground leading-snug">
                     {plan.powerfulFeatures.subtitle}
                   </p>
-                  <div className="pt-1 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+                  <div className="pt-1">
                     <FeaturesPreviewDialog url={plan.powerfulFeatures.previewUrl} />
-                    <a
-                      href={plan.powerfulFeatures.previewUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                    >
-                      Open in new tab
-                    </a>
                   </div>
                 </div>
               ) : null}

@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyWorker } from "@/lib/worker-helpers";
 import { prisma } from "@/lib/prisma";
-import { INSTALL_JOB_STATUS } from "@/lib/job-status";
 
 interface Params {
   id: string;
 }
 
 /**
- * POST /api/jobs/:id/submit
- * Submit job for QA
+ * POST /api/jobs/:id/html-confirmation
+ * Worker attestation that customer HTML has been updated.
  */
 export async function POST(
   req: NextRequest,
@@ -20,10 +19,13 @@ export async function POST(
 
     if (!worker) {
       return NextResponse.json(
-        { error: "Only workers can submit jobs" },
+        { error: "Only workers can confirm HTML updates" },
         { status: 403 }
       );
     }
+
+    const body = await req.json();
+    const confirmed = body.confirmed === true;
 
     const job = await prisma.installJob.findUnique({
       where: { id: params.id },
@@ -35,46 +37,35 @@ export async function POST(
 
     if (job.assignedWorkerId !== worker.id) {
       return NextResponse.json(
-        { error: "You can only submit jobs assigned to you" },
+        { error: "You can only update jobs assigned to you" },
         { status: 403 }
       );
     }
 
-    // Validate checklist is complete
-    if (!job.checklistCompleted) {
-      return NextResponse.json(
-        { error: "QA checklist must be completed before submission" },
-        { status: 400 }
-      );
-    }
-
-    if (!job.htmlUpdatedConfirmed) {
-      return NextResponse.json(
-        {
-          error:
-            "You must confirm that the customer's HTML has been updated before submitting",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Update job status to SUBMITTED_FOR_QA
     const updatedJob = await prisma.installJob.update({
       where: { id: params.id },
       data: {
-        status: INSTALL_JOB_STATUS.SUBMITTED_FOR_QA,
+        htmlUpdatedConfirmed: confirmed,
+        htmlUpdatedConfirmedAt: confirmed ? new Date() : null,
+      },
+      select: {
+        id: true,
+        htmlUpdatedConfirmed: true,
+        htmlUpdatedConfirmedAt: true,
       },
     });
 
     return NextResponse.json({
       success: true,
       job: updatedJob,
-      message: "Job submitted for QA successfully",
     });
-  } catch (error: any) {
-    console.error("[JOBS_SUBMIT]", error);
+  } catch (error: unknown) {
+    console.error("[JOBS_HTML_CONFIRMATION]", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      {
+        error:
+          error instanceof Error ? error.message : "Internal server error",
+      },
       { status: 500 }
     );
   }

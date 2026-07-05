@@ -5,6 +5,7 @@ import {
   useAdminSubscriptions,
   useUpdateSubscription,
   useCancelSubscription,
+  useGrantCompAccess,
   Subscription,
 } from "@/lib/hooks/useAdminSubscriptions";
 import {
@@ -18,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Edit, Trash2, XCircle, Search } from "lucide-react";
+import { Loader2, Edit, Trash2, XCircle, Search, Gift } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -47,7 +48,16 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+
+const EMPTY_GRANT_FORM = {
+  email: "",
+  userId: "",
+  plan: "starter" as "starter" | "pro" | "church",
+  durationInMonths: "3",
+  cancelExistingBilling: true,
+};
 
 export default function AdminSubscriptionsPage() {
   const [page, setPage] = useState(1);
@@ -56,6 +66,8 @@ export default function AdminSubscriptionsPage() {
   const [planFilter, setPlanFilter] = useState("all");
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
   const [deletingSubscriptionId, setDeletingSubscriptionId] = useState<string | null>(null);
+  const [grantDialogOpen, setGrantDialogOpen] = useState(false);
+  const [grantForm, setGrantForm] = useState(EMPTY_GRANT_FORM);
 
   const { data, isLoading, isError, refetch } = useAdminSubscriptions({
     page,
@@ -68,9 +80,64 @@ export default function AdminSubscriptionsPage() {
 
   const updateSubscription = useUpdateSubscription();
   const cancelSubscription = useCancelSubscription();
+  const grantCompAccess = useGrantCompAccess();
 
   const isUpdating = updateSubscription.isPending;
   const isDeleting = cancelSubscription.isPending;
+  const isGranting = grantCompAccess.isPending;
+
+  const openGrantDialog = (subscription?: Subscription) => {
+    setGrantForm({
+      email: subscription?.user?.email ?? "",
+      userId: subscription?.user?.id ?? "",
+      plan:
+        subscription?.plan === "pro" || subscription?.plan === "church"
+          ? subscription.plan
+          : "starter",
+      durationInMonths: "3",
+      cancelExistingBilling: true,
+    });
+    setGrantDialogOpen(true);
+  };
+
+  const handleGrantComp = () => {
+    const duration = parseInt(grantForm.durationInMonths, 10);
+    if (!grantForm.email.trim() && !grantForm.userId) {
+      toast.error("Enter a user email");
+      return;
+    }
+    if (!Number.isFinite(duration) || duration < 1) {
+      toast.error("Enter a valid duration in months");
+      return;
+    }
+
+    grantCompAccess.mutate(
+      {
+        userId: grantForm.userId || undefined,
+        email: grantForm.email.trim() || undefined,
+        plan: grantForm.plan,
+        durationInMonths: duration,
+        cancelExistingBilling: grantForm.cancelExistingBilling,
+      },
+      {
+        onSuccess: (data) => {
+          setGrantDialogOpen(false);
+          setGrantForm(EMPTY_GRANT_FORM);
+          refetch();
+          toast.success(
+            `Complimentary ${data.subscription.planLabel} access granted to ${data.user.email} for ${data.subscription.durationInMonths} month(s).`
+          );
+        },
+        onError: (error) => {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Failed to grant complimentary access"
+          );
+        },
+      }
+    );
+  };
 
   const handleSave = () => {
     if (!editingSubscription) return;
@@ -136,6 +203,16 @@ export default function AdminSubscriptionsPage() {
     return <Badge className={color}>{label}</Badge>;
   };
 
+  const getSourceBadge = (source: string | null | undefined) => {
+    if (source === "coupon") {
+      return <Badge variant="outline">Coupon</Badge>;
+    }
+    if (source === "admin_comp") {
+      return <Badge className="bg-emerald-600">Comp</Badge>;
+    }
+    return <Badge variant="outline">Stripe</Badge>;
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -150,7 +227,13 @@ export default function AdminSubscriptionsPage() {
 
   return (
     <div className="space-y-6 p-6 bg-muted rounded-2xl">
-      <h1 className="text-2xl font-bold">Subscriptions Management</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold">Subscriptions Management</h1>
+        <Button onClick={() => openGrantDialog()}>
+          <Gift className="h-4 w-4 mr-2" />
+          Grant complimentary access
+        </Button>
+      </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4 items-center">
@@ -221,11 +304,7 @@ export default function AdminSubscriptionsPage() {
             {data?.data.map((subscription) => (
               <TableRow key={subscription.id}>
                 <TableCell>{getPlanBadge(subscription.plan)}</TableCell>
-                <TableCell>
-                  <Badge variant="outline">
-                    {subscription.source === "coupon" ? "Coupon" : "Stripe"}
-                  </Badge>
-                </TableCell>
+                <TableCell>{getSourceBadge(subscription.source)}</TableCell>
                 <TableCell>{getStatusBadge(subscription.status)}</TableCell>
                 <TableCell>
                   {subscription.user ? (
@@ -263,6 +342,15 @@ export default function AdminSubscriptionsPage() {
                   )}
                 </TableCell>
                 <TableCell className="space-x-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    title="Grant complimentary access"
+                    onClick={() => openGrantDialog(subscription)}
+                  >
+                    <Gift className="h-4 w-4" />
+                  </Button>
+
                   {/* Edit Dialog */}
                   <Dialog
                     open={!!editingSubscription && editingSubscription.id === subscription.id}
@@ -409,6 +497,109 @@ export default function AdminSubscriptionsPage() {
           </Button>
         </div>
       )}
+
+      <Dialog open={grantDialogOpen} onOpenChange={setGrantDialogOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Grant complimentary access</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Give an existing user free plan access without Stripe billing. Their
+              current subscription can be cancelled automatically.
+            </p>
+            <div>
+              <Label htmlFor="grant-email">User email</Label>
+              <Input
+                id="grant-email"
+                type="email"
+                placeholder="customer@example.com"
+                value={grantForm.email}
+                onChange={(e) =>
+                  setGrantForm((prev) => ({
+                    ...prev,
+                    email: e.target.value,
+                    userId: "",
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="grant-plan">Plan</Label>
+              <Select
+                value={grantForm.plan}
+                onValueChange={(value: "starter" | "pro" | "church") =>
+                  setGrantForm((prev) => ({ ...prev, plan: value }))
+                }
+              >
+                <SelectTrigger id="grant-plan">
+                  <SelectValue placeholder="Select plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="starter">Starter</SelectItem>
+                  <SelectItem value="pro">Growth</SelectItem>
+                  <SelectItem value="church">Church</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="grant-duration">Duration (months)</Label>
+              <Input
+                id="grant-duration"
+                type="number"
+                min={1}
+                max={120}
+                value={grantForm.durationInMonths}
+                onChange={(e) =>
+                  setGrantForm((prev) => ({
+                    ...prev,
+                    durationInMonths: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="flex items-start gap-3 rounded-md border p-3">
+              <Checkbox
+                id="grant-cancel-billing"
+                checked={grantForm.cancelExistingBilling}
+                onCheckedChange={(checked) =>
+                  setGrantForm((prev) => ({
+                    ...prev,
+                    cancelExistingBilling: checked === true,
+                  }))
+                }
+              />
+              <div className="space-y-1">
+                <Label htmlFor="grant-cancel-billing" className="cursor-pointer">
+                  Cancel existing billing
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Cancels any active Stripe or coupon subscription before
+                  applying complimentary access.
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setGrantDialogOpen(false);
+                setGrantForm(EMPTY_GRANT_FORM);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleGrantComp} disabled={isGranting}>
+              {isGranting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Grant access"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

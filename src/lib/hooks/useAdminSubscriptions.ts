@@ -148,3 +148,35 @@ export function useCancelSubscription() {
     },
   });
 }
+
+export interface GrantCompAccessInput {
+  userId?: string;
+  email?: string;
+  plan: "starter" | "pro" | "church";
+  durationInMonths: number;
+  cancelExistingBilling?: boolean;
+}
+
+export function useGrantCompAccess() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: GrantCompAccessInput) => {
+      const response = await fetch("/api/admin/subscriptions/grant-comp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to grant complimentary access");
+      }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["subscription-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["subscription-charts"] });
+    },
+  });
+}

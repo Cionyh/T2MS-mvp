@@ -10,6 +10,7 @@ import { renderPasswordResetEmail } from "@/lib/email-templates";
 import {
   buildBetterAuthStripePlans,
   getStripeWebhookSecret,
+  isLiveMode,
   tryGetStripeServerClient,
 } from "@/lib/stripe-config";
 
@@ -78,6 +79,20 @@ export const auth = betterAuth({
 	database: prismaAdapter(db, {
 		provider: "postgresql",
 	}),
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          return {
+            data: {
+              ...user,
+              registeredFromSandbox: !isLiveMode(),
+            },
+          };
+        },
+      },
+    },
+  },
     secret: process.env.BETTER_AUTH_SECRET || "your-secret-key-change-this-in-production",
     user: {
     additionalFields: {
