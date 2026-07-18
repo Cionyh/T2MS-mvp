@@ -1,11 +1,6 @@
 "use client";
 
-import { Check, ExternalLink, Zap, Layers, Rocket, Church } from "lucide-react";
-import {
-  CHURCH_PLAN_FEATURES,
-  getChurchIntroPriceLabel,
-  isChurchPlanEnabled,
-} from "@/lib/church-pricing";
+import { Check, ExternalLink, Zap, Layers, Rocket } from "lucide-react";
 import {
   GROWTH_PLAN_FEATURES,
   STARTER_PLAN_FEATURES,
@@ -106,24 +101,9 @@ function FeaturesPreviewDialog({ url }: { url: string }) {
   );
 }
 
-function buildPricingPlans(): PricingPlan[] {
-  const churchPlan: PricingPlan | null = isChurchPlanEnabled()
-    ? {
-        name: "Church Intro Plan",
-        planId: "church",
-        price: getChurchIntroPriceLabel(),
-        description: "Verified churches — intro pricing, price locked up to 3 years.",
-        icon: Church,
-        features: [...CHURCH_PLAN_FEATURES],
-        highlight: true,
-      }
-    : null;
-
-  return churchPlan ? [churchPlan, ...plans] : plans;
-}
-
 export function PricingSection() {
-  const displayPlans = buildPricingPlans();
+  // Church intro pricing is campaign-only (/church) — never shown on public pricing.
+  const displayPlans = plans;
 
   return (
     <section id="pricing" className="w-full max-w-6xl mx-auto px-4 md:px-8 py-20">
@@ -136,14 +116,7 @@ export function PricingSection() {
         </p>
       </div>
 
-      <div
-        className={cn(
-          "grid grid-cols-1 gap-8",
-          displayPlans.length >= 4
-            ? "md:grid-cols-2 lg:grid-cols-4"
-            : "md:grid-cols-3"
-        )}
-      >
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         {displayPlans.map((plan) => {
           const Icon = plan.icon;
           const isEnterprise = plan.planId === "enterprise";

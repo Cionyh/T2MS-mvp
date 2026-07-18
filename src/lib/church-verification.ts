@@ -11,8 +11,15 @@ export type ChurchVerificationStatus =
 
 export const CHURCH_PRICE_LOCK_YEARS = 3
 
+/**
+ * When enabled, church attestation immediately unlocks checkout (no admin wait).
+ * Default ON so the church campaign path can reach Stripe after a short eligibility form.
+ * Set CHURCH_INTRO_AUTO_VERIFY=false to require admin approval before checkout.
+ */
 export function isChurchIntroAutoVerifyEnabled(): boolean {
-  return process.env.CHURCH_INTRO_AUTO_VERIFY?.trim().toLowerCase() === "true"
+  const raw = process.env.CHURCH_INTRO_AUTO_VERIFY?.trim().toLowerCase()
+  if (raw === "false" || raw === "0" || raw === "off") return false
+  return true
 }
 
 export function getChurchPriceLockUntil(from: Date = new Date()): Date {
