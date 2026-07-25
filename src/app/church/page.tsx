@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ChurchTrialLink } from "./church-trial-link";
 
 export default function ChurchPage() {
@@ -7,7 +8,12 @@ export default function ChurchPage() {
         <div className="brand">
           TEXT2MYSITE<span>™</span>
         </div>
-        <ChurchTrialLink className="nav-cta">Start Free Trial</ChurchTrialLink>
+        <div className="topbar-actions">
+          <Link href="/" className="nav-return">
+            Return to Main Website
+          </Link>
+          <ChurchTrialLink className="nav-cta">Start Free Trial</ChurchTrialLink>
+        </div>
       </header>
 
       <section className="hero">
@@ -28,12 +34,6 @@ export default function ChurchPage() {
             </div>
             <div>
               <span className="check">✓</span>No technical experience required
-            </div>
-            <div>
-              <span className="check">✓</span>Fast church communication
-            </div>
-            <div>
-              <span className="check">✓</span>Hosted pages and website widgets
             </div>
           </div>
 
@@ -87,13 +87,11 @@ export default function ChurchPage() {
             <h3>Create Your Church Account</h3>
             <p>Set up your church in just a few minutes.</p>
           </div>
-
           <div className="step">
             <div className="num">2</div>
             <h3>Send a Text Message</h3>
             <p>Send your announcement from your phone.</p>
           </div>
-
           <div className="step">
             <div className="num">3</div>
             <h3>Your Announcement Appears Online</h3>
@@ -102,9 +100,9 @@ export default function ChurchPage() {
         </div>
       </section>
 
-      <section className="soft" id="ways">
+      <section className="soft">
         <div className="section-title">
-          <h2>Hosted Announcement Page vs Website Widget</h2>
+          <h2>Two Ways To Share Updates</h2>
           <p>Use a dedicated announcement page, a website widget, or both.</p>
         </div>
 
@@ -114,7 +112,7 @@ export default function ChurchPage() {
             <h3>Hosted Announcement Page</h3>
             <p>
               Every church receives a hosted announcement page that can be shared by email, text
-              message, social media, QR codes, church bulletins, or other communication channels.
+              message, social media, QR code, church bulletins, or other communication channels.
             </p>
             <p>
               Perfect for churches that do not have a website or want a dedicated announcements
@@ -125,42 +123,13 @@ export default function ChurchPage() {
           <div className="option">
             <div className="option-icon">🌐</div>
             <h3>Website Widget</h3>
-            <p>Already have a church website?</p>
             <p>
-              Add the Text2MySite widget and display announcements directly on your existing
-              website.
+              Already have a church website? Add the Text2MySite widget and display announcements
+              directly on your existing website.
             </p>
             <p>Send a text message and your updates appear automatically on your website.</p>
           </div>
         </div>
-      </section>
-
-      <section className="one-text-section">
-        <div className="section-title">
-          <h2>One Simple Text Message</h2>
-          <p>
-            Whether you use a hosted announcement page, a website widget, or both, the update
-            process is exactly the same.
-          </p>
-        </div>
-        <p className="one-text-lead">
-          Simply send a text message from your phone and your announcement will appear wherever you
-          have chosen to display it.
-        </p>
-        <div className="simple-list one-text-list">
-          <div>
-            <span className="check">✓</span>No website editing.
-          </div>
-          <div>
-            <span className="check">✓</span>No separate login process.
-          </div>
-          <div>
-            <span className="check">✓</span>No technical experience required.
-          </div>
-        </div>
-        <p className="one-text-tagline">
-          <strong>Text once. Update everywhere.</strong>
-        </p>
       </section>
 
       <section>
@@ -233,7 +202,10 @@ export default function ChurchPage() {
       <section className="soft">
         <div className="section-title">
           <h2>Example Layouts</h2>
-          <p>Screenshots can be added later. These placeholders show where the visual examples will sit.</p>
+          <p>
+            Screenshots can be added later. These placeholders show where the visual examples will
+            sit.
+          </p>
         </div>
 
         <div className="layouts">
@@ -305,33 +277,27 @@ export default function ChurchPage() {
         <div className="faq">
           <details open>
             <summary>Do I need a website?</summary>
-            <p>
-              No. Every account includes a hosted announcement page that can be shared with members
-              and visitors.
-            </p>
+            <p>No. Every account includes a hosted announcement page.</p>
           </details>
 
           <details>
             <summary>Can I use my existing website?</summary>
             <p>
-              Yes. Text2MySite can display announcements directly on your existing website using a
-              banner, ticker, popup, or other widget options.
+              Yes. Text2MySite can also display updates directly on your current website using a
+              widget.
             </p>
           </details>
 
           <details>
             <summary>Can I update announcements from my phone?</summary>
-            <p>
-              Yes. Simply send a text message from an approved phone number associated with your
-              account.
-            </p>
+            <p>Yes. Simply send a text message.</p>
           </details>
 
           <details>
             <summary>How quickly do updates appear?</summary>
             <p>
-              Updates are designed to appear almost immediately after your text message is received
-              and processed.
+              Updates are designed to appear almost immediately after your text message is
+              received.
             </p>
           </details>
 
@@ -339,20 +305,7 @@ export default function ChurchPage() {
             <summary>Who can send updates?</summary>
             <p>
               Authorized church staff and administrators can send announcements from approved phone
-              numbers connected to the account.
-            </p>
-          </details>
-
-          <details>
-            <summary>Do I need technical experience?</summary>
-            <p>No. If you can send a text message, you can update your church announcements.</p>
-          </details>
-
-          <details>
-            <summary>Can I use both the hosted page and the website widget?</summary>
-            <p>
-              Yes. Many churches use both. A single text message can update the hosted page and
-              website widget at the same time.
+              numbers associated with the account.
             </p>
           </details>
         </div>
@@ -368,13 +321,10 @@ export default function ChurchPage() {
       </section>
 
       <footer>
-        <p>TEXT2MYSITE™ Church Communications</p>
-        <p>
-          <a href="mailto:support@t2ms.biz">support@t2ms.biz</a>
-        </p>
-        <p className="footer-schedule">
-          Prefer to speak with someone?{" "}
-          <a href="mailto:support@t2ms.biz">Contact us</a> and we&apos;ll schedule a time.
+        TEXT2MYSITE™ Church Communications ·{" "}
+        <a href="mailto:support@t2ms.biz">support@t2ms.biz</a>
+        <p className="footer-return">
+          <Link href="/">Return to Main Website</Link>
         </p>
       </footer>
     </div>

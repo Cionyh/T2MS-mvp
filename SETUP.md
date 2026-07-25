@@ -94,8 +94,8 @@ STRIPE_TEST_CHURCH_STARTER_PRICE_ID="price_test_church"
 NEXT_PUBLIC_STRIPE_TEST_CHURCH_STARTER_PRICE_ID="price_test_church"
 
 NEXT_PUBLIC_CHURCH_INTRO_PRICE_LABEL="$7.99"
-# Optional: auto-verify church attestation at signup (skip admin approval). Default: admin must approve.
-CHURCH_INTRO_AUTO_VERIFY="false"
+# Optional: auto-verify church attestation at signup (skip admin approval wait). Default: true (campaign path continues to Stripe after attestation). Set false to require admin approval before checkout.
+CHURCH_INTRO_AUTO_VERIFY="true"
 
 # PostHog Analytics (Optional)
 NEXT_PUBLIC_POSTHOG_KEY="your-posthog-key"

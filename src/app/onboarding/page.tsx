@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { client } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { Loader2, Zap, Layers, Rocket, Check, Globe, Phone, Link2, Code2, Church } from "lucide-react";
+import { Loader2, Zap, Layers, Rocket, Check, Globe, Phone, Link2, Code2 } from "lucide-react";
 import { PhoneNumberManagement } from "@/components/app/phone-number-management";
 import { OnboardingInstallSetupForm } from "@/components/onboarding-install-setup-form";
 import { OnboardingHostedSetupForm } from "@/components/onboarding-hosted-setup-form";
@@ -25,11 +25,7 @@ import {
   SETUP_PATH_HOSTED_ONLY,
   type OnboardingSetupPath,
 } from "@/lib/setup-path";
-import {
-  CHURCH_PLAN_FEATURES,
-  getChurchIntroPriceLabel,
-  isChurchPlanEnabled,
-} from "@/lib/church-pricing";
+import { isChurchPlanEnabled } from "@/lib/church-pricing";
 import {
   CHURCH_VERIFICATION_VERIFIED,
 } from "@/lib/church-verification";
@@ -1012,54 +1008,8 @@ function OnboardingContent() {
           ) : null}
         </div>
 
-        <div
-          className={`grid gap-6 items-stretch ${
-            churchPlanEnabled ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"
-          }`}
-        >
-          {churchPlanEnabled && (
-            <Card className="flex flex-col border-2 border-amber-600 shadow-md min-h-0">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <Church className="h-5 w-5 text-amber-600" />
-                  Church Intro Plan
-                </CardTitle>
-                <div className="mt-1">
-                  <span className="text-2xl font-bold text-amber-700">
-                    {getChurchIntroPriceLabel()}
-                  </span>
-                  <span className="text-muted-foreground">/month</span>
-                </div>
-                <CardDescription className="text-sm">
-                  Verified churches — intro pricing with price locked up to 3 years.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 min-h-0 overflow-y-auto">
-                <ul className="space-y-2">
-                  {CHURCH_PLAN_FEATURES.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 shrink-0 text-amber-600" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-              <CardFooter className="flex-shrink-0 border-t border-amber-600/30 flex flex-col gap-2 pt-4 pb-2 mt-0">
-                <Button
-                  className="w-full min-h-11 font-medium !bg-amber-600 hover:!bg-amber-700 !text-white"
-                  onClick={() => handlePaidPlan("church")}
-                  disabled={!!loading}
-                >
-                  {loading === "church" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Get Started"
-                  )}
-                </Button>
-              </CardFooter>
-            </Card>
-          )}
-
+        {/* Church intro is campaign-only (/church → ?plan=church); not shown in public plan picker. */}
+        <div className="grid gap-6 items-stretch md:grid-cols-3">
           {/* Starter Plan – uses STRIPE_STARTER_PRICE_ID */}
           <Card className="flex flex-col border-2 border-amber-600/50 shadow-md min-h-0">
             <CardHeader>
