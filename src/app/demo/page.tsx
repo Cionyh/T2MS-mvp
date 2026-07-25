@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { getDemoExamples, hostedPublicUrl } from "@/lib/demo-examples"
+import { getPublicDemoExamples, hostedPublicUrl } from "@/lib/demo-examples"
 import { getHostedPageDomain } from "@/lib/hosted-page/constants"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,8 +17,10 @@ export const metadata = {
     "See hosted announcement pages on t2ms.live — no login required to view.",
 }
 
+const T2MS_LIVE_LANDING = "https://t2ms.live"
+
 export default function DemoPage() {
-  const examples = getDemoExamples()
+  const examples = getPublicDemoExamples()
   const domain = getHostedPageDomain()
 
   return (
@@ -53,12 +55,8 @@ export default function DemoPage() {
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" className="gap-2">
-              <a
-                href={hostedPublicUrl(examples[0]?.slug ?? "demo-church")}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View {examples[0]?.label ?? "demo"}
+              <a href={T2MS_LIVE_LANDING} target="_blank" rel="noopener noreferrer">
+                Learn More
                 <ExternalLink className="h-4 w-4" />
               </a>
             </Button>
@@ -69,9 +67,34 @@ export default function DemoPage() {
           <h2 className="text-lg font-semibold mb-4">Example pages</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {examples.map((ex) => (
-              <Card key={ex.slug}>
+              <Card key={ex.slug} className="overflow-hidden pt-0 gap-0">
+                {ex.backgroundImage ? (
+                  <div
+                    className="relative h-28 w-full border-b"
+                    style={{
+                      background:
+                        ex.style === "business"
+                          ? "linear-gradient(135deg, #3d2914 0%, #6b4423 55%, #8b5a2b 100%)"
+                          : "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
+                    }}
+                  >
+                    <img
+                      src={ex.backgroundImage}
+                      alt=""
+                      width={96}
+                      height={96}
+                      className="absolute right-4 top-1/2 h-20 w-20 -translate-y-1/2 opacity-90"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/35 to-transparent" />
+                    <p className="absolute bottom-3 left-4 text-sm font-semibold text-white drop-shadow">
+                      {ex.label}
+                    </p>
+                  </div>
+                ) : null}
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{ex.label}</CardTitle>
+                  {!ex.backgroundImage ? (
+                    <CardTitle className="text-base">{ex.label}</CardTitle>
+                  ) : null}
                   <CardDescription className="text-sm">{ex.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -93,15 +116,6 @@ export default function DemoPage() {
             ))}
           </div>
         </section>
-
-        <p className="text-xs text-muted-foreground text-center">
-          Demo pages{" "}
-          <code className="bg-muted px-1 rounded">demo-church</code> and{" "}
-          <code className="bg-muted px-1 rounded">demo-business</code> work out of
-          the box. Override with{" "}
-          <code className="bg-muted px-1 rounded">NEXT_PUBLIC_DEMO_HOSTED_SLUGS</code>{" "}
-          for custom live demo accounts.
-        </p>
       </main>
     </div>
   )
