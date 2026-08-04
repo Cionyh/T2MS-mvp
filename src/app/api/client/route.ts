@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { checkSiteLimit, getOrganizationPlan } from "@/lib/plan-limits";
+import { planRequiresSmsKeyword } from "@/lib/plan-keyword";
 import { getActiveOrganization, isPhoneUsedByAnotherUser, normalizeKeyword, isKeywordTakenByUser } from "@/lib/organization-helpers";
 import { INSTALL_JOB_STATUS } from "@/lib/job-status";
 import { isHostedOnlyPath } from "@/lib/setup-path";
@@ -25,11 +26,11 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const { name, domain: domainValue, phone: phoneValue, keyword: keywordValue } = body;
-    domain = domainValue;
+    domain = typeof domainValue === "string" ? domainValue.trim() : "";
 
-    if (!name || !domain) {
+    if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json(
-        { error: "Missing required fields: name and domain" },
+        { error: "Missing required field: name" },
         { status: 400 }
       );
     }
@@ -58,13 +59,12 @@ export async function POST(req: Request) {
     }
 
     const plan = await getOrganizationPlan(organizationId);
-    // Treat "free" as starter-like for keyword enforcement. Keyword should only be
-    // required for plans that support multiple sites / SMS routing (e.g. pro+).
-    const keywordRequired = plan === "pro" || plan === "enterprise";
+    // Keyword only required for multi-site plans (must match onboarding UI).
+    const keywordRequired = planRequiresSmsKeyword(plan);
     const rawKeyword = typeof keywordValue === "string" ? keywordValue.trim() : "";
     let keyword: string | null = null;
     if (!keywordRequired) {
-      // Starter (single-site): keyword optional; store null if not provided
+      // Single-site plans: keyword optional; store null if not provided
       if (rawKeyword) {
         if (!/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
           return NextResponse.json(
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
         keyword = normalized;
       }
     } else {
-      // Growth (pro) or other: keyword required for SMS routing
+      // Growth / multi-site: keyword required for SMS routing
       if (!rawKeyword) {
         return NextResponse.json(
           { error: "Keyword is required. It identifies this site when you text (e.g. BAKERY: your message)." },
@@ -106,39 +106,42 @@ export async function POST(req: Request) {
       }
     }
 
-    // ✅ Normalize domain: remove protocol, www, and trailing slashes
-    try {
-      const url = new URL(
-        domain.startsWith("http://") || domain.startsWith("https://")
-          ? domain
-          : `https://${domain}`
-      );
-      normalizedDomain = url.hostname.replace(/^www\./, "");
-    } catch (err) {
-      console.error("[DOMAIN_NORMALIZATION_ERROR]", err);
-      return NextResponse.json(
-        { error: "Invalid domain format" },
-        { status: 400 }
-      );
-    }
+    // Domain is optional (hosted-only / no website yet). Generate a unique placeholder if omitted.
+    if (domain) {
+      try {
+        const url = new URL(
+          domain.startsWith("http://") || domain.startsWith("https://")
+            ? domain
+            : `https://${domain}`
+        );
+        normalizedDomain = url.hostname.replace(/^www\./, "");
+      } catch (err) {
+        console.error("[DOMAIN_NORMALIZATION_ERROR]", err);
+        return NextResponse.json(
+          { error: "Invalid domain format" },
+          { status: 400 }
+        );
+      }
 
-    // normalizedDomain is guaranteed to be defined here since we return early on error
-    if (!normalizedDomain) {
-      return NextResponse.json(
-        { error: "Invalid domain format" },
-        { status: 400 }
-      );
-    }
+      if (!normalizedDomain) {
+        return NextResponse.json(
+          { error: "Invalid domain format" },
+          { status: 400 }
+        );
+      }
 
-    // Validate domain not already registered (don't create site if taken)
-    const existingByDomain = await prisma.client.findUnique({
-      where: { domain: normalizedDomain },
-    });
-    if (existingByDomain) {
-      return NextResponse.json(
-        { error: `The domain "${normalizedDomain}" is already registered.` },
-        { status: 409 }
-      );
+      // Validate domain not already registered (don't create site if taken)
+      const existingByDomain = await prisma.client.findUnique({
+        where: { domain: normalizedDomain },
+      });
+      if (existingByDomain) {
+        return NextResponse.json(
+          { error: `The domain "${normalizedDomain}" is already registered.` },
+          { status: 409 }
+        );
+      }
+    } else {
+      normalizedDomain = `pending-${session.user.id.slice(0, 12)}-${Date.now()}.t2ms.local`;
     }
 
     // If phone provided (e.g. onboarding), validate it's not used by another user before creating site
@@ -160,17 +163,18 @@ export async function POST(req: Request) {
       select: { setupPath: true },
     });
     const skipInstallJob = isHostedOnlyPath(onboarding?.setupPath);
-    const mainWebsiteUrl = `https://${normalizedDomain}`;
+    const hasRealDomain = !normalizedDomain.endsWith(".t2ms.local");
+    const mainWebsiteUrl = hasRealDomain ? `https://${normalizedDomain}` : null;
 
     const client = await prisma.client.create({
       data: {
-        name,
+        name: name.trim(),
         domain: normalizedDomain,
         organizationId,
         keyword,
-        widgetConfig: {
-          companyWebsiteLink: mainWebsiteUrl,
-        },
+        widgetConfig: mainWebsiteUrl
+          ? { companyWebsiteLink: mainWebsiteUrl }
+          : {},
         defaultType: "banner",
         defaultBgColor: "#222",
         defaultTextColor: "#fff",
@@ -193,6 +197,19 @@ export async function POST(req: Request) {
     }
 
     // Auto-create an install job (embed path) so site shows "Installation In Progress"
+    // Only when a real website domain was provided
+    if (!hasRealDomain) {
+      return NextResponse.json({
+        id: client.id,
+        defaultType: client.defaultType,
+        defaultBgColor: client.defaultBgColor,
+        defaultTextColor: client.defaultTextColor,
+        defaultFont: client.defaultFont,
+        defaultDismissAfter: client.defaultDismissAfter,
+        pinned: client.pinned,
+      });
+    }
+
     try {
       let customer = await prisma.customer.findUnique({
         where: { userId: session.user.id },

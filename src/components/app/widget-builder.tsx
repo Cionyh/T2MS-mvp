@@ -18,6 +18,7 @@ import { Form, FormField, FormItem, FormControl, FormMessage } from "@/component
 import { Skeleton } from "@/components/ui/skeleton";
 import { DotPattern } from "../magicui/dot-pattern";
 import { cn } from "@/lib/utils";
+import { planRequiresSmsKeyword } from "@/lib/plan-keyword";
 
 // Schema: keyword optional so starter plan can omit it; growth plan requires it (validated in submit)
 const clientSchema = z.object({
@@ -50,7 +51,7 @@ export default function ClientWidgetBuilder() {
       .finally(() => setPlanLoading(false));
   }, [userId]);
 
-  const isStarterPlan = plan === "starter";
+  const keywordRequired = planRequiresSmsKeyword(plan);
 
   const form = useForm<ClientSchemaType>({
     resolver: zodResolver(clientSchema),
@@ -74,9 +75,13 @@ export default function ClientWidgetBuilder() {
       toast.error("Loading your plan details. Please try again in a moment.");
       return;
     }
-    // Client-side keyword validation is best-effort only. The API is the source of truth.
-    // (Avoid blocking starter users if plan lookup is delayed or temporarily fails.)
     const kw = values.keyword?.trim();
+    if (keywordRequired && !kw) {
+      toast.error(
+        "Please enter a keyword (e.g. BAKERY). You'll text KEYWORD: your message to post to this site."
+      );
+      return;
+    }
     if (kw && !/^[A-Za-z0-9_]{1,50}$/.test(kw)) {
       toast.error("Keyword must be 1–50 characters, letters, numbers, or underscore only.");
       return;
@@ -91,7 +96,7 @@ export default function ClientWidgetBuilder() {
         body: JSON.stringify({
           name: rest.name,
           domain: rest.domain,
-          ...(isStarterPlan ? {} : { keyword: (keyword ?? "").trim().toUpperCase() }),
+          ...(kw ? { keyword: kw.toUpperCase() } : {}),
           defaultType: "banner",
           defaultBgColor: "#222",
           defaultTextColor: "#fff",
@@ -156,7 +161,7 @@ export default function ClientWidgetBuilder() {
                   </FormItem>
                 )}
               />
-              {!planLoading && !isStarterPlan && (
+              {!planLoading && keywordRequired && (
                 <FormField
                   control={form.control}
                   name="keyword"

@@ -16,15 +16,11 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { client } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { Loader2, Zap, Layers, Rocket, Check, Globe, Phone, Link2, Code2 } from "lucide-react";
+import { Loader2, Zap, Layers, Rocket, Check, Globe, Phone } from "lucide-react";
 import { PhoneNumberManagement } from "@/components/app/phone-number-management";
 import { OnboardingInstallSetupForm } from "@/components/onboarding-install-setup-form";
 import { OnboardingHostedSetupForm } from "@/components/onboarding-hosted-setup-form";
-import {
-  SETUP_PATH_EMBED,
-  SETUP_PATH_HOSTED_ONLY,
-  type OnboardingSetupPath,
-} from "@/lib/setup-path";
+import { SETUP_PATH_HOSTED_ONLY } from "@/lib/setup-path";
 import { isChurchPlanEnabled } from "@/lib/church-pricing";
 import {
   CHURCH_VERIFICATION_VERIFIED,
@@ -34,6 +30,7 @@ import {
   STARTER_PLAN_FEATURES,
   UNIFIED_PLAN_TAGLINE,
 } from "@/lib/plan-features";
+import { planRequiresSmsKeyword } from "@/lib/plan-keyword";
 import { preparePlanCheckout } from "@/lib/prepare-plan-checkout";
 import { ChurchVerificationDialog } from "@/components/onboarding/church-verification-dialog";
 import {
@@ -69,7 +66,6 @@ function OnboardingContent() {
     needsHostedSetup?: boolean;
     firstClientId?: string | null;
   } | null>(null);
-  const [pathSaving, setPathSaving] = useState(false);
   const [phoneStepClientId, setPhoneStepClientId] = useState<string | null>(null);
   const [registerForm, setRegisterForm] = useState({
     name: "",
@@ -220,26 +216,6 @@ function OnboardingContent() {
 
   // After Stripe success: show register-site step (do NOT call complete until site is registered)
 
-  const handleSetupPath = async (setupPath: OnboardingSetupPath) => {
-    setPathSaving(true);
-    try {
-      const res = await fetch("/api/onboarding/setup-path", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ setupPath }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to save setup path");
-      }
-      await refreshStatus();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setPathSaving(false);
-    }
-  };
-
   const proceedToStripeCheckout = async (planId: "starter" | "pro" | "church") => {
     setLoading(planId);
     try {
@@ -315,20 +291,18 @@ function OnboardingContent() {
     window.location.href = "mailto:sales@t2ms.biz";
   };
 
-  const isStarterPlan =
-    status?.planId === "starter" || status?.planId === "church";
+  const keywordRequired = planRequiresSmsKeyword(status?.planId);
   const isHostedOnlyPath = status?.setupPath === SETUP_PATH_HOSTED_ONLY;
   const churchPlanEnabled = isChurchPlanEnabled();
 
   const handleRegisterSite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!registerForm.name.trim() || !registerForm.domain.trim()) {
-      toast.error("Please enter a business name and domain.");
+    if (!registerForm.name.trim()) {
+      toast.error("Please enter your business name.");
       return;
     }
-    // Keyword is only required for non-starter plans; validate format if provided
     const rawKeyword = registerForm.keyword.trim();
-    if (!isStarterPlan && !rawKeyword) {
+    if (keywordRequired && !rawKeyword) {
       toast.error(
         "Please enter a keyword (e.g. BAKERY). You'll text KEYWORD: your message to post to this site."
       );
@@ -343,24 +317,25 @@ function OnboardingContent() {
       return;
     }
     if (!registerForm.websiteOwnership) {
-      toast.error("Please acknowledge that you own or have rights to this website.");
+      toast.error("Please confirm you are authorized for this business.");
       return;
     }
     setLoading("register");
     try {
+      const domainTrimmed = registerForm.domain.trim();
       const clientRes = await fetch("/api/client", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: registerForm.name.trim(),
-          domain: registerForm.domain.trim(),
-          ...(isStarterPlan ? {} : { keyword: registerForm.keyword.trim() }),
+          ...(domainTrimmed ? { domain: domainTrimmed } : {}),
+          ...(rawKeyword ? { keyword: rawKeyword } : {}),
           phone: registerForm.phone.trim(),
         }),
       });
       const clientData = await clientRes.json();
       if (!clientRes.ok) {
-        throw new Error(clientData.error || "Failed to register site");
+        throw new Error(clientData.error || "Failed to register business");
       }
 
       const clientId = clientData.id as string;
@@ -526,12 +501,6 @@ function OnboardingContent() {
 
   const showHostedSetupStep = statusLoaded && hostedSetupClientId !== null;
 
-  const showPathSelectionStep =
-    statusLoaded &&
-    status?.needsPathSelection === true &&
-    !successParam &&
-    !status?.needsSiteRegistration;
-
   useEffect(() => {
     if (!statusLoaded || churchPlanAutoStarted.current || !churchPlanEnabled) return;
 
@@ -547,7 +516,6 @@ function OnboardingContent() {
       showPhoneVerificationStep ||
       showInstallSetupStep ||
       showHostedSetupStep ||
-      showPathSelectionStep ||
       successParam === "1" ||
       couponRedeeming
     ) {
@@ -567,7 +535,6 @@ function OnboardingContent() {
     planParam,
     showHostedSetupStep,
     showInstallSetupStep,
-    showPathSelectionStep,
     showPhoneVerificationStep,
     showRegisterSiteStep,
     statusLoaded,
@@ -717,10 +684,10 @@ function OnboardingContent() {
         <div className="w-full max-w-md text-center">
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-foreground tracking-tight">
-              Register Your Site
+              Register Your Business
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Let&apos;s connect your first website to get started.
+              Tell us about your business so we can set up your announcement page.
             </p>
           </div>
         </div>
@@ -728,11 +695,11 @@ function OnboardingContent() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Globe className="h-5 w-5 text-amber-600" />
-                Site Details
+                Business Details
               </CardTitle>
               <CardDescription>
-                Enter your business name and website domain.
-                {!isStarterPlan && (
+                Enter your business name. Domain is optional if you don&apos;t have a website yet.
+                {keywordRequired && (
                   <div className="mt-2 text-xs text-muted-foreground">
                     <strong>Note:</strong> You will need to assign a different keyword for each New
                     Site.
@@ -743,7 +710,7 @@ function OnboardingContent() {
             <CardContent>
               <form onSubmit={handleRegisterSite} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Business Name</Label>
+                  <Label htmlFor="name">Business Name *</Label>
                   <Input
                     id="name"
                     placeholder="Your Business Name"
@@ -755,7 +722,10 @@ function OnboardingContent() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="domain">Domain (e.g. https://example.com)</Label>
+                  <Label htmlFor="domain">
+                    Website Domain{" "}
+                    <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
                   <Input
                     id="domain"
                     placeholder="https://example.com"
@@ -765,8 +735,11 @@ function OnboardingContent() {
                     }
                     disabled={!!loading}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Skip this if you only need a hosted announcement page for now.
+                  </p>
                 </div>
-                {!isStarterPlan && (
+                {keywordRequired && (
                   <div className="space-y-2">
                     <Label htmlFor="keyword">SMS Keyword (e.g. BAKERY)</Label>
                     <Input
@@ -785,7 +758,7 @@ function OnboardingContent() {
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">Phone Number *</Label>
                   <PhoneInput
                     international
                     defaultCountry="US"
@@ -817,7 +790,7 @@ function OnboardingContent() {
                     htmlFor="ownership"
                     className="text-sm font-normal leading-relaxed cursor-pointer"
                   >
-                    I acknowledge that I own and/or have rights to this website.
+                    I confirm I am authorized to register this business on Text2MySite.
                   </Label>
                 </div>
                 <Button
@@ -828,7 +801,7 @@ function OnboardingContent() {
                   {loading === "register" ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    "Register Site & Continue"
+                    "Continue"
                   )}
                 </Button>
               </form>
@@ -915,77 +888,6 @@ function OnboardingContent() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-      </div>
-    );
-  }
-
-  if (showPathSelectionStep) {
-    return (
-      <div className="min-h-screen bg-muted/30 py-12 px-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-10">
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">
-              How do you want to use T2MS?
-            </h1>
-            <p className="mt-2 text-muted-foreground">
-              Choose how you want to get started. {UNIFIED_PLAN_TAGLINE} You can add the other option later from your dashboard.
-            </p>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-6">
-            <Card
-              className="cursor-pointer border-2 hover:border-amber-600/60 transition-colors"
-              onClick={() => !pathSaving && handleSetupPath(SETUP_PATH_HOSTED_ONLY)}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link2 className="h-5 w-5 text-amber-600" />
-                  Hosted announcement page
-                </CardTitle>
-                <CardDescription>
-                  Get a shareable link on t2ms.live — no widget install required.
-                </CardDescription>
-              </CardHeader>
-              <CardFooter>
-                <Button
-                  className="w-full !bg-amber-600 hover:!bg-amber-700 !text-white"
-                  disabled={pathSaving}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSetupPath(SETUP_PATH_HOSTED_ONLY);
-                  }}
-                >
-                  {pathSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Continue"}
-                </Button>
-              </CardFooter>
-            </Card>
-            <Card
-              className="cursor-pointer border-2 hover:border-amber-600/60 transition-colors"
-              onClick={() => !pathSaving && handleSetupPath(SETUP_PATH_EMBED)}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Code2 className="h-5 w-5 text-amber-600" />
-                  Widget on my website
-                </CardTitle>
-                <CardDescription>
-                  Embed a banner or widget on your existing site (Wix, Squarespace, etc.).
-                </CardDescription>
-              </CardHeader>
-              <CardFooter>
-                <Button
-                  className="w-full !bg-amber-600 hover:!bg-amber-700 !text-white"
-                  disabled={pathSaving}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSetupPath(SETUP_PATH_EMBED);
-                  }}
-                >
-                  {pathSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Continue"}
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        </div>
       </div>
     );
   }
