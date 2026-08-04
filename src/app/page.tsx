@@ -108,7 +108,7 @@ export default function Home() {
                                           View Pricing Plans
                                         </Button>
                                       </Link>
-                                      <Link href="/sign-in">
+                                      <Link href="/signup">
                                         <Button variant="outline" size="lg" className="w-full sm:w-auto">
                                           Start Building
                                         </Button>

@@ -219,7 +219,7 @@ export function PricingSection() {
                     "bg-primary text-white hover:bg-primary/90"
                   )}
                 >
-                  <Link href="/sign-in">Get Started</Link>
+                  <Link href="/signup">Get Started</Link>
                 </Button>
               )}
             </div>

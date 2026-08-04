@@ -197,6 +197,7 @@ The dev server uses Turbopack for faster builds.
 - **Main Application**: http://localhost:3000
 - **Admin Dashboard**: http://localhost:3000/admin
 - **Sign In**: http://localhost:3000/sign-in
+- **Sign Up**: http://localhost:3000/signup
 - **Widget Endpoint**: http://localhost:3000/widget
 
 ## Available Scripts
@@ -330,7 +331,7 @@ T2MS-mvp/
 
 ## Next Steps
 
-1. **Create an account** at http://localhost:3000/sign-in
+1. **Create an account** at http://localhost:3000/signup
 2. **Set up a client/site** in the dashboard
 3. **Add a phone number** and verify it
 4. **Get the embed code** and test the widget

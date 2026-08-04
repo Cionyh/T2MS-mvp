@@ -10,10 +10,14 @@ type ChurchTrialLinkProps = Omit<ComponentProps<typeof Link>, "href"> & {
   children: React.ReactNode;
 };
 
+/**
+ * Church campaign CTA: send new customers through signup, then onboarding
+ * with the church plan pre-selected (via sessionStorage / post-signup flow).
+ */
 export function ChurchTrialLink({ className, children, onClick, ...rest }: ChurchTrialLinkProps) {
   return (
     <Link
-      href="/onboarding?plan=church"
+      href="/signup"
       className={className}
       onClick={(e) => {
         try {

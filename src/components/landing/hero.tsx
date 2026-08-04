@@ -93,7 +93,7 @@ export function Hero({
               className="text-foreground w-full max-w-xs py-4"
               onClick={() => posthog.capture("register_site_click")}
             >
-              <Link href="/sign-in">Register Your Site</Link>
+              <Link href="/signup">Register Your Site</Link>
             </Button>
 
             <Button
@@ -104,16 +104,6 @@ export function Hero({
               onClick={() => posthog.capture("learn_more_click")}
             >
               <Link href="/learn-more">Learn More</Link>
-            </Button>
-
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="w-full max-w-xs border-2 border-muted-foreground/30 py-4"
-              onClick={() => posthog.capture("demo_click")}
-            >
-              <Link href="/demo">View live demo</Link>
             </Button>
           </motion.div>
         </div>

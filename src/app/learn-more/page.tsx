@@ -132,7 +132,7 @@ export default function LearnMorePage() {
             </CardHeader>
             <CardContent className="mt-8">
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Link href="/sign-in">
+                <Link href="/signup">
                   <Button
                     size="lg"
                     onClick={handleCTA}
@@ -362,7 +362,7 @@ export default function LearnMorePage() {
             </CardHeader>
             <CardContent className="mt-8 text-center">
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-        <Link href="/sign-in">
+        <Link href="/signup">
           <Button
             size="lg"
             onClick={handleCTA}
