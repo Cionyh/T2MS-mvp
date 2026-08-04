@@ -37,7 +37,7 @@ export default function DemoPage() {
             </p>
           </div>
           <Button asChild className="!bg-amber-600 hover:!bg-amber-700 shrink-0">
-            <Link href="/onboarding">Get started</Link>
+            <Link href="/signup">Get started</Link>
           </Button>
         </div>
       </header>

@@ -75,6 +75,15 @@ export function Navbar() {
             )
           )}
           <ThemeToggle />
+          <Link href="/signup">
+            <Button
+              variant="outline"
+              className="px-4 py-2 rounded-md shadow-sm transition-colors"
+              onClick={() => posthog.capture("sign_up_click")}
+            >
+              Sign Up
+            </Button>
+          </Link>
           <Link href="/sign-in">
             <Button
               className="bg-primary text-foreground hover:bg-primary/90 px-4 py-2 rounded-md shadow-sm transition-colors"
@@ -121,8 +130,17 @@ export function Navbar() {
                 )}
               </nav>
 
-              <div className="mt-auto pt-4 border-t border-border">
-                <Link href="/sign-in">
+              <div className="mt-auto pt-4 border-t border-border space-y-2">
+                <Link href="/signup" onClick={() => setOpen(false)}>
+                  <Button
+                    variant="outline"
+                    className="w-full shadow-sm transition-colors"
+                    onClick={() => posthog.capture("sign_up_click")}
+                  >
+                    Sign Up
+                  </Button>
+                </Link>
+                <Link href="/sign-in" onClick={() => setOpen(false)}>
                   <Button
                     className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors"
                     onClick={() => posthog.capture("sign_in_click")}

@@ -151,11 +151,17 @@ export function DocsSidebar() {
           <h3 className="text-sm font-medium text-foreground">Quick Links</h3>
           <div className="space-y-1">
             <Link
-              href="/sign-in"
+              href="/signup"
               className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             >
               <Zap className="h-4 w-4" />
               Get Started
+            </Link>
+            <Link
+              href="/sign-in"
+              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              Sign In
             </Link>
             
           </div>

@@ -1,12 +1,12 @@
 import { getHostedPageDomain } from "@/lib/hosted-page/constants";
 
-function getSignInUrl() {
+function getSignupUrl() {
   const base = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
-  return base ? `${base}/sign-in` : "/sign-in";
+  return base ? `${base}/signup` : "/signup";
 }
 
 export default function AnnounceLandingPage() {
-  const signInUrl = getSignInUrl();
+  const signupUrl = getSignupUrl();
   const hostedDomain = getHostedPageDomain();
 
   return (
@@ -20,7 +20,7 @@ export default function AnnounceLandingPage() {
           <a href="#tools">What&apos;s Included</a>
           <a href="#how">How It Works</a>
           <a href="#examples">Examples</a>
-          <a className="announce-nav-cta" href={signInUrl}>
+          <a className="announce-nav-cta" href={signupUrl}>
             Get Started
           </a>
         </nav>
@@ -45,7 +45,7 @@ export default function AnnounceLandingPage() {
             </p>
 
             <div className="announce-hero-actions">
-              <a href={signInUrl} className="announce-btn announce-btn-primary">
+              <a href={signupUrl} className="announce-btn announce-btn-primary">
                 Start Your Announcement Page →
               </a>
               <a href="#tools" className="announce-btn announce-btn-secondary">
@@ -249,7 +249,7 @@ export default function AnnounceLandingPage() {
               anytime — then update it instantly by text message whenever plans
               change.
             </p>
-            <a href={signInUrl} className="announce-btn announce-btn-primary">
+            <a href={signupUrl} className="announce-btn announce-btn-primary">
               Launch My Announcement Page →
             </a>
           </div>

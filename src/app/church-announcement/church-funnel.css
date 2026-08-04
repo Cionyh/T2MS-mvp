@@ -1,0 +1,1547 @@
+.church-funnel-page {
+    --orange:#f36a10;
+    --orange2:#ff8b34;
+    --navy:#10203a;
+    --ink:#26364e;
+    --muted:#667085;
+    --green:#23975e;
+    --red:#df4b47;
+    --cream:#fff9f3;
+    --soft:#f5f7fa;
+    --white:#fff;
+    --line:#dfe5ed;
+    --shadow:0 20px 55px rgba(16,32,58,.14);
+    --radius:24px;
+    --max:1260px
+}
+
+
+
+
+.church-funnel-page, .church-funnel-page * {
+    box-sizing:border-box
+}
+
+
+
+
+.church-funnel-page {
+    scroll-behavior:smooth
+}
+
+
+
+
+.church-funnel-page {
+    margin:0;
+    font-family:Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+    color:var(--ink);
+    background:#fff;
+    line-height:1.55;
+    overflow-x:hidden
+}
+
+
+
+
+.church-funnel-page a {
+    color:inherit
+}
+
+
+
+
+.church-funnel-page .container {
+    width:min(calc(100% - 34px),var(--max));
+    margin:auto
+}
+
+
+
+
+.church-funnel-page .skip {
+    position:absolute;
+    left:-9999px;
+    top:10px;
+    background:var(--navy);
+    color:#fff;
+    padding:10px 14px;
+    border-radius:10px;
+    z-index:9999
+}
+
+
+
+
+.church-funnel-page .skip:focus {
+    left:10px
+}
+
+
+
+
+.church-funnel-page .topbar {
+    position:sticky;
+    top:0;
+    z-index:50;
+    background:rgba(255,255,255,.93);
+    backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(223,229,237,.8)
+}
+
+
+
+
+.church-funnel-page .nav {
+    min-height:72px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px
+}
+
+
+
+
+.church-funnel-page .brand {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    text-decoration:none;
+    font-weight:950;
+    color:var(--navy);
+    font-size:1.12rem
+}
+
+
+
+
+.church-funnel-page .brand-mark {
+    width:42px;
+    height:42px;
+    border-radius:13px;
+    background:linear-gradient(145deg,var(--orange),var(--orange2));
+    display:grid;
+    place-items:center;
+    color:#fff;
+    box-shadow:0 10px 24px rgba(243,106,16,.28)
+}
+
+
+
+
+.church-funnel-page .brand small {
+    display:block;
+    color:var(--orange);
+    font-weight:800;
+    font-size:.67rem;
+    line-height:1
+}
+
+
+
+
+.church-funnel-page .navlinks {
+    display:flex;
+    align-items:center;
+    gap:28px;
+    font-weight:800;
+    color:#3d4d65
+}
+
+
+
+
+.church-funnel-page .navlinks a {
+    text-decoration:none
+}
+
+
+
+
+.church-funnel-page .navlinks a:hover {
+    color:var(--orange)
+}
+
+
+
+
+.church-funnel-page .btn {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    min-height:52px;
+    padding:13px 22px;
+    border:0;
+    border-radius:999px;
+    text-decoration:none;
+    font-weight:900;
+    cursor:pointer;
+    transition:.2s transform,
+    .2s box-shadow
+}
+
+
+
+
+.church-funnel-page .btn:hover {
+    transform:translateY(-2px)
+}
+
+
+
+
+.church-funnel-page .btn-primary {
+    background:linear-gradient(135deg,var(--orange),var(--orange2));
+    color:#fff;
+    box-shadow:0 14px 30px rgba(243,106,16,.32)
+}
+
+
+
+
+.church-funnel-page .btn-nav {
+    min-height:44px;
+    padding:10px 18px
+}
+
+
+
+
+.church-funnel-page .hero {
+    padding:64px 0 54px;
+    background:radial-gradient(circle at 0 10%,rgba(243,106,16,.11),transparent 27%),
+    linear-gradient(180deg,#fffdfa,#fff)
+}
+
+
+
+
+.church-funnel-page .hero-grid {
+    display:grid;
+    grid-template-columns:.78fr 1.22fr;
+    gap:48px;
+    align-items:center
+}
+
+
+
+
+.church-funnel-page .hero h1 {
+    margin:0 0 22px;
+    color:var(--navy);
+    font-size:clamp(3.2rem,5.5vw,5.9rem);
+    line-height:.99;
+    letter-spacing:-.055em
+}
+
+
+
+
+.church-funnel-page .hero h1 span {
+    color:var(--orange)
+}
+
+
+
+
+.church-funnel-page .lead {
+    font-size:clamp(1.05rem,1.5vw,1.25rem);
+    color:#4e5e75;
+    max-width:590px
+}
+
+
+
+
+.church-funnel-page .trust-row {
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    margin:27px 0
+}
+
+
+
+
+.church-funnel-page .trust {
+    display:flex;
+    gap:10px;
+    align-items:center;
+    font-size:.87rem;
+    font-weight:800;
+    color:#33445d
+}
+
+
+
+
+.church-funnel-page .trust-icon {
+    width:34px;
+    height:34px;
+    border:2px solid var(--orange);
+    border-radius:10px;
+    display:grid;
+    place-items:center;
+    color:var(--orange);
+    flex:0 0 auto
+}
+
+
+
+
+.church-funnel-page .hand-note {
+    margin:12px 0 0 66px;
+    color:var(--navy);
+    font-family:"Segoe Print",
+    "Bradley Hand",
+    cursive;
+    font-weight:700;
+    transform:rotate(-2deg)
+}
+
+
+
+
+.church-funnel-page .demo {
+    position:relative;
+    min-height:560px
+}
+
+
+
+
+.church-funnel-page .laptop {
+    position:absolute;
+    right:0;
+    top:12px;
+    width:82%;
+    border:13px solid #111927;
+    border-radius:24px 24px 12px 12px;
+    background:#111927;
+    box-shadow:var(--shadow);
+    overflow:hidden
+}
+
+
+
+
+.church-funnel-page .laptop::after {
+    content:"";
+    display:block;
+    height:18px;
+    margin:0 -30px -10px;
+    background:linear-gradient(#c8cbd0,#9ca1a9);
+    border-radius:0 0 50% 50%
+}
+
+
+
+
+.church-funnel-page .screen {
+    background:#fff;
+    min-height:405px
+}
+
+
+
+
+.church-funnel-page .sitebar {
+    height:52px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 19px;
+    background:#fff;
+    font-size:.72rem;
+    font-weight:850;
+    color:var(--navy)
+}
+
+
+
+
+.church-funnel-page .sitebrand {
+    display:flex;
+    gap:8px;
+    align-items:center;
+    font-size:.82rem
+}
+
+
+
+
+.church-funnel-page .cross {
+    font-size:1.35rem;
+    color:var(--orange)
+}
+
+
+
+
+.church-funnel-page .sitenav {
+    display:flex;
+    gap:15px;
+    font-size:.58rem
+}
+
+
+
+
+.church-funnel-page .church-scene {
+    position:relative;
+    height:333px;
+    background-image:linear-gradient(rgba(16,32,58,.05),rgba(16,32,58,.18)),
+    url('/images/church-announcement/hero-church.jpg');
+    background-size:cover;
+    background-position:center
+}
+
+
+
+
+.church-funnel-page /* ============================================================
+   CHURCH WEBSITE ANNOUNCEMENT
+   Positioned naturally inside the laptop website
+   ============================================================ */
+
+.announce-card {
+    position: absolute;
+
+    /* Keeps the announcement within the visible website area */
+    right: 6%;
+    top: 13%;
+
+    width: 46%;
+    max-width: 285px;
+
+    padding: 20px 22px;
+    border-radius: 17px;
+
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid rgba(16, 32, 58, 0.10);
+
+    box-shadow:
+        0 12px 28px rgba(16, 32, 58, 0.20);
+
+    z-index: 2;
+}
+
+
+
+
+.church-funnel-page .announce-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    color: var(--orange);
+    font-size: 0.72rem;
+    font-weight: 950;
+    line-height: 1.25;
+
+    text-transform: uppercase;
+    letter-spacing: 0.035em;
+}
+
+
+
+
+.church-funnel-page .announce-text {
+    margin: 12px 0 15px;
+
+    color: var(--navy);
+    font-size: clamp(0.86rem, 1.08vw, 1.08rem);
+    font-weight: 850;
+    line-height: 1.38;
+}
+
+
+
+
+.church-funnel-page .mini-btn {
+    display: inline-block;
+
+    padding: 8px 16px;
+    border-radius: 7px;
+
+    background: var(--orange);
+    color: #ffffff;
+
+    font-size: 0.66rem;
+    font-weight: 900;
+}
+
+
+.church-funnel-page .announce-card, .church-funnel-page .announce-card * {
+    opacity: 1;
+}
+
+
+
+
+.church-funnel-page .site-actions {
+    z-index: 1;
+}
+
+
+
+
+.church-funnel-page .announce-card {
+    z-index: 3;
+}
+
+
+.church-funnel-page .site-actions {
+    position:absolute;
+    left:4%;
+    right:4%;
+    bottom:4%;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:7px
+}
+
+
+
+
+.church-funnel-page .site-action {
+    background:rgba(16,32,58,.9);
+    color:#fff;
+    padding:10px 5px;
+    border:1px solid rgba(255,255,255,.45);
+    border-radius:7px;
+    text-align:center;
+    font-size:.65rem;
+    font-weight:800
+}
+
+
+
+
+.church-funnel-page .phone {
+    position:absolute;
+    left:4%;
+    top:70px;
+    z-index:5;
+    width:205px;
+    border:10px solid #101927;
+    border-radius:35px;
+    background:#f7f8fa;
+    box-shadow:0 26px 55px rgba(16,32,58,.28);
+    transform:rotate(-1deg)
+}
+
+
+
+
+.church-funnel-page .phone-notch {
+    width:86px;
+    height:18px;
+    margin:0 auto 9px;
+    background:#101927;
+    border-radius:0 0 14px 14px
+}
+
+
+
+
+.church-funnel-page .phone-inner {
+    padding:12px 13px 18px
+}
+
+
+
+
+.church-funnel-page .phone-title {
+    font-weight:900;
+    color:var(--navy);
+    font-size:.83rem
+}
+
+
+
+
+.church-funnel-page .to {
+    font-size:.7rem;
+    color:var(--green);
+    margin:8px 0 20px
+}
+
+
+
+
+.church-funnel-page .label {
+    font-size:.7rem;
+    font-weight:800;
+    color:#56667d
+}
+
+
+
+
+.church-funnel-page .message-box {
+    height:140px;
+    margin-top:6px;
+    padding:13px;
+    border-radius:17px;
+    background:#fff;
+    border:1px solid #d9e0e9;
+    color:var(--navy);
+    font-size:.83rem;
+    line-height:1.55
+}
+
+
+
+
+.church-funnel-page .cursor {
+    display:inline-block;
+    width:2px;
+    height:1em;
+    background:var(--orange);
+    vertical-align:-2px;
+    animation:blink .7s infinite
+}
+
+
+
+
+.church-funnel-page .send {
+    width:100%;
+    margin-top:14px;
+    padding:12px;
+    border:0;
+    border-radius:999px;
+    background:linear-gradient(135deg,var(--orange),var(--orange2));
+    color:#fff;
+    font-weight:950;
+    box-shadow:0 10px 22px rgba(243,106,16,.3)
+}
+
+
+
+
+.church-funnel-page .sent {
+    height:20px;
+    margin-top:10px;
+    text-align:center;
+    color:var(--green);
+    font-size:.72rem;
+    font-weight:850;
+    opacity:0;
+    transition:.35s
+}
+
+
+
+
+.church-funnel-page .sent.show {
+    opacity:1
+}
+
+
+
+
+.church-funnel-page .flight {
+    position:absolute;
+    left:26%;
+    top:215px;
+    z-index:4;
+    width:180px;
+    border-top:4px dashed var(--orange);
+    border-radius:50%;
+    transform:rotate(-12deg);
+    opacity:.9
+}
+
+
+
+
+.church-funnel-page .flight::after {
+    content:"➤";
+    position:absolute;
+    right:-8px;
+    top:-15px;
+    color:var(--orange);
+    font-size:25px
+}
+
+
+
+
+.church-funnel-page .status-strip {
+    position:absolute;
+    right:0;
+    bottom:3px;
+    width:78%;
+    padding:17px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:0 12px 30px rgba(16,32,58,.11);
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px
+}
+
+
+
+
+.church-funnel-page .status {
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-size:.7rem;
+    font-weight:850;
+    color:var(--navy);
+    opacity:.35;
+    transform:translateY(7px);
+    transition:.35s
+}
+
+
+
+
+.church-funnel-page .status.active {
+    opacity:1;
+    transform:none
+}
+
+
+
+
+.church-funnel-page .check {
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:#eaf8f0;
+    color:var(--green);
+    font-weight:950;
+    flex:0 0 auto
+}
+
+
+
+
+.church-funnel-page .live-note {
+    position:absolute;
+    bottom:-28px;
+    right:18%;
+    color:var(--green);
+    font-weight:850
+}
+
+
+
+
+.church-funnel-page .section {
+    padding:80px 0
+}
+
+
+
+
+.church-funnel-page .soft {
+    background:var(--soft)
+}
+
+
+
+
+.church-funnel-page .section-head {
+    text-align:center;
+    max-width:820px;
+    margin:0 auto 45px
+}
+
+
+
+
+.church-funnel-page .eyebrow {
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    padding:7px 13px;
+    border:1px solid rgba(243,106,16,.28);
+    border-radius:999px;
+    background:#fff;
+    color:#c65108;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    font-size:.76rem;
+    font-weight:900
+}
+
+
+
+
+.church-funnel-page .eyebrow::before {
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:var(--orange);
+    box-shadow:0 0 0 5px rgba(243,106,16,.13)
+}
+
+
+
+
+.church-funnel-page h2 {
+    margin:16px 0 0;
+    color:var(--navy);
+    font-size:clamp(2.1rem,4.4vw,4rem);
+    line-height:1.08;
+    letter-spacing:-.045em
+}
+
+
+
+
+.church-funnel-page .compare {
+    display:grid;
+    grid-template-columns:270px 1fr 1fr 270px;
+    gap:20px;
+    align-items:stretch
+}
+
+
+
+
+.church-funnel-page .person {
+    border-radius:20px;
+    overflow:hidden;
+    min-height:325px;
+    box-shadow:var(--shadow)
+}
+
+
+
+
+.church-funnel-page .person img {
+    width:100%;
+    height:100%;
+    object-fit:cover
+}
+
+
+
+
+.church-funnel-page .compare-card {
+    padding:28px;
+    border:1px solid var(--line);
+    border-radius:22px;
+    background:#fff;
+    box-shadow:0 12px 30px rgba(16,32,58,.08)
+}
+
+
+
+
+.church-funnel-page .compare-card.after {
+    background:#f3fbf7;
+    border-color:#b8e1cd
+}
+
+
+
+
+.church-funnel-page .compare-card h3 {
+    margin:0 0 20px;
+    font-size:1.35rem;
+    color:var(--red)
+}
+
+
+
+
+.church-funnel-page .compare-card.after h3 {
+    color:var(--green)
+}
+
+
+
+
+.church-funnel-page .compare-card ul {
+    list-style:none;
+    padding:0;
+    margin:0
+}
+
+
+
+
+.church-funnel-page .compare-card li {
+    display:flex;
+    gap:11px;
+    margin:14px 0;
+    font-weight:780;
+    color:#40516b
+}
+
+
+
+
+.church-funnel-page .bullet {
+    width:24px;
+    height:24px;
+    border-radius:8px;
+    display:grid;
+    place-items:center;
+    background:#ffe9e8;
+    color:var(--red);
+    font-weight:950;
+    flex:0 0 auto
+}
+
+
+
+
+.church-funnel-page .after .bullet {
+    background:#e4f6ec;
+    color:var(--green)
+}
+
+
+
+
+.church-funnel-page .benefits {
+    margin-top:28px;
+    padding:25px;
+    border-radius:20px;
+    background:var(--cream);
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:0
+}
+
+
+
+
+.church-funnel-page .benefit {
+    display:grid;
+    grid-template-columns:48px 1fr;
+    gap:13px;
+    padding:0 20px;
+    border-right:1px solid #e6ddd5
+}
+
+
+
+
+.church-funnel-page .benefit:last-child {
+    border-right:0
+}
+
+
+
+
+.church-funnel-page .benefit-icon {
+    font-size:2rem;
+    color:var(--orange)
+}
+
+
+
+
+.church-funnel-page .benefit b {
+    display:block;
+    color:var(--navy)
+}
+
+
+
+
+.church-funnel-page .benefit span {
+    font-size:.82rem;
+    color:#596980
+}
+
+
+
+
+.church-funnel-page .moments {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:18px
+}
+
+
+
+
+.church-funnel-page .moment {
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:24px 22px;
+    border:1px solid var(--line);
+    border-radius:19px;
+    background:#fff;
+    font-weight:850;
+    color:var(--navy);
+    box-shadow:0 9px 24px rgba(16,32,58,.06);
+    transition:.2s transform,
+    .2s box-shadow
+}
+
+
+
+
+.church-funnel-page .moment:hover {
+    transform:translateY(-4px);
+    box-shadow:0 15px 32px rgba(16,32,58,.1)
+}
+
+
+
+
+.church-funnel-page .emoji {
+    font-size:1.65rem
+}
+
+
+
+
+.church-funnel-page .partner-grid {
+    display:grid;
+    grid-template-columns:1.05fr 1fr 1fr 1.05fr;
+    gap:18px
+}
+
+
+
+
+.church-funnel-page .partner-intro, .church-funnel-page .option, .church-funnel-page .price {
+    padding:27px;
+    border-radius:21px;
+    border:1px solid var(--line);
+    background:#fff
+}
+
+
+
+
+.church-funnel-page .partner-intro h3 {
+    font-size:1.55rem;
+    color:var(--navy)
+}
+
+
+
+
+.church-funnel-page .mission {
+    margin-top:20px;
+    padding:17px;
+    border-radius:15px;
+    background:var(--cream);
+    font-size:.85rem
+}
+
+
+
+
+.church-funnel-page .option h3 {
+    font-size:1.1rem
+}
+
+
+
+
+.church-funnel-page .option ul {
+    list-style:none;
+    padding:0;
+    margin:20px 0 0
+}
+
+
+
+
+.church-funnel-page .option li {
+    margin:11px 0;
+    font-size:.85rem
+}
+
+
+
+
+.church-funnel-page .option li::before {
+    content:"✓";
+    color:var(--green);
+    font-weight:950;
+    margin-right:9px
+}
+
+
+
+
+.church-funnel-page .price {
+    text-align:center;
+    background:linear-gradient(150deg,#fff,#fff4e9)
+}
+
+
+
+
+.church-funnel-page .price-label {
+    color:var(--orange);
+    font-weight:900
+}
+
+
+
+
+.church-funnel-page .price-main {
+    margin:12px 0;
+    color:var(--orange);
+    font-size:3.1rem;
+    font-weight:950;
+    letter-spacing:-.05em
+}
+
+
+
+
+.church-funnel-page .price-main small {
+    font-size:1rem;
+    color:var(--navy);
+    letter-spacing:0
+}
+
+
+
+
+.church-funnel-page .faq {
+    max-width:900px;
+    margin:auto
+}
+
+
+
+
+.church-funnel-page .faq-item {
+    border-bottom:1px solid var(--line)
+}
+
+
+
+
+.church-funnel-page .faq-button {
+    width:100%;
+    padding:22px 4px;
+    border:0;
+    background:none;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    text-align:left;
+    color:var(--navy);
+    font-weight:900;
+    font-size:1.05rem;
+    cursor:pointer
+}
+
+
+
+
+.church-funnel-page .faq-answer {
+    display:grid;
+    grid-template-rows:0fr;
+    transition:.3s
+}
+
+
+
+
+.church-funnel-page .faq-answer>div {
+    overflow:hidden
+}
+
+
+
+
+.church-funnel-page .faq-answer p {
+    margin:0 0 22px;
+    color:var(--muted)
+}
+
+
+
+
+.church-funnel-page .faq-item.open .faq-answer {
+    grid-template-rows:1fr
+}
+
+
+
+
+.church-funnel-page .faq-item.open .plus {
+    transform:rotate(45deg)
+}
+
+
+
+
+.church-funnel-page .plus {
+    font-size:1.5rem;
+    color:var(--orange);
+    transition:.3s
+}
+
+
+
+
+.church-funnel-page .cta-band {
+    padding:30px 0;
+    background:var(--navy);
+    color:#fff
+}
+
+
+
+
+.church-funnel-page .cta-inner {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:25px
+}
+
+
+
+
+.church-funnel-page .cta-inner h3 {
+    margin:0;
+    color:#fff;
+    font-size:1.55rem
+}
+
+
+
+
+.church-funnel-page .cta-inner p {
+    margin:3px 0 0;
+    color:#d8e0ec
+}
+
+
+
+
+.church-funnel-page .footer {
+    padding:22px 0;
+    background:#fff;
+    font-size:.78rem;
+    color:#677389
+}
+
+
+
+
+.church-funnel-page .footer-inner {
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+    flex-wrap:wrap
+}
+
+
+
+
+.church-funnel-page .footer-links {
+    display:flex;
+    gap:24px;
+    flex-wrap:wrap
+}
+
+
+
+
+.church-funnel-page .footer a {
+    text-decoration:none
+}
+
+
+
+
+.church-funnel-page .reveal {
+    opacity:0;
+    transform:translateY(18px);
+    transition:.7s
+}
+
+
+
+
+.church-funnel-page .reveal.in {
+    opacity:1;
+    transform:none
+}
+
+
+
+
+@keyframes blink {
+    50% {
+        opacity:0
+    }
+}
+
+
+
+
+@media(max-width:1050px) {
+
+.church-funnel-page .hero-grid {
+        grid-template-columns:1fr
+    }
+
+
+
+
+.church-funnel-page .demo {
+        min-height:570px
+    }
+
+
+
+
+.church-funnel-page .compare {
+        grid-template-columns:1fr 1fr
+    }
+
+
+
+
+.church-funnel-page .person {
+        display:none
+    }
+
+
+
+
+.church-funnel-page .partner-grid {
+        grid-template-columns:1fr 1fr
+    }
+
+
+
+
+.church-funnel-page .moments {
+        grid-template-columns:repeat(3,1fr)
+    }
+
+
+
+
+.church-funnel-page .benefits {
+        grid-template-columns:1fr 1fr
+    }
+
+
+
+
+.church-funnel-page .benefit {
+        border-right:0;
+        border-bottom:1px solid #e6ddd5;
+        padding:18px
+    }
+
+
+
+
+.church-funnel-page .benefit:nth-last-child(-n+2) {
+        border-bottom:0
+    }
+
+}
+
+
+
+
+@media(max-width:760px) {
+
+.church-funnel-page .navlinks a:not(.btn) {
+        display:none
+    }
+
+
+
+
+.church-funnel-page .brand span {
+        font-size:.95rem
+    }
+
+
+
+
+.church-funnel-page .hero {
+        padding-top:40px
+    }
+
+
+
+
+.church-funnel-page .hero-grid {
+        gap:20px
+    }
+
+
+
+
+.church-funnel-page .trust-row {
+        grid-template-columns:1fr
+    }
+
+
+
+
+.church-funnel-page .demo {
+        min-height:650px
+    }
+
+
+
+
+.church-funnel-page .laptop {
+        top:180px;
+        width:100%;
+        border-width:8px
+    }
+
+
+
+
+.church-funnel-page .phone {
+        top:5px;
+        left:50%;
+        transform:translateX(-50%);
+        width:185px
+    }
+
+
+
+
+.church-funnel-page .flight {
+        display:none
+    }
+
+
+
+
+.church-funnel-page .status-strip {
+        width:94%;
+        right:3%;
+        bottom:0;
+        grid-template-columns:1fr 1fr
+    }
+
+
+
+
+.church-funnel-page .live-note {
+        display:none
+    }
+
+
+
+
+.church-funnel-page .compare {
+        grid-template-columns:1fr
+    }
+
+
+
+
+.church-funnel-page .benefits, .church-funnel-page .moments, .church-funnel-page .partner-grid {
+        grid-template-columns:1fr
+    }
+
+
+
+
+.church-funnel-page .benefit {
+        border-bottom:1px solid #e6ddd5
+    }
+
+
+
+
+.church-funnel-page .benefit:last-child {
+        border-bottom:0
+    }
+
+
+
+
+.church-funnel-page .cta-inner {
+        flex-direction:column;
+        text-align:center
+    }
+
+
+
+
+.church-funnel-page .sitenav {
+        display:none
+    }
+
+
+
+
+.church-funnel-page .announce-card {
+        width:68%;
+        right:4%;
+        padding:17px
+    }
+
+
+
+
+.church-funnel-page .site-actions {
+        grid-template-columns:repeat(2,1fr)
+    }
+
+
+
+
+.church-funnel-page .church-scene {
+        height:340px
+    }
+
+
+
+
+.church-funnel-page .section {
+        padding:62px 0
+    }
+
+}
+
+
+
+
+@media(prefers-reduced-motion:reduce) {
+
+.church-funnel-page, .church-funnel-page * {
+        scroll-behavior:auto!important;
+        animation:none!important;
+        transition:none!important
+    }
+
+
+
+
+.church-funnel-page .reveal {
+        opacity:1;
+        transform:none
+    }
+
+}
