@@ -15,6 +15,8 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
   enterprise: { websites: -1, messages: -1, storage: 1000 }
 };
 
+export { planRequiresSmsKeyword } from "@/lib/plan-keyword"
+
 /**
  * Get the plan for an organization by checking the owner's subscription
  */

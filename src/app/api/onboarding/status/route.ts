@@ -3,7 +3,10 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getActiveSubscriptionWhere } from "@/lib/subscriptions";
-import { isHostedOnlyPath } from "@/lib/setup-path";
+import {
+  isHostedOnlyPath,
+  SETUP_PATH_HOSTED_ONLY,
+} from "@/lib/setup-path";
 
 export async function GET() {
   try {
@@ -15,9 +18,23 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const onboarding = await prisma.onboarding.findUnique({
+    let onboarding = await prisma.onboarding.findUnique({
       where: { userId: session.user.id },
     });
+
+    // Skip the hosted-vs-widget chooser: start with hosted path (widget can be added later).
+    // New signups go straight to plan/pricing selection on /onboarding.
+    if (!onboarding?.setupPath && !onboarding?.completedAt) {
+      onboarding = await prisma.onboarding.upsert({
+        where: { userId: session.user.id },
+        create: {
+          userId: session.user.id,
+          planId: "free",
+          setupPath: SETUP_PATH_HOSTED_ONLY,
+        },
+        update: { setupPath: SETUP_PATH_HOSTED_ONLY },
+      });
+    }
 
     // User is "paid" only when they have an active Stripe subscription (not just planId, which is set before payment)
     const activeSubscription = await prisma.subscription.findFirst({
@@ -41,7 +58,7 @@ export async function GET() {
       return NextResponse.json({
         completed: true,
         step: undefined,
-        planId: onboarding?.planId,
+        planId: activeSubscription?.plan ?? onboarding?.planId,
         installAddonSku: onboarding?.installAddonSku,
         installAddonStatus: onboarding?.installAddonStatus,
         needsSiteRegistration: false,
@@ -109,7 +126,8 @@ export async function GET() {
         !firstClient.hostedSlug?.trim() || !firstClient.hostedEnabled;
     }
 
-    const needsPathSelection = !setupPath && !onboarding?.completedAt;
+    // Path chooser removed from onboarding; setupPath defaults above when missing.
+    const needsPathSelection = false;
 
     // Completed when: completedAt set AND (if paid) site + phone + path-specific setup done
     const completed =
@@ -131,7 +149,8 @@ export async function GET() {
     return NextResponse.json({
       completed,
       step: onboarding ? undefined : 1,
-      planId: onboarding?.planId,
+      // Prefer live subscription so Register Site UI matches keyword rules on POST /api/client
+      planId: activeSubscription?.plan ?? onboarding?.planId ?? null,
       installAddonSku: onboarding?.installAddonSku,
       installAddonStatus: onboarding?.installAddonStatus,
       needsSiteRegistration,
