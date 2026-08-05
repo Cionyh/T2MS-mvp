@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { checkSiteLimit, getOrganizationPlan } from "@/lib/plan-limits";
-import { planRequiresSmsKeyword } from "@/lib/plan-keyword";
+import { checkSiteLimit } from "@/lib/plan-limits";
 import { getActiveOrganization, isPhoneUsedByAnotherUser, normalizeKeyword, isKeywordTakenByUser } from "@/lib/organization-helpers";
 import { INSTALL_JOB_STATUS } from "@/lib/job-status";
 import { isHostedOnlyPath } from "@/lib/setup-path";
@@ -58,52 +57,25 @@ export async function POST(req: Request) {
       );
     }
 
-    const plan = await getOrganizationPlan(organizationId);
-    // Keyword only required for multi-site plans (must match onboarding UI).
-    const keywordRequired = planRequiresSmsKeyword(plan);
+    // Keyword is optional for all plans. When provided, validate format and uniqueness.
     const rawKeyword = typeof keywordValue === "string" ? keywordValue.trim() : "";
     let keyword: string | null = null;
-    if (!keywordRequired) {
-      // Single-site plans: keyword optional; store null if not provided
-      if (rawKeyword) {
-        if (!/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
-          return NextResponse.json(
-            { error: "Keyword must be 1–50 characters, letters, numbers, or underscore only." },
-            { status: 400 }
-          );
-        }
-        const normalized = normalizeKeyword(rawKeyword);
-        const taken = await isKeywordTakenByUser(session.user.id, normalized);
-        if (taken) {
-          return NextResponse.json(
-            { error: `You already have a site with keyword "${normalized}". Choose a different keyword.` },
-            { status: 409 }
-          );
-        }
-        keyword = normalized;
-      }
-    } else {
-      // Growth / multi-site: keyword required for SMS routing
-      if (!rawKeyword) {
-        return NextResponse.json(
-          { error: "Keyword is required. It identifies this site when you text (e.g. BAKERY: your message)." },
-          { status: 400 }
-        );
-      }
+    if (rawKeyword) {
       if (!/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
         return NextResponse.json(
           { error: "Keyword must be 1–50 characters, letters, numbers, or underscore only." },
           { status: 400 }
         );
       }
-      keyword = normalizeKeyword(rawKeyword);
-      const taken = await isKeywordTakenByUser(session.user.id, keyword);
+      const normalized = normalizeKeyword(rawKeyword);
+      const taken = await isKeywordTakenByUser(session.user.id, normalized);
       if (taken) {
         return NextResponse.json(
-          { error: `You already have a site with keyword "${keyword}". Choose a different keyword.` },
+          { error: `You already have a site with keyword "${normalized}". Choose a different keyword.` },
           { status: 409 }
         );
       }
+      keyword = normalized;
     }
 
     // Domain is optional (hosted-only / no website yet). Generate a unique placeholder if omitted.

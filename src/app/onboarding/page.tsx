@@ -30,7 +30,6 @@ import {
   STARTER_PLAN_FEATURES,
   UNIFIED_PLAN_TAGLINE,
 } from "@/lib/plan-features";
-import { planRequiresSmsKeyword } from "@/lib/plan-keyword";
 import { preparePlanCheckout } from "@/lib/prepare-plan-checkout";
 import { ChurchVerificationDialog } from "@/components/onboarding/church-verification-dialog";
 import {
@@ -291,7 +290,6 @@ function OnboardingContent() {
     window.location.href = "mailto:sales@t2ms.biz";
   };
 
-  const keywordRequired = planRequiresSmsKeyword(status?.planId);
   const isHostedOnlyPath = status?.setupPath === SETUP_PATH_HOSTED_ONLY;
   const churchPlanEnabled = isChurchPlanEnabled();
 
@@ -302,12 +300,6 @@ function OnboardingContent() {
       return;
     }
     const rawKeyword = registerForm.keyword.trim();
-    if (keywordRequired && !rawKeyword) {
-      toast.error(
-        "Please enter a keyword (e.g. BAKERY). You'll text KEYWORD: your message to post to this site."
-      );
-      return;
-    }
     if (rawKeyword && !/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
       toast.error("Keyword must be 1–50 characters, letters, numbers, or underscore only.");
       return;
@@ -698,13 +690,7 @@ function OnboardingContent() {
                 Business Details
               </CardTitle>
               <CardDescription>
-                Enter your business name. Domain is optional if you don&apos;t have a website yet.
-                {keywordRequired && (
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    <strong>Note:</strong> You will need to assign a different keyword for each New
-                    Site.
-                  </div>
-                )}
+                Enter your business name. Website domain and SMS keyword are optional.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -739,24 +725,26 @@ function OnboardingContent() {
                     Skip this if you only need a hosted announcement page for now.
                   </p>
                 </div>
-                {keywordRequired && (
-                  <div className="space-y-2">
-                    <Label htmlFor="keyword">SMS Keyword (e.g. BAKERY)</Label>
-                    <Input
-                      id="keyword"
-                      placeholder="BAKERY"
-                      value={registerForm.keyword}
-                      onChange={(e) =>
-                        setRegisterForm((s) => ({ ...s, keyword: e.target.value.replace(/\s/g, "").toUpperCase() }))
-                      }
-                      disabled={!!loading}
-                      maxLength={50}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      To post via text, send: <strong>{registerForm.keyword || "KEYWORD"}: your message</strong>
-                    </p>
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="keyword">
+                    SMS Keyword{" "}
+                    <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  <Input
+                    id="keyword"
+                    placeholder="BAKERY"
+                    value={registerForm.keyword}
+                    onChange={(e) =>
+                      setRegisterForm((s) => ({ ...s, keyword: e.target.value.replace(/\s/g, "").toUpperCase() }))
+                    }
+                    disabled={!!loading}
+                    maxLength={50}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Optional for multi-site routing. To post via text:{" "}
+                    <strong>{registerForm.keyword || "KEYWORD"}: your message</strong>
+                  </p>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number *</Label>
                   <PhoneInput

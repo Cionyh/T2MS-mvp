@@ -265,6 +265,8 @@ model Client {
   hostedEnabled     Boolean   @default(false)
   hostedIntroText   String?
   hostedFooterText  String?
+  /// Public page layout: classic | light | spotlight | banner | minimal
+  hostedTheme       String    @default("classic")
   hostedPublishedAt DateTime?
   hostedWelcomeEmailSentAt DateTime?
 

@@ -6,6 +6,10 @@ import { verifyClientAccess } from "@/lib/organization-helpers"
 import { getHostedPageDomain } from "@/lib/hosted-page/constants"
 import { validateHostedSlug } from "@/lib/hosted-page/slug"
 import { sendHostedWelcomeEmailForClient } from "@/lib/hosted-welcome-notify"
+import {
+  isHostedThemeId,
+  normalizeHostedTheme,
+} from "@/lib/hosted-page/themes"
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -32,6 +36,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         hostedEnabled: true,
         hostedIntroText: true,
         hostedFooterText: true,
+        hostedTheme: true,
         hostedPublishedAt: true,
       },
     })
@@ -50,6 +55,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       ...client,
+      hostedTheme: normalizeHostedTheme(client.hostedTheme),
       publicUrls,
     })
   } catch (err) {
@@ -75,11 +81,18 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     }
 
     const body = await req.json()
-    const { hostedSlug, hostedEnabled, hostedIntroText, hostedFooterText } = body as {
+    const {
+      hostedSlug,
+      hostedEnabled,
+      hostedIntroText,
+      hostedFooterText,
+      hostedTheme,
+    } = body as {
       hostedSlug?: string | null
       hostedEnabled?: boolean
       hostedIntroText?: string | null
       hostedFooterText?: string | null
+      hostedTheme?: string | null
     }
 
     const existing = await prisma.client.findUnique({
@@ -100,6 +113,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedEnabled?: boolean
       hostedIntroText?: string | null
       hostedFooterText?: string | null
+      hostedTheme?: string
       hostedPublishedAt?: Date | null
     } = {}
 
@@ -113,6 +127,19 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       const trimmed =
         typeof hostedFooterText === "string" ? hostedFooterText.trim() : ""
       updateData.hostedFooterText = trimmed ? trimmed.slice(0, 1000) : null
+    }
+
+    if (hostedTheme !== undefined) {
+      if (!isHostedThemeId(hostedTheme)) {
+        return NextResponse.json(
+          {
+            error:
+              "Invalid page style. Choose classic, light, spotlight, banner, or minimal.",
+          },
+          { status: 400 }
+        )
+      }
+      updateData.hostedTheme = hostedTheme
     }
 
     if (hostedSlug !== undefined) {
@@ -168,6 +195,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         hostedEnabled: true,
         hostedIntroText: true,
         hostedFooterText: true,
+        hostedTheme: true,
         hostedPublishedAt: true,
       },
     })
@@ -193,7 +221,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({
       message: "Hosted page settings saved",
-      data: { ...updated, publicUrls },
+      data: {
+        ...updated,
+        hostedTheme: normalizeHostedTheme(updated.hostedTheme),
+        publicUrls,
+      },
     })
   } catch (err) {
     console.error("[client/hosted PATCH]", err)

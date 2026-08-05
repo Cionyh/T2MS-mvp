@@ -14,6 +14,8 @@ export type HostedPageData = {
   hostedSlug: string
   hostedIntroText: string | null
   hostedFooterText: string | null
+  /** classic | light | spotlight | banner | minimal */
+  hostedTheme?: string | null
   messageContent: string
   defaultBgColor: string
   defaultTextColor: string

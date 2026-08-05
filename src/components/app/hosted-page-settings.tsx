@@ -6,10 +6,16 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, ExternalLink, Copy } from "lucide-react"
+import { Loader2, ExternalLink, Copy, Check } from "lucide-react"
 import { toast } from "sonner"
 import { getHostedPageDomain } from "@/lib/hosted-page/constants"
 import { slugFromSiteName } from "@/lib/hosted-page/slug"
+import {
+  HOSTED_THEMES,
+  normalizeHostedTheme,
+  type HostedThemeId,
+} from "@/lib/hosted-page/themes"
+import { cn } from "@/lib/utils"
 
 type HostedPageSettingsProps = {
   clientId: string
@@ -21,6 +27,7 @@ type HostedState = {
   hostedEnabled: boolean
   hostedIntroText: string | null
   hostedFooterText: string | null
+  hostedTheme: HostedThemeId
   publicUrls: {
     path: string
     subdomain: string
@@ -37,6 +44,7 @@ export function HostedPageSettings({
   const [slugInput, setSlugInput] = useState("")
   const [introText, setIntroText] = useState("")
   const [footerText, setFooterText] = useState("")
+  const [theme, setTheme] = useState<HostedThemeId>("classic")
   const [enabled, setEnabled] = useState(false)
   const [publicUrls, setPublicUrls] = useState<HostedState["publicUrls"]>(null)
   const [slugStatus, setSlugStatus] = useState<
@@ -69,6 +77,7 @@ export function HostedPageSettings({
       }
       setIntroText(data.hostedIntroText ?? "")
       setFooterText(data.hostedFooterText ?? "")
+      setTheme(normalizeHostedTheme(data.hostedTheme))
       setEnabled(data.hostedEnabled ?? false)
       setPublicUrls(data.publicUrls ?? null)
     } catch {
@@ -137,6 +146,7 @@ export function HostedPageSettings({
           hostedEnabled: enabled,
           hostedIntroText: introText,
           hostedFooterText: footerText,
+          hostedTheme: theme,
         }),
       })
       const data = await res.json()
@@ -144,6 +154,9 @@ export function HostedPageSettings({
         throw new Error(data.error || "Failed to save")
       }
       setPublicUrls(data.data?.publicUrls ?? null)
+      if (data.data?.hostedTheme) {
+        setTheme(normalizeHostedTheme(data.data.hostedTheme))
+      }
       toast.success("Hosted page settings saved")
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save")
@@ -233,6 +246,80 @@ export function HostedPageSettings({
             )}
           </p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Page style</Label>
+        <p className="text-xs text-muted-foreground">
+          Choose how your public announcement page looks. Your logo, brand
+          colors, and latest message still apply where the layout supports them.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {HOSTED_THEMES.map((t) => {
+            const selected = theme === t.id
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTheme(t.id)}
+                className={cn(
+                  "text-left rounded-lg border p-3 transition-colors",
+                  selected
+                    ? "border-amber-600 bg-amber-50/80 ring-1 ring-amber-600/40 dark:bg-amber-950/30"
+                    : "border-border bg-background hover:border-amber-600/40"
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className="relative h-14 w-16 shrink-0 overflow-hidden rounded-md border border-black/10 shadow-sm"
+                    aria-hidden
+                  >
+                    <div
+                      className="absolute inset-0"
+                      style={{ background: t.swatch.bg }}
+                    />
+                    {t.id === "banner" && (
+                      <div
+                        className="absolute inset-x-0 top-0 h-4"
+                        style={{ background: t.swatch.accent }}
+                      />
+                    )}
+                    <div
+                      className={cn(
+                        "absolute rounded-sm",
+                        t.id === "minimal"
+                          ? "inset-x-2 bottom-2 top-5"
+                          : "inset-x-2 bottom-2 top-6"
+                      )}
+                      style={{
+                        background: t.swatch.card,
+                        border:
+                          t.id === "minimal"
+                            ? "none"
+                            : `1px solid ${t.swatch.accent}33`,
+                      }}
+                    />
+                    <div
+                      className="absolute left-2.5 top-1.5 h-1 w-6 rounded-full opacity-90"
+                      style={{ background: t.swatch.text }}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium">{t.name}</span>
+                      {selected && (
+                        <Check className="h-3.5 w-3.5 text-amber-700 dark:text-amber-400" />
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                      {t.description}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <div className="space-y-2">

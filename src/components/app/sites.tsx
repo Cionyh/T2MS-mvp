@@ -81,6 +81,11 @@ import { Info } from "lucide-react";
 import { PhoneNumberManagement } from "./phone-number-management";
 import { Badge } from "@/components/ui/badge";
 import { HostedPageSettings } from "./hosted-page-settings";
+import {
+  getWidgetSetupGaps,
+  isPlaceholderDomain,
+  siteReadyForWidget,
+} from "@/lib/client-setup";
 
 // Widget type instructions
 const widgetTypeInstructions = {
@@ -196,6 +201,14 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [plan, setPlan] = useState<string>("");
   const [setupPath, setSetupPath] = useState<string | null>(null);
 
+  // Prompt to add website domain + SMS keyword before enabling widget
+  const [widgetSetupOpen, setWidgetSetupOpen] = useState(false);
+  const [widgetSetupSite, setWidgetSetupSite] = useState<Website | null>(null);
+  const [widgetSetupDomain, setWidgetSetupDomain] = useState("");
+  const [widgetSetupKeyword, setWidgetSetupKeyword] = useState("");
+  const [widgetSetupSaving, setWidgetSetupSaving] = useState(false);
+  const [widgetSetupEnableAfter, setWidgetSetupEnableAfter] = useState(false);
+
   useEffect(() => {
     if (!userId) return;
     fetch("/api/plan/usage")
@@ -248,6 +261,76 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     if (site) setInstallationGuideSiteName(site.name);
   }, [installationGuideClientId, websites]);
 
+  const openWidgetSetup = (website: Website, enableAfter = false) => {
+    setWidgetSetupSite(website);
+    setWidgetSetupDomain(isPlaceholderDomain(website.domain) ? "" : website.domain);
+    setWidgetSetupKeyword(website.keyword ?? "");
+    setWidgetSetupEnableAfter(enableAfter);
+    setWidgetSetupOpen(true);
+  };
+
+  const handleWidgetSetupSave = async () => {
+    if (!widgetSetupSite) return;
+    const domain = widgetSetupDomain.trim();
+    const keyword = widgetSetupKeyword.trim().toUpperCase();
+    if (!domain) {
+      toast.error("Please enter your website domain.");
+      return;
+    }
+    if (!keyword) {
+      toast.error("Please enter an SMS keyword (e.g. BAKERY).");
+      return;
+    }
+    if (!/^[A-Za-z0-9_]{1,50}$/.test(keyword)) {
+      toast.error("Keyword must be 1–50 characters, letters, numbers, or underscore only.");
+      return;
+    }
+
+    setWidgetSetupSaving(true);
+    try {
+      const res = await fetch(`/api/client/${widgetSetupSite.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          domain,
+          keyword,
+          ...(widgetSetupEnableAfter ? { pinned: true } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to save site details");
+      }
+
+      const updated = data.data as Website | undefined;
+      setWebsites((prev) =>
+        prev.map((w) =>
+          w.id === widgetSetupSite.id
+            ? {
+                ...w,
+                domain: updated?.domain ?? domain,
+                keyword: updated?.keyword ?? keyword,
+                pinned: widgetSetupEnableAfter ? true : w.pinned,
+              }
+            : w
+        )
+      );
+
+      setWidgetSetupOpen(false);
+      setWidgetSetupSite(null);
+      toast.success(
+        widgetSetupEnableAfter
+          ? "Website and keyword saved. Widget is now live."
+          : "Website and keyword saved. You can enable the widget when ready."
+      );
+      router.refresh();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to save");
+    } finally {
+      setWidgetSetupSaving(false);
+    }
+  };
+
   const openInstallationGuide = (website: Website) => {
     setInstallationGuideClientId(website.id);
     setInstallationGuideSiteName(website.name);
@@ -274,7 +357,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const handleEditClick = (website: Website) => {
     setSelectedWebsite(website);
     setEditedName(website.name);
-    setEditedDomain(website.domain);
+    setEditedDomain(isPlaceholderDomain(website.domain) ? "" : website.domain);
     setEditedKeyword(website.keyword ?? "");
     setEditedDefaultType(website.defaultType || "banner");
     setEditedDefaultBgColor(website.defaultBgColor || "#222");
@@ -614,6 +697,15 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             return;
           }
 
+          // Enabling widget requires a real website + SMS keyword
+          if (checked && !siteReadyForWidget(website)) {
+            toast.warning(
+              "Add your website domain and SMS keyword before enabling the widget."
+            );
+            openWidgetSetup(website, true);
+            return;
+          }
+
           try {
             const res = await fetch(`/api/client/${website.id}`, {
               method: "PUT",
@@ -623,6 +715,10 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
 
             if (!res.ok) {
               const errorData = await res.json();
+              if (errorData.needsWidgetSetup) {
+                openWidgetSetup(website, true);
+                return;
+              }
               throw new Error(errorData.error || "Failed to update widget visibility");
             }
 
@@ -735,13 +831,53 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 <Separator />
                 <CardContent className="px-4 py-1">
   <div className="space-y-3">
+      {!siteReadyForWidget(website) && (
+        <div className="rounded-lg border border-amber-300/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-950 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-100">
+          <p className="font-medium">
+            Add website &amp; keyword to enable the widget
+          </p>
+          <p className="mt-1 text-xs opacity-90">
+            {(() => {
+              const gaps = getWidgetSetupGaps(website);
+              const missing = [
+                gaps.needsDomain ? "website domain" : null,
+                gaps.needsKeyword ? "SMS keyword" : null,
+              ]
+                .filter(Boolean)
+                .join(" and ");
+              return `Enter your ${missing} so you can turn the widget on and embed it on your site.`;
+            })()}
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            className="mt-2 !bg-amber-600 hover:!bg-amber-700 !text-white"
+            onClick={() => openWidgetSetup(website, false)}
+          >
+            Add website &amp; keyword
+          </Button>
+        </div>
+      )}
       <div className="flex items-center gap-2 flex-wrap">
         <p className="text-sm">
-          <span className="font-semibold">Domain:</span> {website.domain}
+          <span className="font-semibold">Domain:</span>{" "}
+          {isPlaceholderDomain(website.domain) ? (
+            <span className="text-muted-foreground italic">Not set</span>
+          ) : (
+            website.domain
+          )}
         </p>
-        {website.keyword && (
+        {website.keyword ? (
           <p className="text-sm">
-            <span className="font-semibold">SMS:</span> <code className="text-xs bg-muted px-1 rounded">{website.keyword}: message</code>
+            <span className="font-semibold">SMS:</span>{" "}
+            <code className="text-xs bg-muted px-1 rounded">
+              {website.keyword}: message
+            </code>
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">SMS:</span>{" "}
+            <span className="italic">Keyword not set</span>
           </p>
         )}
         {website.hostedEnabled && website.hostedSlug && (
@@ -890,6 +1026,91 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         siteName={installationGuideSiteName || undefined}
       />
 
+      {/* Add website domain + SMS keyword before enabling widget */}
+      <Dialog
+        open={widgetSetupOpen}
+        onOpenChange={(open) => {
+          setWidgetSetupOpen(open);
+          if (!open) {
+            setWidgetSetupSite(null);
+            setWidgetSetupEnableAfter(false);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add website &amp; SMS keyword</DialogTitle>
+            <DialogDescription>
+              {widgetSetupEnableAfter
+                ? "The widget needs your website domain and an SMS keyword before it can go live."
+                : "Add your website domain and SMS keyword so you can enable the widget on your site."}
+              {widgetSetupSite?.name ? (
+                <span className="mt-1 block text-foreground">
+                  Site: <strong>{widgetSetupSite.name}</strong>
+                </span>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="widget-setup-domain">Website domain *</Label>
+              <Input
+                id="widget-setup-domain"
+                placeholder="https://example.com"
+                value={widgetSetupDomain}
+                onChange={(e) => setWidgetSetupDomain(e.target.value)}
+                disabled={widgetSetupSaving}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="widget-setup-keyword">SMS keyword *</Label>
+              <Input
+                id="widget-setup-keyword"
+                placeholder="BAKERY"
+                value={widgetSetupKeyword}
+                onChange={(e) =>
+                  setWidgetSetupKeyword(
+                    e.target.value.replace(/\s/g, "").toUpperCase()
+                  )
+                }
+                disabled={widgetSetupSaving}
+                maxLength={50}
+              />
+              <p className="text-xs text-muted-foreground">
+                To post via text, send:{" "}
+                <strong>
+                  {widgetSetupKeyword || "KEYWORD"}: your message
+                </strong>
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={widgetSetupSaving}
+              onClick={() => setWidgetSetupOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="!bg-amber-600 hover:!bg-amber-700 !text-white"
+              disabled={widgetSetupSaving}
+              onClick={handleWidgetSetupSave}
+            >
+              {widgetSetupSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : widgetSetupEnableAfter ? (
+                "Save & enable widget"
+              ) : (
+                "Save"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Configure Sheet */}
       <Sheet  open={configureDialogOpen} onOpenChange={setConfigureDialogOpen}>
         <SheetContent className="w-[90vw] sm:w-[80vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw] 2xl:w-[45vw] overflow-y-auto pl-5 pr-5">
@@ -921,36 +1142,38 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               <Input
                 value={editedDomain}
                 onChange={(e) => setEditedDomain(e.target.value)}
+                placeholder="https://example.com"
                 className="w-full"
               />
+              {selectedWebsite && isPlaceholderDomain(selectedWebsite.domain) && !editedDomain.trim() && (
+                <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                  Required to enable the website widget.
+                </p>
+              )}
             </div>
 
-            {plan !== "starter" && (
-              <div>
-                <Label className="mb-2 text-sm font-medium">SMS Keyword</Label>
-                <Input
-                  value={editedKeyword}
-                  onChange={(e) =>
-                    setEditedKeyword(e.target.value.replace(/\s/g, "").toUpperCase())
-                  }
-                  placeholder="e.g. BAKERY"
-                  className="w-full"
-                  maxLength={50}
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  To post via text to{" "}
-                  <strong>{getT2msSmsDisplayNumber()}</strong>, send:{" "}
-                  <strong>{editedKeyword || "KEYWORD"}: your message</strong>
-                </p>
-              </div>
-            )}
-            {plan === "starter" && (
-              <p className="text-xs text-muted-foreground rounded-md border border-amber-200/60 bg-amber-50/50 dark:bg-amber-950/20 px-3 py-2">
-                To post via text, send your message to{" "}
-                <strong>{getT2msSmsDisplayNumber()}</strong> from your verified
-                number — no keyword or number prefix needed.
+            <div>
+              <Label className="mb-2 text-sm font-medium">SMS Keyword</Label>
+              <Input
+                value={editedKeyword}
+                onChange={(e) =>
+                  setEditedKeyword(e.target.value.replace(/\s/g, "").toUpperCase())
+                }
+                placeholder="e.g. BAKERY"
+                className="w-full"
+                maxLength={50}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                To post via text to{" "}
+                <strong>{getT2msSmsDisplayNumber()}</strong>, send:{" "}
+                <strong>{editedKeyword || "KEYWORD"}: your message</strong>
+                {!editedKeyword.trim() && (
+                  <span className="block mt-1 text-amber-700 dark:text-amber-400">
+                    Required to enable the website widget.
+                  </span>
+                )}
               </p>
-            )}
+            </div>
             
             {/* Phone Numbers Section - Managed separately */}
             {selectedWebsite && (
