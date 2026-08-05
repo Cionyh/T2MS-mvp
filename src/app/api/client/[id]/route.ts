@@ -4,6 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { verifyClientAccess, normalizeKeyword, isKeywordTakenByUser } from "@/lib/organization-helpers";
+import {
+  isPlaceholderDomain,
+  normalizeClientDomain,
+  siteReadyForWidget,
+} from "@/lib/client-setup";
 
 export async function PUT(
   req: NextRequest,
@@ -49,17 +54,49 @@ export async function PUT(
       keyword: keywordValue,
     } = body;
 
+    const existing = await prisma.client.findUnique({
+      where: { id },
+      select: { domain: true, keyword: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    }
+
     const updateData: Record<string, unknown> = {
       ...(name && { name }),
-      ...(domain && { domain }),
       ...(defaultType && { defaultType }),
       ...(defaultBgColor && { defaultBgColor }),
       ...(defaultTextColor && { defaultTextColor }),
       ...(defaultFont && { defaultFont }),
       ...(defaultDismissAfter !== undefined && { defaultDismissAfter }),
-      ...(pinned !== undefined && { pinned }),
       ...(widgetConfig !== undefined && { widgetConfig }),
     };
+
+    if (domain !== undefined && domain !== null && String(domain).trim()) {
+      let normalizedDomain: string;
+      try {
+        normalizedDomain = normalizeClientDomain(String(domain));
+      } catch {
+        return NextResponse.json({ error: "Invalid domain format" }, { status: 400 });
+      }
+      if (isPlaceholderDomain(normalizedDomain)) {
+        return NextResponse.json(
+          { error: "Please enter a real website domain." },
+          { status: 400 }
+        );
+      }
+      const taken = await prisma.client.findFirst({
+        where: { domain: normalizedDomain, NOT: { id } },
+        select: { id: true },
+      });
+      if (taken) {
+        return NextResponse.json(
+          { error: `The domain "${normalizedDomain}" is already registered.` },
+          { status: 409 }
+        );
+      }
+      updateData.domain = normalizedDomain;
+    }
 
     if (keywordValue !== undefined) {
       const rawKeyword = typeof keywordValue === "string" ? keywordValue.trim() : "";
@@ -84,6 +121,26 @@ export async function PUT(
         );
       }
       updateData.keyword = keyword;
+    }
+
+    const nextDomain =
+      typeof updateData.domain === "string" ? updateData.domain : existing.domain;
+    const nextKeyword =
+      typeof updateData.keyword === "string" ? updateData.keyword : existing.keyword;
+
+    if (pinned === true && !siteReadyForWidget({ domain: nextDomain, keyword: nextKeyword })) {
+      return NextResponse.json(
+        {
+          error:
+            "Add your website domain and SMS keyword before enabling the widget.",
+          needsWidgetSetup: true,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (pinned !== undefined) {
+      updateData.pinned = pinned;
     }
 
     const updatedClient = await prisma.client.update({

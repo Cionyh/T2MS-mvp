@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { getStaticDemoPageData } from "./demo-pages"
 import type { HostedPageData, WidgetConfigJson } from "./types"
+import { normalizeHostedTheme } from "./themes"
 
 function parseWidgetConfig(raw: unknown): WidgetConfigJson {
   if (!raw || typeof raw !== "object") return {}
@@ -21,6 +22,7 @@ export async function getHostedPageBySlug(
       hostedSlug: true,
       hostedIntroText: true,
       hostedFooterText: true,
+      hostedTheme: true,
       defaultBgColor: true,
       defaultTextColor: true,
       defaultFont: true,
@@ -45,6 +47,7 @@ export async function getHostedPageBySlug(
     hostedSlug: client.hostedSlug,
     hostedIntroText: client.hostedIntroText,
     hostedFooterText: client.hostedFooterText,
+    hostedTheme: normalizeHostedTheme(client.hostedTheme),
     messageContent:
       client.messages[0]?.content ??
       "No announcement yet. Check back soon.",
