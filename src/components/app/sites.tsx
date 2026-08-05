@@ -673,159 +673,178 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               layout
             >
               <Card className="bg-muted rounded-2xl overflow-hidden hover:bg-background">
-                <CardHeader className="flex items-center justify-between px-4 py-0">
-  <div className="flex items-center space-x-3">
-    <CardTitle className="text-lg font-medium">{website.name}</CardTitle>
+                <CardHeader className="!flex !flex-col !gap-3 space-y-0 px-4 py-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="min-w-0 flex-1 text-lg font-medium leading-snug break-words">
+                      {website.name}
+                    </CardTitle>
+                    {editingWebsiteId !== website.id && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="h-8 w-8 shrink-0 p-0 rounded-full"
+                          >
+                            <span className="sr-only">Open menu</span>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-[160px] p-2">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                className="justify-start w-full rounded-md hover:bg-secondary/50"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Are you absolutely sure?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the website.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteClick(website.id)}
+                                >
+                                  Continue
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  </div>
 
-    {/* Widget visibility — does not affect hosted page */}
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex items-center space-x-2">
-        <span className="text-xs text-muted-foreground hidden sm:inline">Widget</span>
-        <Switch
-          checked={website.pinned ?? false}
-          onCheckedChange={async (checked) => {
-          const hasInstallInProgress =
-            website.installJob &&
-            website.installJob.status !== "COMPLETED" &&
-            website.installJob.status !== "CANCELLED";
+                  {/* Widget toggle + status badges — stacked so long labels never overlap */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        Widget
+                      </span>
+                      <Switch
+                        checked={website.pinned ?? false}
+                        onCheckedChange={async (checked) => {
+                          const hasInstallInProgress =
+                            website.installJob &&
+                            website.installJob.status !== "COMPLETED" &&
+                            website.installJob.status !== "CANCELLED";
 
-          // Customers cannot publish/unpublish until installation is complete
-          if (hasInstallInProgress) {
-            toast.error(
-              "Installation is still in progress. You can publish the widget once installation is completed."
-            );
-            return;
-          }
+                          if (hasInstallInProgress) {
+                            toast.error(
+                              "Installation is still in progress. You can publish the widget once installation is completed."
+                            );
+                            return;
+                          }
 
-          // Enabling widget requires a real website + SMS keyword
-          if (checked && !siteReadyForWidget(website)) {
-            toast.warning(
-              "Add your website domain and SMS keyword before enabling the widget."
-            );
-            openWidgetSetup(website, true);
-            return;
-          }
+                          if (checked && !siteReadyForWidget(website)) {
+                            toast.warning(
+                              "Add your website domain and SMS keyword before enabling the widget."
+                            );
+                            openWidgetSetup(website, true);
+                            return;
+                          }
 
-          try {
-            const res = await fetch(`/api/client/${website.id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ pinned: checked }),
-            });
+                          try {
+                            const res = await fetch(`/api/client/${website.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ pinned: checked }),
+                            });
 
-            if (!res.ok) {
-              const errorData = await res.json();
-              if (errorData.needsWidgetSetup) {
-                openWidgetSetup(website, true);
-                return;
-              }
-              throw new Error(errorData.error || "Failed to update widget visibility");
-            }
+                            if (!res.ok) {
+                              const errorData = await res.json();
+                              if (errorData.needsWidgetSetup) {
+                                openWidgetSetup(website, true);
+                                return;
+                              }
+                              throw new Error(
+                                errorData.error ||
+                                  "Failed to update widget visibility"
+                              );
+                            }
 
-            // Update state locally
-            setWebsites((prev) =>
-              prev.map((w) =>
-                w.id === website.id ? { ...w, pinned: checked } : w
-              )
-            );
+                            setWebsites((prev) =>
+                              prev.map((w) =>
+                                w.id === website.id
+                                  ? { ...w, pinned: checked }
+                                  : w
+                              )
+                            );
 
-            toast.success(`Widget ${checked ? "live on your website" : "hidden"}`);
-          } catch (error: any) {
-            console.error("Error updating widget visibility:", error);
-            toast.error(error.message || "Failed to update widget visibility");
-          }
-        }}
-        />
-        {(() => {
-        const hasInstallInProgress =
-          website.installJob &&
-          website.installJob.status !== "COMPLETED" &&
-          website.installJob.status !== "CANCELLED";
+                            toast.success(
+                              `Widget ${checked ? "live on your website" : "hidden"}`
+                            );
+                          } catch (error: any) {
+                            console.error(
+                              "Error updating widget visibility:",
+                              error
+                            );
+                            toast.error(
+                              error.message ||
+                                "Failed to update widget visibility"
+                            );
+                          }
+                        }}
+                      />
+                    </div>
 
-        const badgeClasses = hasInstallInProgress
-          ? "bg-amber-500/90 text-foreground"
-          : website.pinned
-          ? "bg-green-500 text-foreground"
-          : "bg-muted text-foreground";
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {(() => {
+                        const hasInstallInProgress =
+                          website.installJob &&
+                          website.installJob.status !== "COMPLETED" &&
+                          website.installJob.status !== "CANCELLED";
 
-        let label: string;
-        if (hasInstallInProgress && website.installJob) {
-          label =
-            website.installJob.platform === "To be confirmed"
-              ? "Install form not submitted"
-              : "Installation In Progress: 80%";
-        } else {
-          label = website.pinned ? "Widget live" : "Widget hidden";
-        }
+                        const badgeClasses = hasInstallInProgress
+                          ? "bg-amber-500/90 text-foreground"
+                          : website.pinned
+                            ? "bg-green-500 text-foreground"
+                            : "bg-muted text-foreground";
 
-        return (
-          <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${badgeClasses}`}>
-            {label}
-          </span>
-        );
-      })()}
-      </div>
-      {website.hostedSlug && (
-        <span
-          className={`px-2 py-0.5 text-xs rounded-full font-medium ${
-            website.hostedEnabled
-              ? "bg-green-500/90 text-foreground"
-              : "bg-muted text-muted-foreground"
-          }`}
-        >
-          {website.hostedEnabled ? "Hosted page live" : "Hosted page off"}
-        </span>
-      )}
-    </div>
-  </div>
+                        let label: string;
+                        if (hasInstallInProgress && website.installJob) {
+                          label =
+                            website.installJob.platform === "To be confirmed"
+                              ? "Install form needed"
+                              : "Install in progress";
+                        } else {
+                          label = website.pinned
+                            ? "Widget live"
+                            : "Widget hidden";
+                        }
 
-  {editingWebsiteId !== website.id && (
-    <div className="flex items-center space-x-2">
-      {/* More menu */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            className="h-8 w-8 p-0 rounded-full"
-          >
-            <span className="sr-only">Open menu</span>
-            <MoreVertical className="h-4 w-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-[160px] p-2">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                className="justify-start w-full rounded-md hover:bg-secondary/50"
-              >
-                <Trash2 className="mr-2 h-4 w-4" /> Delete
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  Are you absolutely sure?
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the website.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => handleDeleteClick(website.id)}
-                >
-                  Continue
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </PopoverContent>
-      </Popover>
-    </div>
-  )}
-</CardHeader>
+                        return (
+                          <span
+                            className={`inline-flex max-w-full px-2 py-0.5 text-xs rounded-full font-medium whitespace-nowrap ${badgeClasses}`}
+                          >
+                            {label}
+                          </span>
+                        );
+                      })()}
+                      {website.hostedSlug && (
+                        <span
+                          className={`inline-flex max-w-full px-2 py-0.5 text-xs rounded-full font-medium whitespace-nowrap ${
+                            website.hostedEnabled
+                              ? "bg-green-500/90 text-foreground"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {website.hostedEnabled
+                            ? "Hosted page live"
+                            : "Hosted page off"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
 
 
                 <Separator />
