@@ -16,6 +16,8 @@ export type HostedPageData = {
   hostedFooterText: string | null
   /** classic | light | spotlight | banner | minimal */
   hostedTheme?: string | null
+  /** When false, logo is hidden on hosted page even if logoUrl is set */
+  hostedShowLogo?: boolean | null
   messageContent: string
   defaultBgColor: string
   defaultTextColor: string

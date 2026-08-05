@@ -267,6 +267,8 @@ model Client {
   hostedFooterText  String?
   /// Public page layout: classic | light | spotlight | banner | minimal
   hostedTheme       String    @default("classic")
+  /// Whether to display widget logoUrl on the hosted page (default on)
+  hostedShowLogo    Boolean   @default(true)
   hostedPublishedAt DateTime?
   hostedWelcomeEmailSentAt DateTime?
 

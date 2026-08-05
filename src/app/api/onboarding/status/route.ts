@@ -119,11 +119,10 @@ export async function GET() {
       needsInstallSetup = installJob?.platform === "To be confirmed";
     }
 
-    // Hosted setup: hosted-only path — slug chosen and page published
+    // Hosted setup: hosted-only path — need a URL name chosen (publish can wait for dashboard)
     let needsHostedSetup = false;
     if (hasPaidPlan && hasRegisteredSite && hasVerifiedPhone && hostedOnly && firstClient) {
-      needsHostedSetup =
-        !firstClient.hostedSlug?.trim() || !firstClient.hostedEnabled;
+      needsHostedSetup = !firstClient.hostedSlug?.trim();
     }
 
     // Path chooser removed from onboarding; setupPath defaults above when missing.
