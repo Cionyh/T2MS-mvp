@@ -9,6 +9,8 @@ export const HOSTED_THEME_IDS = [
   "spotlight",
   "banner",
   "minimal",
+  "aurora",
+  "stage",
 ] as const
 
 export type HostedThemeId = (typeof HOSTED_THEME_IDS)[number]
@@ -56,6 +58,18 @@ export const HOSTED_THEMES: HostedThemeMeta[] = [
     name: "Minimal Type",
     description: "Typography-first, left-aligned, low chrome.",
     swatch: { bg: "#faf9f7", card: "transparent", text: "#1c1917", accent: "#b45309" },
+  },
+  {
+    id: "aurora",
+    name: "Aurora Glass",
+    description: "Luminous glass card over soft teal and amber glows.",
+    swatch: { bg: "#07131f", card: "rgba(255,255,255,0.1)", text: "#ecfeff", accent: "#2dd4bf" },
+  },
+  {
+    id: "stage",
+    name: "Studio Stage",
+    description: "Cinematic dark stage with gold accent and large type.",
+    swatch: { bg: "#0a0a0a", card: "#141414", text: "#fafaf9", accent: "#d4a017" },
   },
 ]
 

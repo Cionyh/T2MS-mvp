@@ -400,6 +400,226 @@ function themeStyles(
     )
   }
 
+  if (theme === "aurora") {
+    return (
+      base +
+      `
+      body {
+        color: #ecfeff;
+        ${
+          bgImage ||
+          `background-color: #040c14;
+        background-image:
+          radial-gradient(ellipse 70% 55% at 15% 20%, #0d948855, transparent 55%),
+          radial-gradient(ellipse 55% 45% at 90% 10%, #f59e0b33, transparent 50%),
+          radial-gradient(ellipse 60% 50% at 70% 90%, #0284c744, transparent 55%),
+          linear-gradient(160deg, #040c14 0%, #0b1a28 50%, #051018 100%);
+        background-attachment: fixed;`
+        }
+      }
+      .t2ms-page {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 18px 28px;
+        max-width: 580px;
+        margin: 0 auto;
+        width: 100%;
+        text-align: center;
+      }
+      .t2ms-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 6px;
+      }
+      .t2ms-logo {
+        max-width: 92px;
+        max-height: 76px;
+        border-radius: 18px;
+        padding: 6px;
+        background: linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.04));
+        border: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+      }
+      .t2ms-title {
+        font-size: clamp(1.7rem, 5vw, 2.4rem);
+        font-weight: 750;
+        letter-spacing: -0.03em;
+        background: linear-gradient(120deg, #ecfeff 0%, #a5f3fc 45%, #fde68a 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+      }
+      .t2ms-intro {
+        font-size: 1rem;
+        color: rgba(236, 254, 255, 0.82);
+        margin-bottom: 28px;
+        line-height: 1.6;
+        max-width: 28rem;
+      }
+      .t2ms-announcement {
+        width: 100%;
+        padding: 34px 28px;
+        border-radius: 24px;
+        background: linear-gradient(165deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
+        backdrop-filter: blur(18px) saturate(1.2);
+        -webkit-backdrop-filter: blur(18px) saturate(1.2);
+        border: 1px solid rgba(255,255,255,0.22);
+        box-shadow:
+          0 0 0 1px rgba(45, 212, 191, 0.12),
+          0 30px 60px -20px rgba(0,0,0,0.55),
+          inset 0 1px 0 rgba(255,255,255,0.2);
+        margin-bottom: 24px;
+        position: relative;
+      }
+      .t2ms-announcement::before {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(135deg, rgba(45,212,191,0.45), transparent 40%, rgba(245,158,11,0.35));
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+      }
+      .t2ms-message {
+        font-size: ${msgSize + 2}px;
+        font-weight: 650;
+        color: #f0fdfa;
+        text-shadow: 0 1px 12px rgba(0,0,0,0.25);
+      }
+      .t2ms-footer {
+        margin-top: auto;
+        padding: 16px;
+        width: 100%;
+        text-align: center;
+      }
+      .t2ms-footer-text {
+        font-size: 0.9rem;
+        line-height: 1.65;
+        color: rgba(207, 250, 254, 0.75);
+        max-width: 28rem;
+        margin: 0 auto;
+      }
+      .t2ms-powered { color: rgba(165, 243, 252, 0.45); }
+    `
+    )
+  }
+
+  if (theme === "stage") {
+    return (
+      base +
+      `
+      body {
+        color: #fafaf9;
+        ${
+          bgImage ||
+          `background-color: #050505;
+        background-image:
+          radial-gradient(ellipse 50% 40% at 50% 0%, rgba(212,160,23,0.12), transparent 60%),
+          radial-gradient(ellipse 80% 50% at 50% 100%, rgba(0,0,0,0.9), transparent 50%),
+          linear-gradient(180deg, #0c0c0c 0%, #050505 100%);`
+        }
+      }
+      .t2ms-page {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 20px 36px;
+        max-width: 640px;
+        margin: 0 auto;
+        width: 100%;
+        text-align: center;
+      }
+      .t2ms-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 8px;
+      }
+      .t2ms-logo {
+        max-width: 100px;
+        max-height: 80px;
+        filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
+      }
+      .t2ms-title {
+        font-size: clamp(1.85rem, 5.5vw, 2.75rem);
+        font-weight: 300;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #fafaf9;
+      }
+      .t2ms-title::after {
+        content: "";
+        display: block;
+        width: 48px;
+        height: 2px;
+        margin: 16px auto 0;
+        background: linear-gradient(90deg, transparent, #d4a017, transparent);
+      }
+      .t2ms-intro {
+        font-size: 0.95rem;
+        font-weight: 300;
+        letter-spacing: 0.04em;
+        color: rgba(250, 250, 249, 0.65);
+        margin: 8px 0 36px;
+        line-height: 1.7;
+        max-width: 26rem;
+      }
+      .t2ms-announcement {
+        width: 100%;
+        padding: 40px 32px;
+        border-radius: 4px;
+        background: linear-gradient(180deg, #121212 0%, #0a0a0a 100%);
+        border: 1px solid rgba(212, 160, 23, 0.28);
+        box-shadow:
+          0 0 0 8px rgba(212, 160, 23, 0.04),
+          0 40px 80px -24px rgba(0,0,0,0.8);
+        margin-bottom: 28px;
+      }
+      .t2ms-message {
+        font-size: ${msgSize + 6}px;
+        font-weight: 400;
+        line-height: 1.4;
+        letter-spacing: -0.01em;
+        color: #fafaf9;
+      }
+      .t2ms-footer {
+        margin-top: auto;
+        padding: 20px 16px;
+        width: 100%;
+        text-align: center;
+        border-top: 1px solid rgba(255,255,255,0.06);
+      }
+      .t2ms-footer-text {
+        font-size: 0.85rem;
+        letter-spacing: 0.03em;
+        line-height: 1.7;
+        color: rgba(250, 250, 249, 0.5);
+        max-width: 28rem;
+        margin: 0 auto;
+      }
+      .t2ms-powered {
+        color: rgba(212, 160, 23, 0.35);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-size: 0.65rem;
+      }
+    `
+    )
+  }
+
   // classic (default)
   return (
     base +

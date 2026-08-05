@@ -265,7 +265,7 @@ model Client {
   hostedEnabled     Boolean   @default(false)
   hostedIntroText   String?
   hostedFooterText  String?
-  /// Public page layout: classic | light | spotlight | banner | minimal
+  /// Public page layout: classic | light | spotlight | banner | minimal | aurora | stage
   hostedTheme       String    @default("classic")
   /// Whether to display widget logoUrl on the hosted page (default on)
   hostedShowLogo    Boolean   @default(true)
