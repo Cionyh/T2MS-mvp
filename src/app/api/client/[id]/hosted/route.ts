@@ -37,6 +37,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         hostedIntroText: true,
         hostedFooterText: true,
         hostedTheme: true,
+        hostedShowLogo: true,
         hostedPublishedAt: true,
       },
     })
@@ -87,12 +88,14 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedIntroText,
       hostedFooterText,
       hostedTheme,
+      hostedShowLogo,
     } = body as {
       hostedSlug?: string | null
       hostedEnabled?: boolean
       hostedIntroText?: string | null
       hostedFooterText?: string | null
       hostedTheme?: string | null
+      hostedShowLogo?: boolean
     }
 
     const existing = await prisma.client.findUnique({
@@ -114,6 +117,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedIntroText?: string | null
       hostedFooterText?: string | null
       hostedTheme?: string
+      hostedShowLogo?: boolean
       hostedPublishedAt?: Date | null
     } = {}
 
@@ -140,6 +144,10 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         )
       }
       updateData.hostedTheme = hostedTheme
+    }
+
+    if (hostedShowLogo !== undefined) {
+      updateData.hostedShowLogo = Boolean(hostedShowLogo)
     }
 
     if (hostedSlug !== undefined) {
@@ -196,6 +204,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         hostedIntroText: true,
         hostedFooterText: true,
         hostedTheme: true,
+        hostedShowLogo: true,
         hostedPublishedAt: true,
       },
     })

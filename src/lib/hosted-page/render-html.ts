@@ -488,6 +488,7 @@ export function renderHostedPageHtml(
   } = data
 
   const theme = normalizeHostedTheme(data.hostedTheme)
+  const showLogo = data.hostedShowLogo !== false
   const logoUrl = widgetConfig.logoUrl || ""
   const backgroundImageUrl = widgetConfig.backgroundImageUrl || ""
   const attachImage = widgetConfig.attachImage || ""
@@ -500,9 +501,10 @@ export function renderHostedPageHtml(
       ? `<p class="t2ms-intro">${escapeHtml(presetText)}</p>`
       : ""
 
-  const logoImg = logoUrl
-    ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(name)} logo" class="t2ms-logo" />`
-    : ""
+  const logoImg =
+    showLogo && logoUrl
+      ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(name)} logo" class="t2ms-logo" />`
+      : ""
 
   // Banner theme: header lives outside the page content column
   const headerBlock = `<header class="t2ms-header">${logoImg}<h1 class="t2ms-title">${escapeHtml(name)}</h1></header>`

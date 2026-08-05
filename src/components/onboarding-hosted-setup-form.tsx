@@ -35,12 +35,7 @@ export function OnboardingHostedSetupForm({
         throw new Error(data.error || "Could not load hosted page settings")
       }
       if (!data.hostedSlug?.trim()) {
-        toast.error("Choose a page URL slug and save your hosted page settings first.")
-        setCompleting(false)
-        return
-      }
-      if (!data.hostedEnabled) {
-        toast.error("Turn on “Publish hosted page” in the settings above, then continue.")
+        toast.error("Choose a page URL name and save your hosted page settings first.")
         setCompleting(false)
         return
       }
@@ -61,7 +56,7 @@ export function OnboardingHostedSetupForm({
         <p className="mt-2 text-muted-foreground">
           Choose your public web address on t2ms.live — this is the link
           visitors will open in a browser to see your announcements. You can
-          change branding anytime in site settings.
+          publish the page now or later from your dashboard.
         </p>
       </div>
       <Card className="w-full max-w-lg">
