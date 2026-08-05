@@ -9,6 +9,67 @@ import {
   normalizeClientDomain,
   siteReadyForWidget,
 } from "@/lib/client-setup";
+import { INSTALL_JOB_STATUS } from "@/lib/job-status";
+
+/**
+ * When a user skipped domain at onboarding then adds a real website later,
+ * create a placeholder QUEUED install job if none is already open for this site.
+ */
+async function ensureInstallJobAfterDomainAdded(params: {
+  userId: string;
+  clientId: string;
+  domain: string;
+  hadPlaceholderDomain: boolean;
+  domainJustUpdated: boolean;
+}) {
+  const { userId, clientId, domain, hadPlaceholderDomain, domainJustUpdated } =
+    params;
+
+  // Only auto-create when they first provide a real domain (onboarding skip → dashboard fill-in)
+  if (!domainJustUpdated || !hadPlaceholderDomain) return;
+  if (isPlaceholderDomain(domain)) return;
+
+  const openJob = await prisma.installJob.findFirst({
+    where: {
+      clientId,
+      status: {
+        notIn: [
+          INSTALL_JOB_STATUS.COMPLETED,
+          INSTALL_JOB_STATUS.CANCELLED,
+        ],
+      },
+    },
+    select: { id: true },
+  });
+  if (openJob) return;
+
+  let customer = await prisma.customer.findUnique({
+    where: { userId },
+  });
+  if (!customer) {
+    customer = await prisma.customer.create({
+      data: { userId },
+    });
+  }
+
+  const websiteUrl = domain.startsWith("http") ? domain : `https://${domain}`;
+
+  await prisma.installJob.create({
+    data: {
+      customerId: customer.id,
+      clientId,
+      platform: "To be confirmed",
+      installType: "script",
+      websiteUrls: [websiteUrl],
+      accessMethod: "instructions",
+      accessCredentials: "{}",
+      status: INSTALL_JOB_STATUS.QUEUED,
+      priority: 0,
+      checklistCompleted: false,
+      proofUploaded: false,
+    },
+  });
+}
 
 export async function PUT(
   req: NextRequest,
@@ -62,6 +123,8 @@ export async function PUT(
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
 
+    const hadPlaceholderDomain = isPlaceholderDomain(existing.domain);
+
     const updateData: Record<string, unknown> = {
       ...(name && { name }),
       ...(defaultType && { defaultType }),
@@ -71,6 +134,8 @@ export async function PUT(
       ...(defaultDismissAfter !== undefined && { defaultDismissAfter }),
       ...(widgetConfig !== undefined && { widgetConfig }),
     };
+
+    let domainJustUpdated = false;
 
     if (domain !== undefined && domain !== null && String(domain).trim()) {
       let normalizedDomain: string;
@@ -96,6 +161,7 @@ export async function PUT(
         );
       }
       updateData.domain = normalizedDomain;
+      domainJustUpdated = normalizedDomain !== existing.domain;
     }
 
     if (keywordValue !== undefined) {
@@ -143,10 +209,44 @@ export async function PUT(
       updateData.pinned = pinned;
     }
 
+    // Keep company website link in sync when domain is set for the first time
+    if (domainJustUpdated && !isPlaceholderDomain(nextDomain)) {
+      const existingConfig =
+        (await prisma.client.findUnique({
+          where: { id },
+          select: { widgetConfig: true },
+        }))?.widgetConfig;
+      const configObj =
+        existingConfig && typeof existingConfig === "object" && !Array.isArray(existingConfig)
+          ? { ...(existingConfig as Record<string, unknown>) }
+          : {};
+      if (widgetConfig && typeof widgetConfig === "object") {
+        Object.assign(configObj, widgetConfig as Record<string, unknown>);
+      }
+      if (!configObj.companyWebsiteLink) {
+        configObj.companyWebsiteLink = `https://${nextDomain}`;
+      }
+      updateData.widgetConfig = configObj;
+    }
+
     const updatedClient = await prisma.client.update({
       where: { id },
       data: updateData as Parameters<typeof prisma.client.update>[0]["data"],
     });
+
+    // Deferred domain from optional onboarding → create install job for the queue
+    try {
+      await ensureInstallJobAfterDomainAdded({
+        userId: session.user.id,
+        clientId: id,
+        domain: nextDomain,
+        hadPlaceholderDomain,
+        domainJustUpdated,
+      });
+    } catch (jobErr) {
+      console.error("[CLIENT_PUT] Auto-create install job failed:", jobErr);
+      // Don't fail the domain/keyword save if job creation fails
+    }
 
     return NextResponse.json({
       message: `Successfully updated client ${id}`,
