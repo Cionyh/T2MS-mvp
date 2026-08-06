@@ -102,7 +102,7 @@ function FeaturesPreviewDialog({ url }: { url: string }) {
 }
 
 export function PricingSection() {
-  // Church intro pricing is campaign-only (/church) — never shown on public pricing.
+  // Church intro pricing is campaign-only (/church, /church-pricing) — never shown on public pricing.
   const displayPlans = plans;
 
   return (
