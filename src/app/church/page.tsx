@@ -266,6 +266,11 @@ export default function ChurchPage() {
           </div>
 
           <ChurchTrialLink className="btn">Start Free Trial</ChurchTrialLink>
+          <p style={{ marginTop: "12px", fontSize: "0.9rem" }}>
+            <Link href="/church-pricing" style={{ textDecoration: "underline" }}>
+              View full Church Partner pricing
+            </Link>
+          </p>
         </div>
       </section>
 

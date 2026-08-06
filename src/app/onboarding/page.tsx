@@ -30,6 +30,7 @@ import {
   STARTER_PLAN_FEATURES,
   UNIFIED_PLAN_TAGLINE,
 } from "@/lib/plan-features";
+import { cn } from "@/lib/utils";
 import { preparePlanCheckout } from "@/lib/prepare-plan-checkout";
 import { ChurchVerificationDialog } from "@/components/onboarding/church-verification-dialog";
 import {
@@ -901,8 +902,14 @@ function OnboardingContent() {
         {/* Church intro is campaign-only (/church → ?plan=church); not shown in public plan picker. */}
         <div className="grid gap-6 items-stretch md:grid-cols-3">
           {/* Starter Plan – uses STRIPE_STARTER_PRICE_ID */}
-          <Card className="flex flex-col border-2 border-amber-600/50 shadow-md min-h-0">
-            <CardHeader>
+          <Card className="relative flex flex-col border-2 border-amber-600/50 shadow-md min-h-0 overflow-hidden ring-2 ring-amber-600/15">
+            <div
+              className="pointer-events-none absolute -left-9 top-5 z-10 w-36 rotate-[-45deg] bg-amber-500 py-1 text-center text-[11px] font-bold uppercase tracking-wide text-amber-950 shadow-md"
+              aria-hidden
+            >
+              Special Offer
+            </div>
+            <CardHeader className="pt-6">
               <CardTitle className="flex items-center gap-2 text-xl">
                 <Zap className="h-5 w-5 text-amber-600" />
                 Starter Plan
@@ -917,12 +924,34 @@ function OnboardingContent() {
             </CardHeader>
             <CardContent className="flex-1 min-h-0 overflow-y-auto">
               <ul className="space-y-2">
-                {STARTER_PLAN_FEATURES.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 shrink-0 text-amber-600" />
-                    {feature}
-                  </li>
-                ))}
+                {STARTER_PLAN_FEATURES.map((feature) => {
+                  const isFeatured =
+                    feature === "Hosted announcement page on t2ms.live";
+                  return (
+                    <li
+                      key={feature}
+                      className={cn(
+                        "flex items-start gap-2 text-sm",
+                        isFeatured &&
+                          "rounded-md border-y border-amber-400/70 bg-amber-50/80 px-2 py-2 dark:bg-amber-950/30"
+                      )}
+                    >
+                      <Check
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          isFeatured
+                            ? "text-amber-700 dark:text-amber-400 mt-0.5"
+                            : "text-amber-600"
+                        )}
+                      />
+                      <span
+                        className={cn(isFeatured && "font-semibold text-foreground")}
+                      >
+                        {feature}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </CardContent>
             <CardFooter className="flex-shrink-0 border-t border-amber-600/30 flex flex-col gap-2 pt-4 pb-2 mt-0">

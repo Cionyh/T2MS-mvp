@@ -152,7 +152,7 @@ export default function ChurchAnnouncementPage() {
      <a href="#options">
       Church Options
      </a>
-     <a href="#pricing">
+     <a href="/church-pricing">
       Pricing
      </a>
      <a href="#faq">
@@ -627,6 +627,11 @@ export default function ChurchAnnouncementPage() {
       <ChurchTrialLink className="btn btn-primary">Start My Free 14-Day Trial</ChurchTrialLink>
       <p style={{fontSize: ".78rem", marginTop: "12px"}}>
        No long term contracts - guaranteed pricing
+      </p>
+      <p style={{fontSize: ".78rem", marginTop: "8px"}}>
+       <a href="/church-pricing" style={{ textDecoration: "underline" }}>
+        View full Church Partner pricing
+       </a>
       </p>
      </article>
     </div>
