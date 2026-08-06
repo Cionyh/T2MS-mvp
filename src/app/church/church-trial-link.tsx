@@ -1,9 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import type { ComponentProps } from "react";
+import { useEffect, type ComponentProps } from "react";
 
-const ONBOARDING_PLAN_STORAGE_KEY = "t2ms_onboarding_plan";
+export const ONBOARDING_PLAN_STORAGE_KEY = "t2ms_onboarding_plan";
+
+/** Persist church campaign plan for post-signup onboarding checkout. */
+export function setChurchOnboardingPlan() {
+  try {
+    sessionStorage.setItem(ONBOARDING_PLAN_STORAGE_KEY, "church");
+  } catch {
+    // ignore storage errors (private mode, etc.)
+  }
+}
 
 type ChurchTrialLinkProps = Omit<ComponentProps<typeof Link>, "href"> & {
   className?: string;
@@ -11,20 +20,21 @@ type ChurchTrialLinkProps = Omit<ComponentProps<typeof Link>, "href"> & {
 };
 
 /**
- * Church campaign CTA: send new customers through signup, then onboarding
- * with the church plan pre-selected (via sessionStorage / post-signup flow).
+ * Church campaign CTA: signup → onboarding with church plan pre-selected.
+ * Uses /signup?plan=church plus sessionStorage so OAuth and multi-tab survive.
  */
-export function ChurchTrialLink({ className, children, onClick, ...rest }: ChurchTrialLinkProps) {
+export function ChurchTrialLink({
+  className,
+  children,
+  onClick,
+  ...rest
+}: ChurchTrialLinkProps) {
   return (
     <Link
-      href="/signup"
+      href="/signup?plan=church"
       className={className}
       onClick={(e) => {
-        try {
-          sessionStorage.setItem(ONBOARDING_PLAN_STORAGE_KEY, "church");
-        } catch {
-          // ignore storage errors
-        }
+        setChurchOnboardingPlan();
         onClick?.(e);
       }}
       {...rest}
@@ -32,4 +42,15 @@ export function ChurchTrialLink({ className, children, onClick, ...rest }: Churc
       {children}
     </Link>
   );
+}
+
+/**
+ * Call from church landing pages so the plan is primed even if the user
+ * later uses a generic Sign Up nav link without ?plan=church.
+ */
+export function ChurchPlanSessionPriming() {
+  useEffect(() => {
+    setChurchOnboardingPlan();
+  }, []);
+  return null;
 }

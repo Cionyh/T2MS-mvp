@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ChurchTrialLink } from "./church-trial-link";
+import { ChurchPlanSessionPriming, ChurchTrialLink } from "./church-trial-link";
 
 export default function ChurchPage() {
   return (
     <div className="church-faith-page page">
+      <ChurchPlanSessionPriming />
       <header className="topbar">
         <div className="brand">
           TEXT2MYSITE<span>™</span>

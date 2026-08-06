@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { ChurchTrialLink } from "@/app/church/church-trial-link";
+import {
+  ChurchPlanSessionPriming,
+  ChurchTrialLink,
+} from "@/app/church/church-trial-link";
 
 export default function ChurchAnnouncementPage() {
   useEffect(() => {
@@ -124,6 +127,7 @@ export default function ChurchAnnouncementPage() {
 
   return (
     <div className="church-funnel-page">
+      <ChurchPlanSessionPriming />
 <a className="skip" href="#main">
    Skip to content
   </a>

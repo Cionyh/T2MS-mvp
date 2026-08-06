@@ -15,6 +15,7 @@ const HIDDEN_PREFIXES = [
   "/sign-in",
   "/signup",
   "/church",
+  "/church-page-announcements",
   "/church-announcement",
   "/announce",
   "/affiliate",
