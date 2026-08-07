@@ -325,6 +325,21 @@ export function SignUp() {
         }
       }
 
+      let onboardingPath = "/onboarding";
+      try {
+        const fromStorage =
+          sessionStorage.getItem("t2ms_onboarding_plan") === "church";
+        const fromUrl =
+          typeof window !== "undefined" &&
+          new URLSearchParams(window.location.search).get("plan") === "church";
+        if (fromStorage || fromUrl) {
+          onboardingPath = "/onboarding?plan=church";
+          sessionStorage.setItem("t2ms_onboarding_plan", "church");
+        }
+      } catch {
+        // ignore
+      }
+
       const { data, error } = await signUp.email({
         email: values.email,
         password: values.password,
@@ -333,7 +348,7 @@ export function SignUp() {
         country: values.country || undefined,
         businessCategory: values.businessCategory || undefined,
         referralCode: validReferralCode,
-        callbackURL: "/onboarding",
+        callbackURL: onboardingPath,
       });
 
       if (error) {
@@ -354,7 +369,7 @@ export function SignUp() {
       if (validReferralCode) {
         storeReferralCode(null);
       }
-      router.push("/onboarding");
+      router.push(onboardingPath);
     } catch (error: unknown) {
       toast.error(
         error instanceof Error

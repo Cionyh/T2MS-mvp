@@ -5,6 +5,8 @@ import "./church-funnel.css";
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
+  // Variable Inter so CSS weights 700–900 (and ~950) match funnel2.html
+  variable: "--font-church-inter",
 });
 
 export const metadata: Metadata = {
@@ -26,5 +28,8 @@ export default function ChurchAnnouncementLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className={inter.className}>{children}</div>;
+  // className applies the real next/font family; variable is used by church-funnel.css
+  return (
+    <div className={`${inter.variable} ${inter.className}`}>{children}</div>
+  );
 }

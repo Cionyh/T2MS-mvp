@@ -21,11 +21,12 @@ import { PhoneNumberManagement } from "@/components/app/phone-number-management"
 import { OnboardingInstallSetupForm } from "@/components/onboarding-install-setup-form";
 import { OnboardingHostedSetupForm } from "@/components/onboarding-hosted-setup-form";
 import { SETUP_PATH_HOSTED_ONLY } from "@/lib/setup-path";
-import { isChurchPlanEnabled } from "@/lib/church-pricing";
+import { isChurchPlanEnabled, getChurchIntroPriceLabel } from "@/lib/church-pricing";
 import {
   CHURCH_VERIFICATION_VERIFIED,
 } from "@/lib/church-verification";
 import {
+  CHURCH_PLAN_FEATURES,
   GROWTH_PLAN_FEATURES,
   STARTER_PLAN_FEATURES,
   UNIFIED_PLAN_TAGLINE,
@@ -49,10 +50,22 @@ import {
   storeCouponCode,
 } from "@/lib/coupons";
 
+const ONBOARDING_PLAN_STORAGE_KEY = "t2ms_onboarding_plan";
+
+function readChurchPlanIntent(planParam: string | null): boolean {
+  if (planParam === "church") return true;
+  try {
+    return sessionStorage.getItem(ONBOARDING_PLAN_STORAGE_KEY) === "church";
+  } catch {
+    return false;
+  }
+}
+
 function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success");
+  const planParam = searchParams.get("plan");
   const [loading, setLoading] = useState<string | null>(null);
   const [statusLoaded, setStatusLoaded] = useState(false);
   const [status, setStatus] = useState<{
@@ -96,12 +109,12 @@ function OnboardingContent() {
   } | null>(null);
   const [churchVerifyDialogOpen, setChurchVerifyDialogOpen] = useState(false);
   const [pendingChurchCheckout, setPendingChurchCheckout] = useState(false);
+  // Sticky church funnel intent for the whole onboarding session (URL or sessionStorage)
+  const [churchFunnelIntent] = useState(() => readChurchPlanIntent(planParam));
 
   const PENDING_VERIFY_STORAGE_KEY = "t2ms_onboarding_verify_pending";
-  const ONBOARDING_PLAN_STORAGE_KEY = "t2ms_onboarding_plan";
   const RESEND_COOLDOWN_SECONDS = 60;
   const churchPlanAutoStarted = useRef(false);
-  const planParam = searchParams.get("plan");
 
   const refreshStatus = useCallback(async () => {
     try {
@@ -238,7 +251,10 @@ function OnboardingContent() {
         plan: planId,
         referenceId: userId,
         successUrl: `${window.location.origin}/onboarding?success=1`,
-        cancelUrl: `${window.location.origin}/onboarding`,
+        cancelUrl:
+          planId === "church"
+            ? `${window.location.origin}/onboarding?plan=church`
+            : `${window.location.origin}/onboarding`,
       });
 
       if (error) {
@@ -293,6 +309,8 @@ function OnboardingContent() {
 
   const isHostedOnlyPath = status?.setupPath === SETUP_PATH_HOSTED_ONLY;
   const churchPlanEnabled = isChurchPlanEnabled();
+  const isChurchFunnel =
+    churchFunnelIntent || planParam === "church" || readChurchPlanIntent(planParam);
 
   const handleRegisterSite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -495,14 +513,22 @@ function OnboardingContent() {
   const showHostedSetupStep = statusLoaded && hostedSetupClientId !== null;
 
   useEffect(() => {
-    if (!statusLoaded || churchPlanAutoStarted.current || !churchPlanEnabled) return;
+    // Keep church intent sticky for this session (survives refresh / soft nav)
+    if (planParam === "church" || churchFunnelIntent) {
+      try {
+        sessionStorage.setItem(ONBOARDING_PLAN_STORAGE_KEY, "church");
+      } catch {
+        // ignore
+      }
+    }
+  }, [planParam, churchFunnelIntent]);
 
-    const storedPlan =
-      typeof window !== "undefined"
-        ? sessionStorage.getItem(ONBOARDING_PLAN_STORAGE_KEY)
-        : null;
-    const targetPlan = planParam || storedPlan;
-    if (targetPlan !== "church") return;
+  useEffect(() => {
+    if (!statusLoaded || churchPlanAutoStarted.current) return;
+
+    const targetIsChurch =
+      isChurchFunnel || planParam === "church" || readChurchPlanIntent(planParam);
+    if (!targetIsChurch) return;
 
     if (
       showRegisterSiteStep ||
@@ -516,15 +542,10 @@ function OnboardingContent() {
     }
 
     churchPlanAutoStarted.current = true;
-    try {
-      sessionStorage.removeItem(ONBOARDING_PLAN_STORAGE_KEY);
-    } catch {
-      // ignore storage errors
-    }
     void handlePaidPlan("church");
   }, [
-    churchPlanEnabled,
     couponRedeeming,
+    isChurchFunnel,
     planParam,
     showHostedSetupStep,
     showInstallSetupStep,
@@ -886,10 +907,14 @@ function OnboardingContent() {
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold text-foreground tracking-tight">
-            Simple, Transparent Pricing
+            {isChurchFunnel
+              ? "Church Partner Plan"
+              : "Simple, Transparent Pricing"}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            {UNIFIED_PLAN_TAGLINE} Choose the plan that fits your needs — no hidden fees.
+            {isChurchFunnel
+              ? "Continue with introductory church pricing. You’ll confirm eligibility, then start your free trial."
+              : `${UNIFIED_PLAN_TAGLINE} Choose the plan that fits your needs — no hidden fees.`}
           </p>
           {couponSummary ? (
             <div className="mx-auto mt-4 max-w-xl rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
@@ -899,7 +924,67 @@ function OnboardingContent() {
           ) : null}
         </div>
 
-        {/* Church intro is campaign-only (/church → ?plan=church); not shown in public plan picker. */}
+        {/* Church funnel from /church or /church-page-announcements — only Church Partner, not business plans */}
+        {isChurchFunnel ? (
+          <div className="mx-auto max-w-md">
+            <Card className="relative flex flex-col border-2 border-amber-600/50 shadow-md overflow-hidden ring-2 ring-amber-600/15">
+              <div
+                className="pointer-events-none absolute -left-9 top-5 z-10 w-36 rotate-[-45deg] bg-amber-500 py-1 text-center text-[11px] font-bold uppercase tracking-wide text-amber-950 shadow-md"
+                aria-hidden
+              >
+                Church intro
+              </div>
+              <CardHeader className="pt-6">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Zap className="h-5 w-5 text-amber-600" />
+                  Church Partner
+                </CardTitle>
+                <div className="mt-1">
+                  <span className="text-2xl font-bold text-amber-700">
+                    {getChurchIntroPriceLabel()}
+                  </span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+                <CardDescription className="text-sm">
+                  Verified churches &amp; religious organizations — hosted page
+                  and widget, 14-day free trial.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <ul className="space-y-2">
+                  {CHURCH_PLAN_FEATURES.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2 text-sm">
+                      <Check className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter className="flex-shrink-0 border-t border-amber-600/30 flex flex-col gap-2 pt-4 pb-2">
+                <Button
+                  className="w-full min-h-11 font-medium !bg-amber-600 hover:!bg-amber-700 !text-white"
+                  onClick={() => handlePaidPlan("church")}
+                  disabled={!!loading}
+                >
+                  {loading === "church" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Continue with Church Partner trial"
+                  )}
+                </Button>
+                {!churchPlanEnabled && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    If checkout is unavailable, contact{" "}
+                    <a href="mailto:sales@t2ms.biz" className="underline">
+                      sales@t2ms.biz
+                    </a>
+                    .
+                  </p>
+                )}
+              </CardFooter>
+            </Card>
+          </div>
+        ) : (
         <div className="grid gap-6 items-stretch md:grid-cols-3">
           {/* Starter Plan – uses STRIPE_STARTER_PRICE_ID */}
           <Card className="relative flex flex-col border-2 border-amber-600/50 shadow-md min-h-0 overflow-hidden ring-2 ring-amber-600/15">
@@ -1046,6 +1131,7 @@ function OnboardingContent() {
             </CardFooter>
           </Card>
         </div>
+        )}
         <ChurchVerificationDialog
           open={churchVerifyDialogOpen}
           onOpenChange={setChurchVerifyDialogOpen}
