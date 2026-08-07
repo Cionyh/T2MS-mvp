@@ -21,7 +21,7 @@ import { PhoneNumberManagement } from "@/components/app/phone-number-management"
 import { OnboardingInstallSetupForm } from "@/components/onboarding-install-setup-form";
 import { OnboardingHostedSetupForm } from "@/components/onboarding-hosted-setup-form";
 import { SETUP_PATH_HOSTED_ONLY } from "@/lib/setup-path";
-import { isChurchPlanEnabled, getChurchIntroPriceLabel } from "@/lib/church-pricing";
+import { isChurchPlanEnabled } from "@/lib/church-pricing";
 import {
   CHURCH_VERIFICATION_VERIFIED,
 } from "@/lib/church-verification";
@@ -49,6 +49,7 @@ import {
   getStoredCouponCode,
   storeCouponCode,
 } from "@/lib/coupons";
+import { useChurchIntroPrice } from "@/hooks/use-church-intro-price";
 
 const ONBOARDING_PLAN_STORAGE_KEY = "t2ms_onboarding_plan";
 
@@ -111,6 +112,7 @@ function OnboardingContent() {
   const [pendingChurchCheckout, setPendingChurchCheckout] = useState(false);
   // Sticky church funnel intent for the whole onboarding session (URL or sessionStorage)
   const [churchFunnelIntent] = useState(() => readChurchPlanIntent(planParam));
+  const churchIntroPrice = useChurchIntroPrice();
 
   const PENDING_VERIFY_STORAGE_KEY = "t2ms_onboarding_verify_pending";
   const RESEND_COOLDOWN_SECONDS = 60;
@@ -939,9 +941,9 @@ function OnboardingContent() {
                   <Zap className="h-5 w-5 text-amber-600" />
                   Church Partner
                 </CardTitle>
-                <div className="mt-1">
+                <div className="mt-1 flex flex-wrap items-baseline gap-x-1">
                   <span className="text-2xl font-bold text-amber-700">
-                    {getChurchIntroPriceLabel()}
+                    {churchIntroPrice.label ?? "…"}
                   </span>
                   <span className="text-muted-foreground">/month</span>
                 </div>

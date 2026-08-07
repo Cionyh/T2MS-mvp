@@ -174,7 +174,14 @@ export function getPublicChurchStripePriceId(): string | undefined {
       undefined
     )
   }
-  return process.env.NEXT_PUBLIC_STRIPE_TEST_CHURCH_STARTER_PRICE_ID?.trim() || undefined
+  return (
+    process.env.NEXT_PUBLIC_STRIPE_TEST_CHURCH_STARTER_PRICE_ID?.trim() ||
+    // Server-side: allow non-public env (not bundled into the client)
+    (typeof window === "undefined"
+      ? process.env.STRIPE_TEST_CHURCH_STARTER_PRICE_ID?.trim()
+      : undefined) ||
+    undefined
+  )
 }
 
 export function getStripeServerClient(): Stripe {

@@ -5,15 +5,15 @@ import {
   ChurchPlanSessionPriming,
   ChurchTrialLink,
 } from "@/app/church/church-trial-link";
-import {
-  getChurchIntroPriceLabel,
-  isChurchPlanEnabled,
-} from "@/lib/church-pricing";
+import { isChurchPlanEnabled } from "@/lib/church-pricing";
 import { CHURCH_PLAN_FEATURES } from "@/lib/plan-features";
+import { useChurchIntroPrice } from "@/hooks/use-church-intro-price";
 
 export default function ChurchPricingPage() {
-  const priceLabel = getChurchIntroPriceLabel();
-  const enabled = isChurchPlanEnabled();
+  const churchPrice = useChurchIntroPrice();
+  const enabled =
+    churchPrice.enabled || (churchPrice.loading ? isChurchPlanEnabled() : false);
+  const priceLabel = churchPrice.label ?? "…";
 
   return (
     <div className="church-pricing-page">
@@ -54,7 +54,7 @@ export default function ChurchPricingPage() {
               widget — built for pastoral teams who need simple, fast updates.
             </p>
 
-            {enabled ? (
+            {enabled || churchPrice.loading ? (
               <>
                 <div className="cp-price">
                   <span className="cp-price-amount">{priceLabel}</span>

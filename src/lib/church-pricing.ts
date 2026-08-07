@@ -18,11 +18,13 @@ export function isChurchPlanEnabled(): boolean {
   return Boolean(getChurchStripePriceId())
 }
 
+/**
+ * Static fallback only when Stripe is unreachable.
+ * Prefer `useChurchIntroPrice` / `/api/church/price` (Stripe unit_amount for
+ * STRIPE_TEST_CHURCH_STARTER_PRICE_ID or STRIPE_CHURCH_STARTER_PRICE_ID).
+ */
 export function getChurchIntroPriceLabel(): string {
-  return (
-    process.env.NEXT_PUBLIC_CHURCH_INTRO_PRICE_LABEL?.trim() ||
-    `$${CHURCH_INTRO_PRICE_AMOUNT.toFixed(2)}`
-  )
+  return `$${CHURCH_INTRO_PRICE_AMOUNT.toFixed(2)}`
 }
 
 export { CHURCH_PLAN_FEATURES } from "@/lib/plan-features"
