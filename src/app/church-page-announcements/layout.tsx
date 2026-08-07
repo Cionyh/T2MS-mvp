@@ -1,13 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./church-funnel.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  // Variable Inter so CSS weights 700–900 (and ~950) match funnel2.html
-  variable: "--font-church-inter",
-});
 
 export const metadata: Metadata = {
   title: "Text2MySite for Churches | Church Announcements by Text",
@@ -28,8 +20,7 @@ export default function ChurchAnnouncementLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // className applies the real next/font family; variable is used by church-funnel.css
-  return (
-    <div className={`${inter.variable} ${inter.className}`}>{children}</div>
-  );
+  // No next/font Inter here: funnel2.html uses the system font stack
+  // (Inter if installed, otherwise system-ui / SF Pro), not Google Fonts.
+  return children;
 }
