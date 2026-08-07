@@ -312,12 +312,55 @@ function OnboardingContent() {
   const isHostedOnlyPath = status?.setupPath === SETUP_PATH_HOSTED_ONLY;
   const churchPlanEnabled = isChurchPlanEnabled();
   const isChurchFunnel =
-    churchFunnelIntent || planParam === "church" || readChurchPlanIntent(planParam);
+    churchFunnelIntent ||
+    planParam === "church" ||
+    readChurchPlanIntent(planParam) ||
+    status?.planId === "church";
+
+  const registerSiteCopy = isChurchFunnel
+    ? {
+        title: "Register Your Church",
+        subtitle:
+          "Tell us about your church so we can set up your announcement page.",
+        cardTitle: "Church Details",
+        cardDescription:
+          "Enter your church name. Website domain and SMS keyword are optional.",
+        nameLabel: "Church Name *",
+        namePlaceholder: "Grace Community Church",
+        keywordPlaceholder: "GRACE",
+        domainHelp:
+          "Skip this if you only need a hosted announcement page for now.",
+        ownership:
+          "I confirm I am authorized to register this church on Text2MySite.",
+        nameRequired: "Please enter your church name.",
+        ownershipRequired:
+          "Please confirm you are authorized for this church.",
+        registerFailed: "Failed to register church",
+      }
+    : {
+        title: "Register Your Business",
+        subtitle:
+          "Tell us about your business so we can set up your announcement page.",
+        cardTitle: "Business Details",
+        cardDescription:
+          "Enter your business name. Website domain and SMS keyword are optional.",
+        nameLabel: "Business Name *",
+        namePlaceholder: "Your Business Name",
+        keywordPlaceholder: "BAKERY",
+        domainHelp:
+          "Skip this if you only need a hosted announcement page for now.",
+        ownership:
+          "I confirm I am authorized to register this business on Text2MySite.",
+        nameRequired: "Please enter your business name.",
+        ownershipRequired:
+          "Please confirm you are authorized for this business.",
+        registerFailed: "Failed to register business",
+      };
 
   const handleRegisterSite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!registerForm.name.trim()) {
-      toast.error("Please enter your business name.");
+      toast.error(registerSiteCopy.nameRequired);
       return;
     }
     const rawKeyword = registerForm.keyword.trim();
@@ -330,7 +373,7 @@ function OnboardingContent() {
       return;
     }
     if (!registerForm.websiteOwnership) {
-      toast.error("Please confirm you are authorized for this business.");
+      toast.error(registerSiteCopy.ownershipRequired);
       return;
     }
     setLoading("register");
@@ -348,7 +391,7 @@ function OnboardingContent() {
       });
       const clientData = await clientRes.json();
       if (!clientRes.ok) {
-        throw new Error(clientData.error || "Failed to register business");
+        throw new Error(clientData.error || registerSiteCopy.registerFailed);
       }
 
       const clientId = clientData.id as string;
@@ -700,10 +743,10 @@ function OnboardingContent() {
         <div className="w-full max-w-md text-center">
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-foreground tracking-tight">
-              Register Your Business
+              {registerSiteCopy.title}
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Tell us about your business so we can set up your announcement page.
+              {registerSiteCopy.subtitle}
             </p>
           </div>
         </div>
@@ -711,19 +754,19 @@ function OnboardingContent() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Globe className="h-5 w-5 text-amber-600" />
-                Business Details
+                {registerSiteCopy.cardTitle}
               </CardTitle>
               <CardDescription>
-                Enter your business name. Website domain and SMS keyword are optional.
+                {registerSiteCopy.cardDescription}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleRegisterSite} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Business Name *</Label>
+                  <Label htmlFor="name">{registerSiteCopy.nameLabel}</Label>
                   <Input
                     id="name"
-                    placeholder="Your Business Name"
+                    placeholder={registerSiteCopy.namePlaceholder}
                     value={registerForm.name}
                     onChange={(e) =>
                       setRegisterForm((s) => ({ ...s, name: e.target.value }))
@@ -746,7 +789,7 @@ function OnboardingContent() {
                     disabled={!!loading}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Skip this if you only need a hosted announcement page for now.
+                    {registerSiteCopy.domainHelp}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -756,7 +799,7 @@ function OnboardingContent() {
                   </Label>
                   <Input
                     id="keyword"
-                    placeholder="BAKERY"
+                    placeholder={registerSiteCopy.keywordPlaceholder}
                     value={registerForm.keyword}
                     onChange={(e) =>
                       setRegisterForm((s) => ({ ...s, keyword: e.target.value.replace(/\s/g, "").toUpperCase() }))
@@ -802,7 +845,7 @@ function OnboardingContent() {
                     htmlFor="ownership"
                     className="text-sm font-normal leading-relaxed cursor-pointer"
                   >
-                    I confirm I am authorized to register this business on Text2MySite.
+                    {registerSiteCopy.ownership}
                   </Label>
                 </div>
                 <Button
