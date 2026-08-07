@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import { getChurchIntroPriceLabel } from "@/lib/church-pricing"
+import { useChurchIntroPrice } from "@/hooks/use-church-intro-price"
 
 type ChurchVerificationDialogProps = {
   open: boolean
@@ -31,6 +31,8 @@ export function ChurchVerificationDialog({
   const [organizationName, setOrganizationName] = useState("")
   const [attestationConfirmed, setAttestationConfirmed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const churchPrice = useChurchIntroPrice()
+  const priceLabel = churchPrice.label ?? "…"
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,7 +73,7 @@ export function ChurchVerificationDialog({
         <DialogHeader>
           <DialogTitle>Church intro pricing eligibility</DialogTitle>
           <DialogDescription>
-            Introductory church pricing ({getChurchIntroPriceLabel()}/month, 14-day
+            Introductory church pricing ({priceLabel}/month, 14-day
             trial, price locked up to 3 years) is available to verified churches
             and religious organizations during our launch period.
           </DialogDescription>

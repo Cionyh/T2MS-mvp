@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChurchPlanSessionPriming, ChurchTrialLink } from "./church-trial-link";
+import { ChurchFaithPrice } from "./church-faith-price";
 
 export default function ChurchPage() {
   return (
@@ -253,9 +254,7 @@ export default function ChurchPage() {
 
         <div className="price-card">
           <h3>14-Day Free Trial</h3>
-          <div className="price">
-            $7.99<small>/month</small>
-          </div>
+          <ChurchFaithPrice />
           <p>Pricing locked for up to 3 years for qualifying early church adopters.</p>
 
           <div className="offer-list">

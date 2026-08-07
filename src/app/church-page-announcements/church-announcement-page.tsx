@@ -5,8 +5,12 @@ import {
   ChurchPlanSessionPriming,
   ChurchTrialLink,
 } from "@/app/church/church-trial-link";
+import { useChurchIntroPrice } from "@/hooks/use-church-intro-price";
 
 export default function ChurchAnnouncementPage() {
+  const churchPrice = useChurchIntroPrice();
+  const priceLabel = churchPrice.label ?? "…";
+
   useEffect(() => {
     const yearEl = document.getElementById("year");
     if (yearEl) yearEl.textContent = String(new Date().getFullYear());
@@ -617,7 +621,7 @@ export default function ChurchAnnouncementPage() {
        Special Church Partner Price
       </div>
       <div className="price-main">
-       $7.99
+       {priceLabel}
        <small>
         /month
        </small>
