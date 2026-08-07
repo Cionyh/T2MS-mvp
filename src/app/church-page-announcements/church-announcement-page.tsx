@@ -296,25 +296,25 @@ export default function ChurchAnnouncementPage() {
       <div className="status-strip">
        <div className="status">
         <span className="check">
-         &checkmark;
+         ✓
         </span>
         Website Updated
        </div>
        <div className="status">
         <span className="check">
-         &checkmark;
+         ✓
         </span>
         Announcement Page Updated
        </div>
        <div className="status">
         <span className="check">
-         &checkmark;
+         ✓
         </span>
         QR Code Page Updated
        </div>
        <div className="status">
         <span className="check">
-         &checkmark;
+         ✓
         </span>
         Congregation Informed
        </div>
@@ -347,31 +347,31 @@ export default function ChurchAnnouncementPage() {
        <ul>
         <li>
          <span className="bullet">
-          &times;
+          ×
          </span>
          Call or email the webmaster.
         </li>
         <li>
          <span className="bullet">
-          &times;
+          ×
          </span>
          Wait for someone to make the update.
         </li>
         <li>
          <span className="bullet">
-          &times;
+          ×
          </span>
          Log in and edit several pages.
         </li>
         <li>
          <span className="bullet">
-          &times;
+          ×
          </span>
          Hope everyone checks the right place.
         </li>
         <li>
          <span className="bullet">
-          &times;
+          ×
          </span>
          Wonder whether members saw it.
         </li>
@@ -384,25 +384,25 @@ export default function ChurchAnnouncementPage() {
        <ul>
         <li>
          <span className="bullet">
-          &checkmark;
+          ✓
          </span>
          Send one text message.
         </li>
         <li>
          <span className="bullet">
-          &checkmark;
+          ✓
          </span>
          Your announcement updates automatically.
         </li>
         <li>
          <span className="bullet">
-          &checkmark;
+          ✓
          </span>
          Your church sees the latest information.
         </li>
         <li>
          <span className="bullet">
-          &checkmark;
+          ✓
          </span>
          Done.
         </li>
