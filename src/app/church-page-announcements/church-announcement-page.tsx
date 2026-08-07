@@ -333,7 +333,8 @@ export default function ChurchAnnouncementPage() {
        A simpler routine
       </span>
       <h2>
-       Before and <span style={{ color: "green" }}>After Text2MySite</span>.
+       Before and{" "}
+       <span style={{ color: "green" }}>After Text2MySite</span>.
       </h2>
      </div>
      <div className="compare reveal">
