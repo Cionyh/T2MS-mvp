@@ -273,8 +273,11 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const handleWidgetSetupSave = async () => {
     if (!widgetSetupSite) return;
     const domain = widgetSetupDomain.trim();
-    const keyword = widgetSetupKeyword.trim().toUpperCase();
     const keywordRequired = planRequiresSmsKeyword(plan);
+    // Only multi-site plans collect keyword in this dialog
+    const keyword = keywordRequired
+      ? widgetSetupKeyword.trim().toUpperCase()
+      : "";
 
     if (!domain) {
       toast.error("Please enter your website domain.");
@@ -291,11 +294,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         );
         return;
       }
-    } else if (keyword && !/^[A-Za-z0-9_]{1,50}$/.test(keyword)) {
-      toast.error(
-        "Keyword must be 1–50 characters, letters, numbers, or underscore only."
-      );
-      return;
     }
 
     setWidgetSetupSaving(true);
@@ -332,12 +330,8 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       setWidgetSetupSite(null);
       toast.success(
         widgetSetupEnableAfter
-          ? keyword
-            ? "Website details saved. Widget is now live."
-            : "Website saved. Widget is now live."
-          : keyword
-            ? "Website and keyword saved. You can enable the widget when ready."
-            : "Website saved. You can enable the widget when ready."
+          ? "Website saved. Widget is now live."
+          : "Website saved. You can enable the widget when ready."
       );
       router.refresh();
     } catch (error: unknown) {
@@ -1285,10 +1279,10 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               {widgetSetupEnableAfter
                 ? planRequiresSmsKeyword(plan)
                   ? "The widget needs your website domain and an SMS keyword before it can go live."
-                  : "The widget needs your website domain before it can go live. SMS keyword is optional on your plan."
+                  : "The widget needs your website domain before it can go live."
                 : planRequiresSmsKeyword(plan)
                   ? "Add your website domain and SMS keyword so you can enable the widget on your site."
-                  : "Add your website domain so you can enable the widget. SMS keyword is optional on single-site plans."}
+                  : "Add your website domain so you can enable the widget on your site."}
               {widgetSetupSite?.name ? (
                 <span className="mt-1 block text-foreground">
                   Site: <strong>{widgetSetupSite.name}</strong>
@@ -1307,34 +1301,29 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 disabled={widgetSetupSaving}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="widget-setup-keyword">
-                SMS keyword
-                {planRequiresSmsKeyword(plan) ? " *" : " (optional)"}
-              </Label>
-              <Input
-                id="widget-setup-keyword"
-                placeholder={
-                  planRequiresSmsKeyword(plan) ? "BAKERY" : "Optional"
-                }
-                value={widgetSetupKeyword}
-                onChange={(e) =>
-                  setWidgetSetupKeyword(
-                    e.target.value.replace(/\s/g, "").toUpperCase()
-                  )
-                }
-                disabled={widgetSetupSaving}
-                maxLength={50}
-              />
-              <p className="text-xs text-muted-foreground">
-                {planRequiresSmsKeyword(plan)
-                  ? "Required for multi-site routing. To post via text: "
-                  : "Optional. To post via text: "}
-                <strong>
-                  {widgetSetupKeyword || "KEYWORD"}: your message
-                </strong>
-              </p>
-            </div>
+            {planRequiresSmsKeyword(plan) && (
+              <div className="space-y-2">
+                <Label htmlFor="widget-setup-keyword">SMS keyword *</Label>
+                <Input
+                  id="widget-setup-keyword"
+                  placeholder="BAKERY"
+                  value={widgetSetupKeyword}
+                  onChange={(e) =>
+                    setWidgetSetupKeyword(
+                      e.target.value.replace(/\s/g, "").toUpperCase()
+                    )
+                  }
+                  disabled={widgetSetupSaving}
+                  maxLength={50}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Required for multi-site routing. To post via text:{" "}
+                  <strong>
+                    {widgetSetupKeyword || "KEYWORD"}: your message
+                  </strong>
+                </p>
+              </div>
+            )}
           </div>
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
             <Button
