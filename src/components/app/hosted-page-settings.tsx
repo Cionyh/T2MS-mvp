@@ -27,6 +27,10 @@ import {
 type HostedPageSettingsProps = {
   clientId: string
   siteName: string
+  onSaved?: (data: {
+    hostedSlug: string | null
+    hostedEnabled: boolean
+  }) => void
 }
 
 type HostedState = {
@@ -44,6 +48,7 @@ type HostedState = {
 export function HostedPageSettings({
   clientId,
   siteName,
+  onSaved,
 }: HostedPageSettingsProps) {
   const domain = getHostedPageDomain()
   const [loading, setLoading] = useState(true)
@@ -170,6 +175,10 @@ export function HostedPageSettings({
       if (typeof data.data?.hostedShowLogo === "boolean") {
         setShowLogo(data.data.hostedShowLogo)
       }
+      onSaved?.({
+        hostedSlug: data.data?.hostedSlug ?? (slugInput.trim() || null),
+        hostedEnabled: Boolean(data.data?.hostedEnabled ?? enabled),
+      })
       toast.success("Hosted page settings saved")
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save")
