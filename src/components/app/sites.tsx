@@ -723,77 +723,147 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                     )}
                   </div>
 
-                  {/* Widget toggle + status badges — stacked so long labels never overlap */}
+                  {/* Widget + hosted publish toggles */}
                   <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        Widget
-                      </span>
-                      <Switch
-                        checked={website.pinned ?? false}
-                        onCheckedChange={async (checked) => {
-                          const hasInstallInProgress =
-                            website.installJob &&
-                            website.installJob.status !== "COMPLETED" &&
-                            website.installJob.status !== "CANCELLED";
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          Widget
+                        </span>
+                        <Switch
+                          checked={website.pinned ?? false}
+                          onCheckedChange={async (checked) => {
+                            const hasInstallInProgress =
+                              website.installJob &&
+                              website.installJob.status !== "COMPLETED" &&
+                              website.installJob.status !== "CANCELLED";
 
-                          if (hasInstallInProgress) {
-                            toast.error(
-                              "Installation is still in progress. You can publish the widget once installation is completed."
-                            );
-                            return;
-                          }
+                            if (hasInstallInProgress) {
+                              toast.error(
+                                "Installation is still in progress. You can publish the widget once installation is completed."
+                              );
+                              return;
+                            }
 
-                          if (checked && !siteReadyForWidget(website)) {
-                            toast.warning(
-                              "Add your website domain and SMS keyword before enabling the widget."
-                            );
-                            openWidgetSetup(website, true);
-                            return;
-                          }
+                            if (checked && !siteReadyForWidget(website)) {
+                              toast.warning(
+                                "Add your website domain and SMS keyword before enabling the widget."
+                              );
+                              openWidgetSetup(website, true);
+                              return;
+                            }
 
-                          try {
-                            const res = await fetch(`/api/client/${website.id}`, {
-                              method: "PUT",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ pinned: checked }),
-                            });
+                            try {
+                              const res = await fetch(`/api/client/${website.id}`, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ pinned: checked }),
+                              });
 
-                            if (!res.ok) {
-                              const errorData = await res.json();
-                              if (errorData.needsWidgetSetup) {
-                                openWidgetSetup(website, true);
-                                return;
+                              if (!res.ok) {
+                                const errorData = await res.json();
+                                if (errorData.needsWidgetSetup) {
+                                  openWidgetSetup(website, true);
+                                  return;
+                                }
+                                throw new Error(
+                                  errorData.error ||
+                                    "Failed to update widget visibility"
+                                );
                               }
-                              throw new Error(
-                                errorData.error ||
+
+                              setWebsites((prev) =>
+                                prev.map((w) =>
+                                  w.id === website.id
+                                    ? { ...w, pinned: checked }
+                                    : w
+                                )
+                              );
+
+                              toast.success(
+                                `Widget ${checked ? "live on your website" : "hidden"}`
+                              );
+                            } catch (error: any) {
+                              console.error(
+                                "Error updating widget visibility:",
+                                error
+                              );
+                              toast.error(
+                                error.message ||
                                   "Failed to update widget visibility"
                               );
                             }
+                          }}
+                        />
+                      </div>
 
-                            setWebsites((prev) =>
-                              prev.map((w) =>
-                                w.id === website.id
-                                  ? { ...w, pinned: checked }
-                                  : w
-                              )
-                            );
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          Hosted page
+                        </span>
+                        <Switch
+                          checked={Boolean(website.hostedEnabled)}
+                          onCheckedChange={async (checked) => {
+                            if (checked && !website.hostedSlug?.trim()) {
+                              toast.warning(
+                                "Choose a page URL name before publishing the hosted page."
+                              );
+                              handleEditClick(website);
+                              return;
+                            }
 
-                            toast.success(
-                              `Widget ${checked ? "live on your website" : "hidden"}`
-                            );
-                          } catch (error: any) {
-                            console.error(
-                              "Error updating widget visibility:",
-                              error
-                            );
-                            toast.error(
-                              error.message ||
-                                "Failed to update widget visibility"
-                            );
-                          }
-                        }}
-                      />
+                            try {
+                              const res = await fetch(
+                                `/api/client/${website.id}/hosted`,
+                                {
+                                  method: "PATCH",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    hostedEnabled: checked,
+                                  }),
+                                }
+                              );
+                              const data = await res.json();
+                              if (!res.ok) {
+                                throw new Error(
+                                  data.error ||
+                                    "Failed to update hosted page visibility"
+                                );
+                              }
+
+                              setWebsites((prev) =>
+                                prev.map((w) =>
+                                  w.id === website.id
+                                    ? {
+                                        ...w,
+                                        hostedEnabled: checked,
+                                        hostedSlug:
+                                          data.data?.hostedSlug ?? w.hostedSlug,
+                                      }
+                                    : w
+                                )
+                              );
+
+                              toast.success(
+                                checked
+                                  ? "Hosted page is live"
+                                  : "Hosted page turned off"
+                              );
+                            } catch (error: any) {
+                              console.error(
+                                "Error updating hosted page visibility:",
+                                error
+                              );
+                              toast.error(
+                                error.message ||
+                                  "Failed to update hosted page visibility"
+                              );
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -829,19 +899,19 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                           </span>
                         );
                       })()}
-                      {website.hostedSlug && (
-                        <span
-                          className={`inline-flex max-w-full px-2 py-0.5 text-xs rounded-full font-medium whitespace-nowrap ${
-                            website.hostedEnabled
-                              ? "bg-green-500/90 text-foreground"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {website.hostedEnabled
-                            ? "Hosted page live"
-                            : "Hosted page off"}
-                        </span>
-                      )}
+                      <span
+                        className={`inline-flex max-w-full px-2 py-0.5 text-xs rounded-full font-medium whitespace-nowrap ${
+                          website.hostedEnabled
+                            ? "bg-green-500/90 text-foreground"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {website.hostedEnabled
+                          ? "Hosted page live"
+                          : website.hostedSlug
+                            ? "Hosted page off"
+                            : "Hosted page not set up"}
+                      </span>
                     </div>
                   </div>
                 </CardHeader>
