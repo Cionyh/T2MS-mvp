@@ -681,9 +681,9 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               exit="exit"
               layout
             >
-              <Card className="bg-muted rounded-2xl overflow-hidden hover:bg-background flex flex-col h-full">
-                <CardHeader className="!flex !flex-row !items-start justify-between gap-2 space-y-0 px-4 py-3">
-                  <CardTitle className="min-w-0 flex-1 text-lg font-medium leading-snug break-words">
+              <Card className="bg-muted rounded-2xl overflow-hidden hover:bg-background flex flex-col h-full gap-0 py-0 shadow-sm">
+                <CardHeader className="!grid-cols-none !grid-rows-none !flex flex-row items-center justify-between gap-2 space-y-0 px-3 py-2.5">
+                  <CardTitle className="min-w-0 flex-1 text-base font-medium leading-tight break-words">
                     {website.name}
                   </CardTitle>
                   {editingWebsiteId !== website.id && (
@@ -691,7 +691,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                       <PopoverTrigger asChild>
                         <Button
                           variant="ghost"
-                          className="h-8 w-8 shrink-0 p-0 rounded-full"
+                          className="h-7 w-7 shrink-0 p-0 rounded-full -mr-1"
                         >
                           <span className="sr-only">Open menu</span>
                           <MoreVertical className="h-4 w-4" />
@@ -732,7 +732,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 </CardHeader>
 
                 <Separator />
-                <CardContent className="px-4 py-3 flex-1 flex flex-col gap-3">
+                <CardContent className="px-3 py-2.5 flex-1 flex flex-col gap-2">
                   {(() => {
                     const hasInstallInProgress =
                       website.installJob &&
@@ -760,7 +760,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                     return (
                       <>
                         {/* Widget channel */}
-                        <div className="rounded-xl border border-border/80 bg-background/70 p-3 space-y-2.5">
+                        <div className="rounded-lg border border-border/80 bg-background/70 p-2.5 space-y-1.5">
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
                               <span className="text-sm font-semibold">Widget</span>
@@ -843,10 +843,10 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                               }}
                             />
                           </div>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground leading-snug">
                             Embed on your own website domain.
                           </p>
-                          <div className="text-sm space-y-1">
+                          <div className="text-sm space-y-0.5 leading-snug">
                             <p>
                               <span className="font-medium text-muted-foreground">
                                 Domain:{" "}
@@ -892,7 +892,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                         </div>
 
                         {/* Announcement page channel */}
-                        <div className="rounded-xl border border-amber-600/25 bg-amber-50/40 dark:bg-amber-950/20 p-3 space-y-2.5">
+                        <div className="rounded-lg border border-amber-600/25 bg-amber-50/40 dark:bg-amber-950/20 p-2.5 space-y-1.5">
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
                               <span className="text-sm font-semibold">
@@ -977,29 +977,29 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                               }}
                             />
                           </div>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground leading-snug">
                             Public shareable page — no website install needed.
                           </p>
 
                           {hostedUrl && hostedDisplay ? (
-                            <div className="rounded-lg border border-amber-600/30 bg-background px-3 py-2.5 space-y-2">
-                              <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+                            <div className="rounded-md border border-amber-600/30 bg-background px-2.5 py-2 space-y-1.5">
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
                                 Your announcement link
                               </p>
                               <a
                                 href={hostedUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block text-sm font-semibold text-amber-800 dark:text-amber-200 hover:underline break-all"
+                                className="block text-sm font-semibold text-amber-800 dark:text-amber-200 hover:underline break-all leading-snug"
                               >
                                 {hostedDisplay}
                               </a>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-1.5">
                                 <Button
                                   type="button"
                                   size="sm"
                                   variant="outline"
-                                  className="h-8"
+                                  className="h-7"
                                   onClick={() => handleCopyHostedUrl(hostedUrl)}
                                 >
                                   <Copy className="h-3.5 w-3.5 mr-1.5" />
@@ -1009,7 +1009,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                                   type="button"
                                   size="sm"
                                   variant="outline"
-                                  className="h-8"
+                                  className="h-7"
                                   asChild
                                 >
                                   <a
@@ -1024,7 +1024,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                               </div>
                             </div>
                           ) : (
-                            <div className="rounded-lg border border-dashed border-amber-600/40 bg-background/60 px-3 py-2.5 text-xs text-muted-foreground">
+                            <div className="rounded-md border border-dashed border-amber-600/40 bg-background/60 px-2.5 py-2 text-xs text-muted-foreground leading-snug">
                               No public URL yet. Set a page name in announcement
                               settings to get your{" "}
                               <span className="font-mono">
@@ -1036,7 +1036,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                         </div>
 
                         {/* Shared details */}
-                        <div className="space-y-2 text-sm pt-0.5">
+                        <div className="space-y-1.5 text-sm pt-0">
                           {website.installJob && (
                             <p className="flex items-center gap-2 flex-wrap">
                               <span className="font-semibold">Install:</span>
@@ -1171,18 +1171,18 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                           </p>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 mt-auto">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5 mt-auto">
                           <Button
                             type="button"
                             variant="outline"
-                            className="w-full rounded-full border-border bg-background hover:bg-muted"
+                            className="w-full h-9 rounded-full border-border bg-background hover:bg-muted text-sm"
                             onClick={() => handleEditClick(website)}
                           >
                             Widget settings
                           </Button>
                           <Button
                             type="button"
-                            className="w-full rounded-full !bg-amber-600 hover:!bg-amber-700 !text-white"
+                            className="w-full h-9 rounded-full !bg-amber-600 hover:!bg-amber-700 !text-white text-sm"
                             onClick={() =>
                               handleOpenAnnouncementSettings(website)
                             }
