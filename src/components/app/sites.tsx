@@ -22,7 +22,6 @@ import {
   Copy,
   Loader2,
   ExternalLink,
-  Link2,
   Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -82,7 +81,6 @@ import { PhoneNumberManagement } from "./phone-number-management";
 import { Badge } from "@/components/ui/badge";
 import { HostedPageSettings } from "./hosted-page-settings";
 import {
-  getWidgetSetupGaps,
   isPlaceholderDomain,
   siteReadyForWidget,
 } from "@/lib/client-setup";
@@ -192,6 +190,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [iframeDialogOpen, setIframeDialogOpen] = useState(false);
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null);
   const [configureDialogOpen, setConfigureDialogOpen] = useState(false);
+  const [hostedSettingsOpen, setHostedSettingsOpen] = useState(false);
   const [installationGuideOpen, setInstallationGuideOpen] = useState(false);
   const [installationGuideClientId, setInstallationGuideClientId] = useState<string | null>(null);
   const [installationGuideSiteName, setInstallationGuideSiteName] = useState<string>("");
@@ -387,6 +386,16 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     setIframeHeight(widgetConfig.iframeHeight || "100vh");
     
     setConfigureDialogOpen(true);
+  };
+
+  const handleOpenAnnouncementSettings = (website: Website) => {
+    setSelectedWebsite(website);
+    setHostedSettingsOpen(true);
+  };
+
+  const handleCopyHostedUrl = (url: string) => {
+    void navigator.clipboard.writeText(url);
+    toast.success("Announcement page link copied");
   };
 
   const uploadWidgetImage = async (
@@ -672,420 +681,519 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               exit="exit"
               layout
             >
-              <Card className="bg-muted rounded-2xl overflow-hidden hover:bg-background">
-                <CardHeader className="!flex !flex-col !gap-3 space-y-0 px-4 py-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="min-w-0 flex-1 text-lg font-medium leading-snug break-words">
-                      {website.name}
-                    </CardTitle>
-                    {editingWebsiteId !== website.id && (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            className="h-8 w-8 shrink-0 p-0 rounded-full"
-                          >
-                            <span className="sr-only">Open menu</span>
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent align="end" className="w-[160px] p-2">
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                className="justify-start w-full rounded-md hover:bg-secondary/50"
+              <Card className="bg-muted rounded-2xl overflow-hidden hover:bg-background flex flex-col h-full">
+                <CardHeader className="!flex !flex-row !items-start justify-between gap-2 space-y-0 px-4 py-3">
+                  <CardTitle className="min-w-0 flex-1 text-lg font-medium leading-snug break-words">
+                    {website.name}
+                  </CardTitle>
+                  {editingWebsiteId !== website.id && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="h-8 w-8 shrink-0 p-0 rounded-full"
+                        >
+                          <span className="sr-only">Open menu</span>
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-[160px] p-2">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="justify-start w-full rounded-md hover:bg-secondary/50"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Are you absolutely sure?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the website.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteClick(website.id)}
                               >
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Are you absolutely sure?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the website.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeleteClick(website.id)}
-                                >
-                                  Continue
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                  </div>
+                                Continue
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </CardHeader>
 
-                  {/* Widget + hosted publish toggles */}
-                  <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground shrink-0">
-                          Widget
-                        </span>
-                        <Switch
-                          checked={website.pinned ?? false}
-                          onCheckedChange={async (checked) => {
-                            const hasInstallInProgress =
-                              website.installJob &&
-                              website.installJob.status !== "COMPLETED" &&
-                              website.installJob.status !== "CANCELLED";
+                <Separator />
+                <CardContent className="px-4 py-3 flex-1 flex flex-col gap-3">
+                  {(() => {
+                    const hasInstallInProgress =
+                      website.installJob &&
+                      website.installJob.status !== "COMPLETED" &&
+                      website.installJob.status !== "CANCELLED";
+                    const widgetLive = Boolean(website.pinned) && !hasInstallInProgress;
+                    let widgetStatusLabel = "Widget hidden";
+                    if (hasInstallInProgress && website.installJob) {
+                      widgetStatusLabel =
+                        website.installJob.platform === "To be confirmed"
+                          ? "Install form needed"
+                          : "Install in progress";
+                    } else if (website.pinned) {
+                      widgetStatusLabel = "Widget live";
+                    }
+                    const hostedUrl =
+                      website.hostedSlug?.trim()
+                        ? `https://${website.hostedSlug}.${getHostedPageDomain()}`
+                        : null;
+                    const hostedDisplay =
+                      website.hostedSlug?.trim()
+                        ? `${website.hostedSlug}.${getHostedPageDomain()}`
+                        : null;
 
-                            if (hasInstallInProgress) {
-                              toast.error(
-                                "Installation is still in progress. You can publish the widget once installation is completed."
-                              );
-                              return;
-                            }
+                    return (
+                      <>
+                        {/* Widget channel */}
+                        <div className="rounded-xl border border-border/80 bg-background/70 p-3 space-y-2.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-sm font-semibold">Widget</span>
+                              <span
+                                className={`inline-flex max-w-full px-2 py-0.5 text-[11px] rounded-full font-medium whitespace-nowrap ${
+                                  hasInstallInProgress
+                                    ? "bg-amber-500/90 text-foreground"
+                                    : widgetLive
+                                      ? "bg-green-500 text-foreground"
+                                      : "bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                {widgetStatusLabel}
+                              </span>
+                            </div>
+                            <Switch
+                              checked={website.pinned ?? false}
+                              aria-label="Toggle website widget"
+                              onCheckedChange={async (checked) => {
+                                if (hasInstallInProgress) {
+                                  toast.error(
+                                    "Installation is still in progress. You can publish the widget once installation is completed."
+                                  );
+                                  return;
+                                }
 
-                            if (checked && !siteReadyForWidget(website)) {
-                              toast.warning(
-                                "Add your website domain and SMS keyword before enabling the widget."
-                              );
-                              openWidgetSetup(website, true);
-                              return;
-                            }
-
-                            try {
-                              const res = await fetch(`/api/client/${website.id}`, {
-                                method: "PUT",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ pinned: checked }),
-                              });
-
-                              if (!res.ok) {
-                                const errorData = await res.json();
-                                if (errorData.needsWidgetSetup) {
+                                if (checked && !siteReadyForWidget(website)) {
+                                  toast.warning(
+                                    "Add your website domain and SMS keyword before enabling the widget."
+                                  );
                                   openWidgetSetup(website, true);
                                   return;
                                 }
-                                throw new Error(
-                                  errorData.error ||
-                                    "Failed to update widget visibility"
-                                );
-                              }
 
-                              setWebsites((prev) =>
-                                prev.map((w) =>
-                                  w.id === website.id
-                                    ? { ...w, pinned: checked }
-                                    : w
-                                )
-                              );
+                                try {
+                                  const res = await fetch(
+                                    `/api/client/${website.id}`,
+                                    {
+                                      method: "PUT",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({ pinned: checked }),
+                                    }
+                                  );
 
-                              toast.success(
-                                `Widget ${checked ? "live on your website" : "hidden"}`
-                              );
-                            } catch (error: any) {
-                              console.error(
-                                "Error updating widget visibility:",
-                                error
-                              );
-                              toast.error(
-                                error.message ||
-                                  "Failed to update widget visibility"
-                              );
-                            }
-                          }}
-                        />
-                      </div>
+                                  if (!res.ok) {
+                                    const errorData = await res.json();
+                                    if (errorData.needsWidgetSetup) {
+                                      openWidgetSetup(website, true);
+                                      return;
+                                    }
+                                    throw new Error(
+                                      errorData.error ||
+                                        "Failed to update widget visibility"
+                                    );
+                                  }
 
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground shrink-0">
-                          Hosted page
-                        </span>
-                        <Switch
-                          checked={Boolean(website.hostedEnabled)}
-                          onCheckedChange={async (checked) => {
-                            if (checked && !website.hostedSlug?.trim()) {
-                              toast.warning(
-                                "Choose a page URL name before publishing the hosted page."
-                              );
-                              handleEditClick(website);
-                              return;
-                            }
+                                  setWebsites((prev) =>
+                                    prev.map((w) =>
+                                      w.id === website.id
+                                        ? { ...w, pinned: checked }
+                                        : w
+                                    )
+                                  );
 
-                            try {
-                              const res = await fetch(
-                                `/api/client/${website.id}/hosted`,
-                                {
-                                  method: "PATCH",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({
-                                    hostedEnabled: checked,
-                                  }),
+                                  toast.success(
+                                    `Widget ${checked ? "live on your website" : "hidden"}`
+                                  );
+                                } catch (error: any) {
+                                  console.error(
+                                    "Error updating widget visibility:",
+                                    error
+                                  );
+                                  toast.error(
+                                    error.message ||
+                                      "Failed to update widget visibility"
+                                  );
                                 }
-                              );
-                              const data = await res.json();
-                              if (!res.ok) {
-                                throw new Error(
-                                  data.error ||
-                                    "Failed to update hosted page visibility"
-                                );
-                              }
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Embed on your own website domain.
+                          </p>
+                          <div className="text-sm space-y-1">
+                            <p>
+                              <span className="font-medium text-muted-foreground">
+                                Domain:{" "}
+                              </span>
+                              {isPlaceholderDomain(website.domain) ? (
+                                <span className="italic text-muted-foreground">
+                                  Not set
+                                </span>
+                              ) : (
+                                website.domain
+                              )}
+                            </p>
+                            <p>
+                              <span className="font-medium text-muted-foreground">
+                                SMS:{" "}
+                              </span>
+                              {website.keyword ? (
+                                <code className="text-xs bg-muted px-1 rounded">
+                                  {website.keyword}: message
+                                </code>
+                              ) : (
+                                <span className="italic text-muted-foreground">
+                                  Keyword not set
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          {!siteReadyForWidget(website) && (
+                            <div className="rounded-lg border border-amber-300/80 bg-amber-50 px-2.5 py-2 text-xs text-amber-950 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-100">
+                              <p className="font-medium">
+                                Domain &amp; keyword needed for widget
+                              </p>
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="mt-1.5 h-7 !bg-amber-600 hover:!bg-amber-700 !text-white"
+                                onClick={() => openWidgetSetup(website, false)}
+                              >
+                                Add website &amp; keyword
+                              </Button>
+                            </div>
+                          )}
+                        </div>
 
-                              setWebsites((prev) =>
-                                prev.map((w) =>
-                                  w.id === website.id
-                                    ? {
-                                        ...w,
+                        {/* Announcement page channel */}
+                        <div className="rounded-xl border border-amber-600/25 bg-amber-50/40 dark:bg-amber-950/20 p-3 space-y-2.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-sm font-semibold">
+                                Announcement page
+                              </span>
+                              <span
+                                className={`inline-flex max-w-full px-2 py-0.5 text-[11px] rounded-full font-medium whitespace-nowrap ${
+                                  website.hostedEnabled
+                                    ? "bg-green-500/90 text-foreground"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                {website.hostedEnabled
+                                  ? "Live"
+                                  : website.hostedSlug
+                                    ? "Off"
+                                    : "Not set up"}
+                              </span>
+                            </div>
+                            <Switch
+                              checked={Boolean(website.hostedEnabled)}
+                              aria-label="Toggle announcement page"
+                              onCheckedChange={async (checked) => {
+                                if (checked && !website.hostedSlug?.trim()) {
+                                  toast.warning(
+                                    "Choose a page URL name before publishing."
+                                  );
+                                  handleOpenAnnouncementSettings(website);
+                                  return;
+                                }
+
+                                try {
+                                  const res = await fetch(
+                                    `/api/client/${website.id}/hosted`,
+                                    {
+                                      method: "PATCH",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
                                         hostedEnabled: checked,
-                                        hostedSlug:
-                                          data.data?.hostedSlug ?? w.hostedSlug,
-                                      }
-                                    : w
-                                )
-                              );
+                                      }),
+                                    }
+                                  );
+                                  const data = await res.json();
+                                  if (!res.ok) {
+                                    throw new Error(
+                                      data.error ||
+                                        "Failed to update announcement page"
+                                    );
+                                  }
 
-                              toast.success(
-                                checked
-                                  ? "Hosted page is live"
-                                  : "Hosted page turned off"
-                              );
-                            } catch (error: any) {
-                              console.error(
-                                "Error updating hosted page visibility:",
-                                error
-                              );
-                              toast.error(
-                                error.message ||
-                                  "Failed to update hosted page visibility"
-                              );
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
+                                  setWebsites((prev) =>
+                                    prev.map((w) =>
+                                      w.id === website.id
+                                        ? {
+                                            ...w,
+                                            hostedEnabled: checked,
+                                            hostedSlug:
+                                              data.data?.hostedSlug ??
+                                              w.hostedSlug,
+                                          }
+                                        : w
+                                    )
+                                  );
 
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {(() => {
-                        const hasInstallInProgress =
-                          website.installJob &&
-                          website.installJob.status !== "COMPLETED" &&
-                          website.installJob.status !== "CANCELLED";
+                                  toast.success(
+                                    checked
+                                      ? "Announcement page is live"
+                                      : "Announcement page turned off"
+                                  );
+                                } catch (error: any) {
+                                  console.error(
+                                    "Error updating hosted page visibility:",
+                                    error
+                                  );
+                                  toast.error(
+                                    error.message ||
+                                      "Failed to update announcement page"
+                                  );
+                                }
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Public shareable page — no website install needed.
+                          </p>
 
-                        const badgeClasses = hasInstallInProgress
-                          ? "bg-amber-500/90 text-foreground"
-                          : website.pinned
-                            ? "bg-green-500 text-foreground"
-                            : "bg-muted text-foreground";
+                          {hostedUrl && hostedDisplay ? (
+                            <div className="rounded-lg border border-amber-600/30 bg-background px-3 py-2.5 space-y-2">
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+                                Your announcement link
+                              </p>
+                              <a
+                                href={hostedUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block text-sm font-semibold text-amber-800 dark:text-amber-200 hover:underline break-all"
+                              >
+                                {hostedDisplay}
+                              </a>
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8"
+                                  onClick={() => handleCopyHostedUrl(hostedUrl)}
+                                >
+                                  <Copy className="h-3.5 w-3.5 mr-1.5" />
+                                  Copy link
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8"
+                                  asChild
+                                >
+                                  <a
+                                    href={hostedUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                                    Open
+                                  </a>
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="rounded-lg border border-dashed border-amber-600/40 bg-background/60 px-3 py-2.5 text-xs text-muted-foreground">
+                              No public URL yet. Set a page name in announcement
+                              settings to get your{" "}
+                              <span className="font-mono">
+                                name.{getHostedPageDomain()}
+                              </span>{" "}
+                              link.
+                            </div>
+                          )}
+                        </div>
 
-                        let label: string;
-                        if (hasInstallInProgress && website.installJob) {
-                          label =
-                            website.installJob.platform === "To be confirmed"
-                              ? "Install form needed"
-                              : "Install in progress";
-                        } else {
-                          label = website.pinned
-                            ? "Widget live"
-                            : "Widget hidden";
-                        }
+                        {/* Shared details */}
+                        <div className="space-y-2 text-sm pt-0.5">
+                          {website.installJob && (
+                            <p className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold">Install:</span>
+                              <Badge
+                                variant={
+                                  website.installJob.status === "COMPLETED"
+                                    ? "default"
+                                    : "secondary"
+                                }
+                                className={
+                                  website.installJob.status === "PENDING_PAYMENT"
+                                    ? "bg-amber-500/20 text-amber-700 dark:text-amber-400"
+                                    : website.installJob.status === "QUEUED" ||
+                                        website.installJob.status ===
+                                          "IN_PROGRESS"
+                                      ? "bg-blue-500/20 text-blue-700 dark:text-blue-400"
+                                      : ""
+                                }
+                              >
+                                {website.installJob.status === "QUEUED"
+                                  ? website.installJob.platform ===
+                                    "To be confirmed"
+                                    ? "Install form not submitted"
+                                    : "Installation In Progress"
+                                  : website.installJob.status.replace(
+                                      /_/g,
+                                      " "
+                                    )}
+                              </Badge>
+                              {website.installJob.status === "QUEUED" &&
+                                website.installJob.platform ===
+                                  "To be confirmed" && (
+                                  <Button
+                                    variant="link"
+                                    size="sm"
+                                    className="h-auto p-0 text-primary"
+                                    onClick={() =>
+                                      router.push(
+                                        `/app/install-request?clientId=${website.id}`
+                                      )
+                                    }
+                                  >
+                                    Submit install form
+                                  </Button>
+                                )}
+                              {website.installJob.status ===
+                                "PENDING_PAYMENT" && (
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto p-0 text-primary"
+                                  onClick={() =>
+                                    router.push(
+                                      `/app/install-request?jobId=${website.installJob!.id}`
+                                    )
+                                  }
+                                >
+                                  Complete payment
+                                </Button>
+                              )}
+                            </p>
+                          )}
+                          <div>
+                            <span className="font-semibold">Phone:</span>
+                            {website.phoneNumbers &&
+                            website.phoneNumbers.length > 0 ? (
+                              <div className="mt-1 space-y-1">
+                                {website.phoneNumbers.map((phone) => (
+                                  <div
+                                    key={phone.id}
+                                    className="flex items-center gap-2 text-sm"
+                                  >
+                                    <span>{phone.phone}</span>
+                                    {phone.verified ? (
+                                      <Badge
+                                        variant="default"
+                                        className="bg-green-500 text-xs"
+                                      >
+                                        Verified
+                                      </Badge>
+                                    ) : (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs"
+                                      >
+                                        Unverified
+                                      </Badge>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm ml-1">
+                                None
+                              </span>
+                            )}
+                          </div>
+                          <p className="flex items-center gap-1.5 flex-wrap text-xs">
+                            <span className="font-semibold text-sm">
+                              Client ID
+                            </span>
+                            <span className="text-muted-foreground">
+                              (widget embed)
+                            </span>
+                            <span className="font-mono">
+                              {showClientId[website.id]
+                                ? website.id
+                                : `${website.id.slice(0, 6)}...`}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() =>
+                                toggleClientIdVisibility(website.id)
+                              }
+                            >
+                              {showClientId[website.id] ? (
+                                <EyeOff className="h-3.5 w-3.5" />
+                              ) : (
+                                <Eye className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => handleCopyClientId(website.id)}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </Button>
+                          </p>
+                        </div>
 
-                        return (
-                          <span
-                            className={`inline-flex max-w-full px-2 py-0.5 text-xs rounded-full font-medium whitespace-nowrap ${badgeClasses}`}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 mt-auto">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full rounded-full border-border bg-background hover:bg-muted"
+                            onClick={() => handleEditClick(website)}
                           >
-                            {label}
-                          </span>
-                        );
-                      })()}
-                      <span
-                        className={`inline-flex max-w-full px-2 py-0.5 text-xs rounded-full font-medium whitespace-nowrap ${
-                          website.hostedEnabled
-                            ? "bg-green-500/90 text-foreground"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {website.hostedEnabled
-                          ? "Hosted page live"
-                          : website.hostedSlug
-                            ? "Hosted page off"
-                            : "Hosted page not set up"}
-                      </span>
-                    </div>
-                  </div>
-                </CardHeader>
-
-
-                <Separator />
-                <CardContent className="px-4 py-1">
-  <div className="space-y-3">
-      {!siteReadyForWidget(website) && (
-        <div className="rounded-lg border border-amber-300/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-950 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-100">
-          <p className="font-medium">
-            Add website &amp; keyword to enable the widget
-          </p>
-          <p className="mt-1 text-xs opacity-90">
-            {(() => {
-              const gaps = getWidgetSetupGaps(website);
-              const missing = [
-                gaps.needsDomain ? "website domain" : null,
-                gaps.needsKeyword ? "SMS keyword" : null,
-              ]
-                .filter(Boolean)
-                .join(" and ");
-              return `Enter your ${missing} so you can turn the widget on and embed it on your site.`;
-            })()}
-          </p>
-          <Button
-            type="button"
-            size="sm"
-            className="mt-2 !bg-amber-600 hover:!bg-amber-700 !text-white"
-            onClick={() => openWidgetSetup(website, false)}
-          >
-            Add website &amp; keyword
-          </Button>
-        </div>
-      )}
-      <div className="flex items-center gap-2 flex-wrap">
-        <p className="text-sm">
-          <span className="font-semibold">Domain:</span>{" "}
-          {isPlaceholderDomain(website.domain) ? (
-            <span className="text-muted-foreground italic">Not set</span>
-          ) : (
-            website.domain
-          )}
-        </p>
-        {website.keyword ? (
-          <p className="text-sm">
-            <span className="font-semibold">SMS:</span>{" "}
-            <code className="text-xs bg-muted px-1 rounded">
-              {website.keyword}: message
-            </code>
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground">SMS:</span>{" "}
-            <span className="italic">Keyword not set</span>
-          </p>
-        )}
-        {website.hostedEnabled && website.hostedSlug && (
-          <a
-            href={`https://${website.hostedSlug}.${getHostedPageDomain()}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-amber-700 hover:underline"
-          >
-            <Link2 className="h-3 w-3" />
-            {website.hostedSlug}.{getHostedPageDomain()}
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
-      </div>
-      {website.installJob && (
-        <p className="flex items-center gap-2">
-          <span className="font-semibold">Install request:</span>
-          <Badge
-            variant={website.installJob.status === "COMPLETED" ? "default" : "secondary"}
-            className={
-              website.installJob.status === "PENDING_PAYMENT"
-                ? "bg-amber-500/20 text-amber-700 dark:text-amber-400"
-                : website.installJob.status === "QUEUED" || website.installJob.status === "IN_PROGRESS"
-                  ? "bg-blue-500/20 text-blue-700 dark:text-blue-400"
-                  : ""
-            }
-          >
-            {website.installJob.status === "QUEUED"
-              ? website.installJob.platform === "To be confirmed"
-                ? "Install form not submitted"
-                : "Installation In Progress"
-              : website.installJob.status.replace(/_/g, " ")}
-          </Badge>
-          {website.installJob.status === "QUEUED" &&
-            website.installJob.platform === "To be confirmed" && (
-              <Button
-                variant="link"
-                size="sm"
-                className="h-auto p-0 text-primary"
-                onClick={() => router.push(`/app/install-request?clientId=${website.id}`)}
-              >
-                Submit install form
-              </Button>
-            )}
-          {website.installJob.status === "PENDING_PAYMENT" && (
-            <Button
-              variant="link"
-              size="sm"
-              className="h-auto p-0 text-primary"
-              onClick={() => router.push(`/app/install-request?jobId=${website.installJob!.id}`)}
-            >
-              Complete payment
-            </Button>
-          )}
-        </p>
-      )}
-      <div>
-        <span className="font-semibold">Phone Numbers:</span>
-        {website.phoneNumbers && website.phoneNumbers.length > 0 ? (
-          <div className="mt-1 space-y-1">
-            {website.phoneNumbers.map((phone) => (
-              <div key={phone.id} className="flex items-center gap-2 text-sm">
-                <span>{phone.phone}</span>
-                {phone.verified ? (
-                  <Badge variant="default" className="bg-green-500 text-xs">
-                    Verified
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-xs">
-                    Unverified
-                  </Badge>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <span className="text-muted-foreground text-sm ml-2">No phone numbers</span>
-        )}
-      </div>
-      <p className="flex items-center space-x-2 flex-wrap gap-y-1">
-        <span className="font-semibold">Client ID</span>
-        <span className="text-xs text-muted-foreground">(widget embed only — not for texting)</span>
-        <span className="font-mono text-sm">
-          {showClientId[website.id] ? website.id : `${website.id.slice(0, 6)}...`}
-        </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => toggleClientIdVisibility(website.id)}
-        >
-          {showClientId[website.id] ? (
-            <EyeOff className="h-4 w-4" />
-          ) : (
-            <Eye className="h-4 w-4" />
-          )}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => handleCopyClientId(website.id)}
-        >
-          <Copy className="h-4 w-4" />
-        </Button>
-      </p>
-
-      {/* Configure button */}
-      <div className="pt-2">
-        <Button
-          variant="outline"
-          className="w-full bg-primary rounded-full hover:bg-primary/80 text-foreground"
-          onClick={() => handleEditClick(website)}
-        >
-          Configure Settings
-        </Button>
-      </div>
-
-    </div>
-  </CardContent>
+                            Widget settings
+                          </Button>
+                          <Button
+                            type="button"
+                            className="w-full rounded-full !bg-amber-600 hover:!bg-amber-700 !text-white"
+                            onClick={() =>
+                              handleOpenAnnouncementSettings(website)
+                            }
+                          >
+                            Announcement page
+                          </Button>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </CardContent>
               </Card>
             </motion.div>
           ))}
@@ -1200,20 +1308,15 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Configure Sheet */}
+      {/* Widget settings sheet */}
       <Sheet  open={configureDialogOpen} onOpenChange={setConfigureDialogOpen}>
         <SheetContent className="w-[90vw] sm:w-[80vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw] 2xl:w-[45vw] overflow-y-auto pl-5 pr-5">
           <SheetHeader className="pb-6">
-            <SheetTitle className="text-xl sm:text-2xl">Configure Widget Settings</SheetTitle>
+            <SheetTitle className="text-xl sm:text-2xl">Widget settings</SheetTitle>
             <SheetDescription className="text-sm sm:text-base">
-              Update your website settings and widget preferences.
+              Domain, SMS keyword, embed, and widget styling for{" "}
+              {selectedWebsite?.name ?? "this site"}.
             </SheetDescription>
-            <p className="text-xs text-muted-foreground rounded-md border border-border bg-muted/40 px-3 py-2 mt-2">
-              Most settings below are for the website widget. Hosted-page-only
-              customers can skip to &quot;Hosted announcement page&quot; at the
-              bottom — widget settings are not required for a shareable hosted
-              link.
-            </p>
           </SheetHeader>
           
           <div className="space-y-6">
@@ -1824,16 +1927,6 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               </div>
             </div>
 
-            {selectedWebsite && (
-              <>
-                <Separator />
-                <HostedPageSettings
-                  clientId={selectedWebsite.id}
-                  siteName={selectedWebsite.name}
-                />
-              </>
-            )}
-
             {/* SMS Disclaimer */}
             <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-amber-200">
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -1870,6 +1963,50 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               </Button>
             </div>
           </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {/* Announcement page settings sheet */}
+      <Sheet
+        open={hostedSettingsOpen}
+        onOpenChange={(open) => {
+          setHostedSettingsOpen(open);
+          if (!open) {
+            // keep selectedWebsite so other dialogs still work if opened next
+          }
+        }}
+      >
+        <SheetContent className="w-[90vw] sm:w-[480px] md:w-[520px] overflow-y-auto pl-5 pr-5">
+          <SheetHeader className="pb-4">
+            <SheetTitle className="text-xl sm:text-2xl">
+              Announcement page
+            </SheetTitle>
+            <SheetDescription className="text-sm sm:text-base">
+              Public shareable page for{" "}
+              <strong>{selectedWebsite?.name ?? "this site"}</strong> — no
+              website install required.
+            </SheetDescription>
+          </SheetHeader>
+          {selectedWebsite && (
+            <HostedPageSettings
+              clientId={selectedWebsite.id}
+              siteName={selectedWebsite.name}
+              onSaved={({ hostedSlug, hostedEnabled }) => {
+                setWebsites((prev) =>
+                  prev.map((w) =>
+                    w.id === selectedWebsite.id
+                      ? { ...w, hostedSlug, hostedEnabled }
+                      : w
+                  )
+                );
+                setSelectedWebsite((prev) =>
+                  prev && prev.id === selectedWebsite.id
+                    ? { ...prev, hostedSlug, hostedEnabled }
+                    : prev
+                );
+              }}
+            />
+          )}
         </SheetContent>
       </Sheet>
     </div>
