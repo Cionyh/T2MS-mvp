@@ -83,7 +83,9 @@ import { HostedPageSettings } from "./hosted-page-settings";
 import {
   isPlaceholderDomain,
   siteReadyForWidget,
+  getWidgetSetupGaps,
 } from "@/lib/client-setup";
+import { planRequiresSmsKeyword } from "@/lib/plan-keyword";
 
 // Widget type instructions
 const widgetTypeInstructions = {
@@ -272,16 +274,27 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     if (!widgetSetupSite) return;
     const domain = widgetSetupDomain.trim();
     const keyword = widgetSetupKeyword.trim().toUpperCase();
+    const keywordRequired = planRequiresSmsKeyword(plan);
+
     if (!domain) {
       toast.error("Please enter your website domain.");
       return;
     }
-    if (!keyword) {
-      toast.error("Please enter an SMS keyword (e.g. BAKERY).");
-      return;
-    }
-    if (!/^[A-Za-z0-9_]{1,50}$/.test(keyword)) {
-      toast.error("Keyword must be 1–50 characters, letters, numbers, or underscore only.");
+    if (keywordRequired) {
+      if (!keyword) {
+        toast.error("Please enter an SMS keyword (e.g. BAKERY).");
+        return;
+      }
+      if (!/^[A-Za-z0-9_]{1,50}$/.test(keyword)) {
+        toast.error(
+          "Keyword must be 1–50 characters, letters, numbers, or underscore only."
+        );
+        return;
+      }
+    } else if (keyword && !/^[A-Za-z0-9_]{1,50}$/.test(keyword)) {
+      toast.error(
+        "Keyword must be 1–50 characters, letters, numbers, or underscore only."
+      );
       return;
     }
 
@@ -292,7 +305,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           domain,
-          keyword,
+          ...(keyword ? { keyword } : {}),
           ...(widgetSetupEnableAfter ? { pinned: true } : {}),
         }),
       });
@@ -308,7 +321,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             ? {
                 ...w,
                 domain: updated?.domain ?? domain,
-                keyword: updated?.keyword ?? keyword,
+                keyword: updated?.keyword ?? (keyword || w.keyword),
                 pinned: widgetSetupEnableAfter ? true : w.pinned,
               }
             : w
@@ -319,8 +332,12 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       setWidgetSetupSite(null);
       toast.success(
         widgetSetupEnableAfter
-          ? "Website and keyword saved. Widget is now live."
-          : "Website and keyword saved. You can enable the widget when ready."
+          ? keyword
+            ? "Website details saved. Widget is now live."
+            : "Website saved. Widget is now live."
+          : keyword
+            ? "Website and keyword saved. You can enable the widget when ready."
+            : "Website saved. You can enable the widget when ready."
       );
       router.refresh();
     } catch (error: unknown) {
@@ -787,9 +804,14 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                                   return;
                                 }
 
-                                if (checked && !siteReadyForWidget(website)) {
+                                if (checked && !siteReadyForWidget(website, plan)) {
+                                  const gaps = getWidgetSetupGaps(website, plan);
                                   toast.warning(
-                                    "Add your website domain and SMS keyword before enabling the widget."
+                                    gaps.needsDomain && gaps.needsKeyword
+                                      ? "Add your website domain and SMS keyword before enabling the widget."
+                                      : gaps.needsDomain
+                                        ? "Add your website domain before enabling the widget."
+                                        : "Add an SMS keyword before enabling the widget."
                                   );
                                   openWidgetSetup(website, true);
                                   return;
@@ -874,10 +896,19 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                               )}
                             </p>
                           </div>
-                          {!siteReadyForWidget(website) && (
+                          {!siteReadyForWidget(website, plan) && (
                             <div className="rounded-lg border border-amber-300/80 bg-amber-50 px-2.5 py-2 text-xs text-amber-950 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-100">
                               <p className="font-medium">
-                                Domain &amp; keyword needed for widget
+                                {(() => {
+                                  const gaps = getWidgetSetupGaps(website, plan);
+                                  if (gaps.needsDomain && gaps.needsKeyword) {
+                                    return "Domain & keyword needed for widget";
+                                  }
+                                  if (gaps.needsDomain) {
+                                    return "Website domain needed for widget";
+                                  }
+                                  return "SMS keyword needed for multi-site widget";
+                                })()}
                               </p>
                               <Button
                                 type="button"
@@ -885,7 +916,16 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                                 className="mt-1.5 h-7 !bg-amber-600 hover:!bg-amber-700 !text-white"
                                 onClick={() => openWidgetSetup(website, false)}
                               >
-                                Add website &amp; keyword
+                                {(() => {
+                                  const gaps = getWidgetSetupGaps(website, plan);
+                                  if (gaps.needsDomain && gaps.needsKeyword) {
+                                    return "Add website & keyword";
+                                  }
+                                  if (gaps.needsDomain) {
+                                    return "Add website domain";
+                                  }
+                                  return "Add SMS keyword";
+                                })()}
                               </Button>
                             </div>
                           )}
@@ -1236,11 +1276,19 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add website &amp; SMS keyword</DialogTitle>
+            <DialogTitle>
+              {planRequiresSmsKeyword(plan)
+                ? "Add website & SMS keyword"
+                : "Add website domain"}
+            </DialogTitle>
             <DialogDescription>
               {widgetSetupEnableAfter
-                ? "The widget needs your website domain and an SMS keyword before it can go live."
-                : "Add your website domain and SMS keyword so you can enable the widget on your site."}
+                ? planRequiresSmsKeyword(plan)
+                  ? "The widget needs your website domain and an SMS keyword before it can go live."
+                  : "The widget needs your website domain before it can go live. SMS keyword is optional on your plan."
+                : planRequiresSmsKeyword(plan)
+                  ? "Add your website domain and SMS keyword so you can enable the widget on your site."
+                  : "Add your website domain so you can enable the widget. SMS keyword is optional on single-site plans."}
               {widgetSetupSite?.name ? (
                 <span className="mt-1 block text-foreground">
                   Site: <strong>{widgetSetupSite.name}</strong>
@@ -1260,10 +1308,15 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="widget-setup-keyword">SMS keyword *</Label>
+              <Label htmlFor="widget-setup-keyword">
+                SMS keyword
+                {planRequiresSmsKeyword(plan) ? " *" : " (optional)"}
+              </Label>
               <Input
                 id="widget-setup-keyword"
-                placeholder="BAKERY"
+                placeholder={
+                  planRequiresSmsKeyword(plan) ? "BAKERY" : "Optional"
+                }
                 value={widgetSetupKeyword}
                 onChange={(e) =>
                   setWidgetSetupKeyword(
@@ -1274,7 +1327,9 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 maxLength={50}
               />
               <p className="text-xs text-muted-foreground">
-                To post via text, send:{" "}
+                {planRequiresSmsKeyword(plan)
+                  ? "Required for multi-site routing. To post via text: "
+                  : "Optional. To post via text: "}
                 <strong>
                   {widgetSetupKeyword || "KEYWORD"}: your message
                 </strong>
@@ -1345,21 +1400,29 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             </div>
 
             <div>
-              <Label className="mb-2 text-sm font-medium">SMS Keyword</Label>
+              <Label className="mb-2 text-sm font-medium">
+                SMS Keyword
+                {planRequiresSmsKeyword(plan) ? "" : " (optional)"}
+              </Label>
               <Input
                 value={editedKeyword}
                 onChange={(e) =>
                   setEditedKeyword(e.target.value.replace(/\s/g, "").toUpperCase())
                 }
-                placeholder="e.g. BAKERY"
+                placeholder={
+                  planRequiresSmsKeyword(plan) ? "e.g. BAKERY" : "Optional"
+                }
                 className="w-full"
                 maxLength={50}
               />
               <p className="mt-1 text-xs text-muted-foreground">
+                {planRequiresSmsKeyword(plan)
+                  ? "Required for multi-site routing. "
+                  : "Optional on single-site plans. "}
                 To post via text to{" "}
                 <strong>{getT2msSmsDisplayNumber()}</strong>, send:{" "}
                 <strong>{editedKeyword || "KEYWORD"}: your message</strong>
-                {!editedKeyword.trim() && (
+                {planRequiresSmsKeyword(plan) && !editedKeyword.trim() && (
                   <span className="block mt-1 text-amber-700 dark:text-amber-400">
                     Required to enable the website widget.
                   </span>

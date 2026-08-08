@@ -8,7 +8,9 @@ import {
   isPlaceholderDomain,
   normalizeClientDomain,
   siteReadyForWidget,
+  widgetSetupErrorMessage,
 } from "@/lib/client-setup";
+import { getOrganizationPlan } from "@/lib/plan-limits";
 import { INSTALL_JOB_STATUS } from "@/lib/job-status";
 
 /**
@@ -117,13 +119,16 @@ export async function PUT(
 
     const existing = await prisma.client.findUnique({
       where: { id },
-      select: { domain: true, keyword: true },
+      select: { domain: true, keyword: true, organizationId: true },
     });
     if (!existing) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
 
     const hadPlaceholderDomain = isPlaceholderDomain(existing.domain);
+    const plan = existing.organizationId
+      ? await getOrganizationPlan(existing.organizationId)
+      : "free";
 
     const updateData: Record<string, unknown> = {
       ...(name && { name }),
@@ -194,11 +199,16 @@ export async function PUT(
     const nextKeyword =
       typeof updateData.keyword === "string" ? updateData.keyword : existing.keyword;
 
-    if (pinned === true && !siteReadyForWidget({ domain: nextDomain, keyword: nextKeyword })) {
+    if (
+      pinned === true &&
+      !siteReadyForWidget({ domain: nextDomain, keyword: nextKeyword }, plan)
+    ) {
       return NextResponse.json(
         {
-          error:
-            "Add your website domain and SMS keyword before enabling the widget.",
+          error: widgetSetupErrorMessage(
+            { domain: nextDomain, keyword: nextKeyword },
+            plan
+          ),
           needsWidgetSetup: true,
         },
         { status: 400 }
