@@ -58,6 +58,10 @@ export function HostedPageSettings({
   const [footerText, setFooterText] = useState("")
   const [theme, setTheme] = useState<HostedThemeId>("classic")
   const [showLogo, setShowLogo] = useState(true)
+  const [showWebsiteLink, setShowWebsiteLink] = useState(false)
+  const [companyWebsiteLink, setCompanyWebsiteLink] = useState<string | null>(
+    null
+  )
   const [logoUrl, setLogoUrl] = useState("")
   const [backgroundImageUrl, setBackgroundImageUrl] = useState("")
   const [logoUploading, setLogoUploading] = useState(false)
@@ -96,6 +100,13 @@ export function HostedPageSettings({
       setFooterText(data.hostedFooterText ?? "")
       setTheme(normalizeHostedTheme(data.hostedTheme))
       setShowLogo(data.hostedShowLogo !== false)
+      setShowWebsiteLink(Boolean(data.hostedShowWebsiteLink))
+      setCompanyWebsiteLink(
+        typeof data.companyWebsiteLink === "string" &&
+          data.companyWebsiteLink.trim()
+          ? data.companyWebsiteLink.trim()
+          : null
+      )
       setLogoUrl(data.hostedLogoUrl ?? "")
       setBackgroundImageUrl(data.hostedBackgroundImageUrl ?? "")
       setEnabled(data.hostedEnabled ?? false)
@@ -196,6 +207,9 @@ export function HostedPageSettings({
           hostedFooterText: footerText,
           hostedTheme: theme,
           hostedShowLogo: showLogo,
+          hostedShowWebsiteLink: companyWebsiteLink
+            ? showWebsiteLink
+            : false,
           hostedLogoUrl: logoUrl.trim() || null,
           hostedBackgroundImageUrl: backgroundImageUrl.trim() || null,
         }),
@@ -210,6 +224,9 @@ export function HostedPageSettings({
       }
       if (typeof data.data?.hostedShowLogo === "boolean") {
         setShowLogo(data.data.hostedShowLogo)
+      }
+      if (typeof data.data?.hostedShowWebsiteLink === "boolean") {
+        setShowWebsiteLink(data.data.hostedShowWebsiteLink)
       }
       if (data.data?.hostedLogoUrl !== undefined) {
         setLogoUrl(data.data.hostedLogoUrl ?? "")
@@ -493,18 +510,39 @@ export function HostedPageSettings({
       <div className="space-y-2">
         <Label htmlFor="hosted-footer">Page footer text (optional)</Label>
         <p className="text-xs text-muted-foreground">
-          Shown at the bottom of your hosted page. Use this for a website
-          link, hours, contact info, or any message you want visitors to see.
+          Shown at the bottom of your announcement page. Use for hours,
+          contact info, or any message you want visitors to see.
         </p>
         <Textarea
           id="hosted-footer"
           value={footerText}
           onChange={(e) => setFooterText(e.target.value)}
-          placeholder="Visit us at www.example.com"
+          placeholder="Open Sundays · All welcome"
           rows={3}
           maxLength={1000}
         />
       </div>
+
+      {companyWebsiteLink ? (
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <Label htmlFor="hosted-show-website">
+              Use website link on the footer
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              When on, shows &quot;Visit website&quot; under the footer text,
+              linking to{" "}
+              <span className="break-all font-mono">{companyWebsiteLink}</span>
+              .
+            </p>
+          </div>
+          <Switch
+            id="hosted-show-website"
+            checked={showWebsiteLink}
+            onCheckedChange={setShowWebsiteLink}
+          />
+        </div>
+      ) : null}
 
       <div className="flex items-center justify-between gap-4">
         <div>

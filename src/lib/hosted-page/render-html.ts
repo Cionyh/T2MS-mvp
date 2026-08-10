@@ -14,6 +14,22 @@ function formatPlainTextBlock(text: string): string {
   return escapeHtml(text).replace(/\n/g, "<br />")
 }
 
+/** Ensure href is a safe absolute-or-protocol-relative http(s) URL for the public page. */
+function normalizeWebsiteHref(raw: string): string | null {
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  try {
+    const withProtocol = /^https?:\/\//i.test(trimmed)
+      ? trimmed
+      : `https://${trimmed}`
+    const url = new URL(withProtocol)
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null
+    return url.toString()
+  } catch {
+    return null
+  }
+}
+
 function themeStyles(
   theme: HostedThemeId,
   defaultBgColor: string,
@@ -63,6 +79,19 @@ function themeStyles(
       opacity: 0.55;
       text-align: center;
       padding: 0 16px 20px;
+    }
+    .t2ms-footer-link {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      color: inherit;
+      opacity: 0.9;
+    }
+    .t2ms-footer-link:hover {
+      opacity: 1;
     }
   `
 
@@ -738,9 +767,20 @@ export function renderHostedPageHtml(
     ? `<div class="t2ms-attach"><img src="${escapeHtml(attachImage)}" alt="" /></div>`
     : ""
 
-  const footerTextBlock = hostedFooterText
-    ? `<footer class="t2ms-footer"><div class="t2ms-footer-text">${formatPlainTextBlock(hostedFooterText)}</div></footer>`
+  const websiteHref =
+    data.hostedShowWebsiteLink && widgetConfig.companyWebsiteLink
+      ? normalizeWebsiteHref(widgetConfig.companyWebsiteLink)
+      : null
+  const websiteLinkBlock = websiteHref
+    ? `<a class="t2ms-footer-link" href="${escapeHtml(websiteHref)}" target="_blank" rel="noopener noreferrer">Visit website</a>`
     : ""
+  const footerTextInner = hostedFooterText
+    ? `<div class="t2ms-footer-text">${formatPlainTextBlock(hostedFooterText)}</div>`
+    : ""
+  const footerTextBlock =
+    footerTextInner || websiteLinkBlock
+      ? `<footer class="t2ms-footer">${footerTextInner}${websiteLinkBlock}</footer>`
+      : ""
 
   const css = themeStyles(
     theme,

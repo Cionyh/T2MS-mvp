@@ -46,9 +46,11 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         hostedFooterText: true,
         hostedTheme: true,
         hostedShowLogo: true,
+        hostedShowWebsiteLink: true,
         hostedLogoUrl: true,
         hostedBackgroundImageUrl: true,
         hostedPublishedAt: true,
+        widgetConfig: true,
       },
     })
 
@@ -64,9 +66,21 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         }
       : null
 
+    const config =
+      client.widgetConfig && typeof client.widgetConfig === "object"
+        ? (client.widgetConfig as Record<string, unknown>)
+        : {}
+    const companyWebsiteLink =
+      typeof config.companyWebsiteLink === "string"
+        ? config.companyWebsiteLink.trim()
+        : ""
+
+    const { widgetConfig: _widgetConfig, ...rest } = client
+
     return NextResponse.json({
-      ...client,
+      ...rest,
       hostedTheme: normalizeHostedTheme(client.hostedTheme),
+      companyWebsiteLink: companyWebsiteLink || null,
       publicUrls,
     })
   } catch (err) {
@@ -99,6 +113,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedFooterText,
       hostedTheme,
       hostedShowLogo,
+      hostedShowWebsiteLink,
       hostedLogoUrl,
       hostedBackgroundImageUrl,
     } = body as {
@@ -108,6 +123,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedFooterText?: string | null
       hostedTheme?: string | null
       hostedShowLogo?: boolean
+      hostedShowWebsiteLink?: boolean
       hostedLogoUrl?: string | null
       hostedBackgroundImageUrl?: string | null
     }
@@ -132,6 +148,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedFooterText?: string | null
       hostedTheme?: string
       hostedShowLogo?: boolean
+      hostedShowWebsiteLink?: boolean
       hostedLogoUrl?: string | null
       hostedBackgroundImageUrl?: string | null
       hostedPublishedAt?: Date | null
@@ -164,6 +181,10 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
     if (hostedShowLogo !== undefined) {
       updateData.hostedShowLogo = Boolean(hostedShowLogo)
+    }
+
+    if (hostedShowWebsiteLink !== undefined) {
+      updateData.hostedShowWebsiteLink = Boolean(hostedShowWebsiteLink)
     }
 
     const logo = normalizeOptionalUrl(hostedLogoUrl)
@@ -231,6 +252,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         hostedFooterText: true,
         hostedTheme: true,
         hostedShowLogo: true,
+        hostedShowWebsiteLink: true,
         hostedLogoUrl: true,
         hostedBackgroundImageUrl: true,
         hostedPublishedAt: true,

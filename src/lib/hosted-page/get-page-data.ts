@@ -24,6 +24,7 @@ export async function getHostedPageBySlug(
       hostedFooterText: true,
       hostedTheme: true,
       hostedShowLogo: true,
+      hostedShowWebsiteLink: true,
       hostedLogoUrl: true,
       hostedBackgroundImageUrl: true,
       defaultBgColor: true,
@@ -52,6 +53,7 @@ export async function getHostedPageBySlug(
     hostedFooterText: client.hostedFooterText,
     hostedTheme: normalizeHostedTheme(client.hostedTheme),
     hostedShowLogo: client.hostedShowLogo !== false,
+    hostedShowWebsiteLink: Boolean(client.hostedShowWebsiteLink),
     hostedLogoUrl: client.hostedLogoUrl,
     hostedBackgroundImageUrl: client.hostedBackgroundImageUrl,
     messageContent:
