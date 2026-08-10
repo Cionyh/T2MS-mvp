@@ -50,8 +50,10 @@ import {
   storeCouponCode,
 } from "@/lib/coupons";
 import { useChurchIntroPrice } from "@/hooks/use-church-intro-price";
+import { planRequiresSmsKeyword } from "@/lib/plan-keyword";
 
 const ONBOARDING_PLAN_STORAGE_KEY = "t2ms_onboarding_plan";
+const CHURCH_ORG_NAME_STORAGE_KEY = "t2ms_church_organization_name";
 
 function readChurchPlanIntent(planParam: string | null): boolean {
   if (planParam === "church") return true;
@@ -59,6 +61,14 @@ function readChurchPlanIntent(planParam: string | null): boolean {
     return sessionStorage.getItem(ONBOARDING_PLAN_STORAGE_KEY) === "church";
   } catch {
     return false;
+  }
+}
+
+function readStoredChurchOrganizationName(): string {
+  try {
+    return sessionStorage.getItem(CHURCH_ORG_NAME_STORAGE_KEY)?.trim() || "";
+  } catch {
+    return "";
   }
 }
 
@@ -317,6 +327,10 @@ function OnboardingContent() {
     readChurchPlanIntent(planParam) ||
     status?.planId === "church";
 
+  // Keyword only for multi-site plans (pro/growth/enterprise) — not church/starter
+  const showSmsKeyword =
+    !isChurchFunnel && planRequiresSmsKeyword(status?.planId);
+
   const registerSiteCopy = isChurchFunnel
     ? {
         title: "Register Your Church",
@@ -324,7 +338,7 @@ function OnboardingContent() {
           "Tell us about your church so we can set up your announcement page.",
         cardTitle: "Church Details",
         cardDescription:
-          "Enter your church name. Website domain and SMS keyword are optional.",
+          "Confirm your church name. Website domain is optional.",
         nameLabel: "Church Name *",
         namePlaceholder: "Grace Community Church",
         keywordPlaceholder: "GRACE",
@@ -342,8 +356,9 @@ function OnboardingContent() {
         subtitle:
           "Tell us about your business so we can set up your announcement page.",
         cardTitle: "Business Details",
-        cardDescription:
-          "Enter your business name. Website domain and SMS keyword are optional.",
+        cardDescription: showSmsKeyword
+          ? "Enter your business name. Website domain and SMS keyword are optional."
+          : "Enter your business name. Website domain is optional.",
         nameLabel: "Business Name *",
         namePlaceholder: "Your Business Name",
         keywordPlaceholder: "BAKERY",
@@ -363,7 +378,7 @@ function OnboardingContent() {
       toast.error(registerSiteCopy.nameRequired);
       return;
     }
-    const rawKeyword = registerForm.keyword.trim();
+    const rawKeyword = showSmsKeyword ? registerForm.keyword.trim() : "";
     if (rawKeyword && !/^[A-Za-z0-9_]{1,50}$/.test(rawKeyword)) {
       toast.error("Keyword must be 1–50 characters, letters, numbers, or underscore only.");
       return;
@@ -567,6 +582,55 @@ function OnboardingContent() {
       }
     }
   }, [planParam, churchFunnelIntent]);
+
+  // Prefill church name from eligibility modal (onboarding.churchOrganizationName)
+  useEffect(() => {
+    if (!showRegisterSiteStep || !isChurchFunnel) return;
+
+    let cancelled = false;
+
+    const applyName = (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed || cancelled) return;
+      setRegisterForm((prev) =>
+        prev.name.trim() ? prev : { ...prev, name: trimmed }
+      );
+    };
+
+    const fromSession = readStoredChurchOrganizationName();
+    if (fromSession) {
+      applyName(fromSession);
+    }
+
+    void (async () => {
+      try {
+        const res = await fetch("/api/onboarding/church-verification");
+        if (!res.ok) return;
+        const data = await res.json();
+        const orgName =
+          typeof data.organizationName === "string"
+            ? data.organizationName
+            : "";
+        if (orgName.trim()) {
+          try {
+            sessionStorage.setItem(
+              CHURCH_ORG_NAME_STORAGE_KEY,
+              orgName.trim()
+            );
+          } catch {
+            // ignore
+          }
+          applyName(orgName);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showRegisterSiteStep, isChurchFunnel]);
 
   useEffect(() => {
     if (!statusLoaded || churchPlanAutoStarted.current) return;
@@ -792,26 +856,33 @@ function OnboardingContent() {
                     {registerSiteCopy.domainHelp}
                   </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="keyword">
-                    SMS Keyword{" "}
-                    <span className="text-muted-foreground font-normal">(optional)</span>
-                  </Label>
-                  <Input
-                    id="keyword"
-                    placeholder={registerSiteCopy.keywordPlaceholder}
-                    value={registerForm.keyword}
-                    onChange={(e) =>
-                      setRegisterForm((s) => ({ ...s, keyword: e.target.value.replace(/\s/g, "").toUpperCase() }))
-                    }
-                    disabled={!!loading}
-                    maxLength={50}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Optional for multi-site routing. To post via text:{" "}
-                    <strong>{registerForm.keyword || "KEYWORD"}: your message</strong>
-                  </p>
-                </div>
+                {showSmsKeyword ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="keyword">
+                      SMS Keyword{" "}
+                      <span className="text-muted-foreground font-normal">(optional)</span>
+                    </Label>
+                    <Input
+                      id="keyword"
+                      placeholder={registerSiteCopy.keywordPlaceholder}
+                      value={registerForm.keyword}
+                      onChange={(e) =>
+                        setRegisterForm((s) => ({
+                          ...s,
+                          keyword: e.target.value.replace(/\s/g, "").toUpperCase(),
+                        }))
+                      }
+                      disabled={!!loading}
+                      maxLength={50}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Optional for multi-site routing. To post via text:{" "}
+                      <strong>
+                        {registerForm.keyword || "KEYWORD"}: your message
+                      </strong>
+                    </p>
+                  </div>
+                ) : null}
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number *</Label>
                   <PhoneInput
