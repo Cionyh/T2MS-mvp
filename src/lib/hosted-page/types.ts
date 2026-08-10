@@ -16,8 +16,14 @@ export type HostedPageData = {
   hostedFooterText: string | null
   /** classic | light | spotlight | banner | minimal | aurora | stage */
   hostedTheme?: string | null
-  /** When false, logo is hidden on hosted page even if logoUrl is set */
+  /** When false, logo is hidden on hosted page even if logo URL is set */
   hostedShowLogo?: boolean | null
+  /** When true and widget has companyWebsiteLink, show Visit website under footer */
+  hostedShowWebsiteLink?: boolean | null
+  /** Announcement page logo (not the website widget logo) */
+  hostedLogoUrl?: string | null
+  /** Announcement page background image */
+  hostedBackgroundImageUrl?: string | null
   messageContent: string
   defaultBgColor: string
   defaultTextColor: string

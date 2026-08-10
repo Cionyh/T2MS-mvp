@@ -1758,11 +1758,12 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               </div>
             </div>
 
-            {/* Logo and Branding */}
+            {/* Logo and Branding — website widget only */}
             <div>
-              <Label className="mb-2 text-sm font-medium">Attach Logo</Label>
+              <Label className="mb-2 text-sm font-medium">Widget logo</Label>
               <p className="text-xs text-muted-foreground mb-2">
-                Upload an image (JPEG, PNG, WebP, or GIF, max 5MB) or paste an image URL.
+                Used on the website widget only — not the announcement page.
+                Upload JPEG, PNG, WebP, or GIF (max 5MB) or paste a URL.
               </p>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
@@ -1823,9 +1824,10 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             </div>
 
             <div>
-              <Label className="mb-2 text-sm font-medium">Widget Background Image</Label>
+              <Label className="mb-2 text-sm font-medium">Widget background image</Label>
               <p className="text-xs text-muted-foreground mb-2">
-                Upload an image or paste a URL. Shown behind the widget when supported by the layout.
+                Website widget only — not the announcement page. Upload an image
+                or paste a URL.
               </p>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input

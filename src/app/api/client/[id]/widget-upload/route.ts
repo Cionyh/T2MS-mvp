@@ -77,14 +77,17 @@ export async function POST(
       );
     }
 
+    const purposeRaw = String(formData.get("purpose") || "widget").toLowerCase();
+    const purposeDir = purposeRaw === "hosted" ? "hosted" : "widget";
+
     const buf = Buffer.from(await file.arrayBuffer());
     const fileName = `${randomUUID()}${ext}`;
-    const dir = path.join(getUploadsRoot(), "widget", clientId);
+    const dir = path.join(getUploadsRoot(), purposeDir, clientId);
     await mkdir(dir, { recursive: true });
     const fullPath = path.join(dir, fileName);
     await writeFile(fullPath, buf);
 
-    const relative = `widget/${clientId}/${fileName}`;
+    const relative = `${purposeDir}/${clientId}/${fileName}`;
     const origin = getPublicOrigin(req);
     const url = publicUrlForUpload(relative, origin || undefined);
     return NextResponse.json({ url });

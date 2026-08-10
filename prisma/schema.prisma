@@ -267,8 +267,13 @@ model Client {
   hostedFooterText  String?
   /// Public page layout: classic | light | spotlight | banner | minimal | aurora | stage
   hostedTheme       String    @default("classic")
-  /// Whether to display widget logoUrl on the hosted page (default on)
+  /// Whether to display hosted page logo (default on)
   hostedShowLogo    Boolean   @default(true)
+  /// Show "Visit website" footer link (uses widgetConfig.companyWebsiteLink)
+  hostedShowWebsiteLink Boolean @default(false)
+  /// Announcement-page branding (independent of widgetConfig logo/background)
+  hostedLogoUrl              String?
+  hostedBackgroundImageUrl   String?
   hostedPublishedAt DateTime?
   hostedWelcomeEmailSentAt DateTime?
 
