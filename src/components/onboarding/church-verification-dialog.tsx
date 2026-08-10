@@ -51,6 +51,14 @@ export function ChurchVerificationDialog({
 
       if (data.canCheckout) {
         toast.success("Church eligibility confirmed. Continuing to checkout…")
+        try {
+          sessionStorage.setItem(
+            "t2ms_church_organization_name",
+            organizationName.trim()
+          )
+        } catch {
+          // ignore
+        }
         onOpenChange(false)
         onVerified()
         return
@@ -59,6 +67,14 @@ export function ChurchVerificationDialog({
       toast.success(
         "Verification submitted. We'll review your request and email you when approved."
       )
+      try {
+        sessionStorage.setItem(
+          "t2ms_church_organization_name",
+          organizationName.trim()
+        )
+      } catch {
+        // ignore
+      }
       onOpenChange(false)
     } catch {
       toast.error("Something went wrong. Please try again.")
