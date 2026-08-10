@@ -27,10 +27,16 @@ import {
 type HostedPageSettingsProps = {
   clientId: string
   siteName: string
+  /** Prefer publish on for first-time setup (e.g. onboarding) when no slug saved yet */
+  defaultPublishOn?: boolean
+  /** Primary action label (dashboard: "Save hosted page") */
+  saveLabel?: string
+  /** Full-width primary button (onboarding) */
+  saveButtonFullWidth?: boolean
   onSaved?: (data: {
     hostedSlug: string | null
     hostedEnabled: boolean
-  }) => void
+  }) => void | Promise<void>
 }
 
 type HostedState = {
@@ -48,6 +54,9 @@ type HostedState = {
 export function HostedPageSettings({
   clientId,
   siteName,
+  defaultPublishOn = false,
+  saveLabel = "Save hosted page",
+  saveButtonFullWidth = false,
   onSaved,
 }: HostedPageSettingsProps) {
   const domain = getHostedPageDomain()
@@ -109,14 +118,19 @@ export function HostedPageSettings({
       )
       setLogoUrl(data.hostedLogoUrl ?? "")
       setBackgroundImageUrl(data.hostedBackgroundImageUrl ?? "")
-      setEnabled(data.hostedEnabled ?? false)
+      // First-time setup: default publish on when no slug has been saved yet
+      if (data.hostedSlug) {
+        setEnabled(Boolean(data.hostedEnabled))
+      } else {
+        setEnabled(Boolean(data.hostedEnabled) || defaultPublishOn)
+      }
       setPublicUrls(data.publicUrls ?? null)
     } catch {
       toast.error("Could not load hosted page settings")
     } finally {
       setLoading(false)
     }
-  }, [clientId, siteName])
+  }, [clientId, siteName, defaultPublishOn])
 
   useEffect(() => {
     load()
@@ -190,9 +204,47 @@ export function HostedPageSettings({
   }, [slugInput, checkSlug])
 
   const handleSave = async () => {
-    if (enabled && slugStatus !== "available" && slugInput.trim()) {
+    const slug = slugInput.trim()
+
+    if (enabled && !slug) {
+      toast.error("Choose a page URL name before publishing.")
+      return false
+    }
+
+    // Re-check slug availability right before publish so suggested names work
+    let currentSlugStatus = slugStatus
+    if (enabled && slug && slugStatus !== "available") {
+      setSlugStatus("checking")
+      try {
+        const params = new URLSearchParams({
+          slug,
+          excludeClientId: clientId,
+        })
+        const res = await fetch(`/api/hosted/slug/check?${params}`)
+        const data = await res.json()
+        if (data.available) {
+          currentSlugStatus = "available"
+          setSlugStatus("available")
+          setSuggestions([])
+        } else if (data.slug) {
+          setSlugStatus("taken")
+          setSuggestions(data.suggestions ?? [])
+          toast.error("Choose an available page name before publishing.")
+          return false
+        } else {
+          setSlugStatus("invalid")
+          toast.error("Choose a valid page name before publishing.")
+          return false
+        }
+      } catch {
+        toast.error("Could not verify page name availability. Try again.")
+        return false
+      }
+    }
+
+    if (enabled && currentSlugStatus !== "available") {
       toast.error("Choose an available page name before publishing.")
-      return
+      return false
     }
 
     setSaving(true)
@@ -201,7 +253,7 @@ export function HostedPageSettings({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          hostedSlug: slugInput.trim() || null,
+          hostedSlug: slug || null,
           hostedEnabled: enabled,
           hostedIntroText: introText,
           hostedFooterText: footerText,
@@ -234,13 +286,23 @@ export function HostedPageSettings({
       if (data.data?.hostedBackgroundImageUrl !== undefined) {
         setBackgroundImageUrl(data.data.hostedBackgroundImageUrl ?? "")
       }
-      onSaved?.({
-        hostedSlug: data.data?.hostedSlug ?? (slugInput.trim() || null),
+      if (typeof data.data?.hostedEnabled === "boolean") {
+        setEnabled(data.data.hostedEnabled)
+      }
+      const savedPayload = {
+        hostedSlug: data.data?.hostedSlug ?? (slug || null),
         hostedEnabled: Boolean(data.data?.hostedEnabled ?? enabled),
-      })
-      toast.success("Hosted page settings saved")
+      }
+      await onSaved?.(savedPayload)
+      toast.success(
+        saveLabel.toLowerCase().includes("finish")
+          ? "Hosted page saved. Finishing setup…"
+          : "Hosted page settings saved"
+      )
+      return true
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save")
+      return false
     } finally {
       setSaving(false)
     }
@@ -590,9 +652,13 @@ export function HostedPageSettings({
 
       <Button
         type="button"
-        onClick={handleSave}
+        onClick={() => void handleSave()}
         disabled={saving}
-        className="w-full sm:w-auto"
+        className={
+          saveButtonFullWidth
+            ? "w-full !bg-amber-600 hover:!bg-amber-700 !text-white"
+            : "w-full sm:w-auto"
+        }
       >
         {saving ? (
           <>
@@ -600,7 +666,7 @@ export function HostedPageSettings({
             Saving…
           </>
         ) : (
-          "Save hosted page"
+          saveLabel
         )}
       </Button>
     </div>
