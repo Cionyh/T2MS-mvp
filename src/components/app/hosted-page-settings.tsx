@@ -58,6 +58,10 @@ export function HostedPageSettings({
   const [footerText, setFooterText] = useState("")
   const [theme, setTheme] = useState<HostedThemeId>("classic")
   const [showLogo, setShowLogo] = useState(true)
+  const [logoUrl, setLogoUrl] = useState("")
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState("")
+  const [logoUploading, setLogoUploading] = useState(false)
+  const [backgroundUploading, setBackgroundUploading] = useState(false)
   const [enabled, setEnabled] = useState(false)
   const [publicUrls, setPublicUrls] = useState<HostedState["publicUrls"]>(null)
   const [slugStatus, setSlugStatus] = useState<
@@ -92,6 +96,8 @@ export function HostedPageSettings({
       setFooterText(data.hostedFooterText ?? "")
       setTheme(normalizeHostedTheme(data.hostedTheme))
       setShowLogo(data.hostedShowLogo !== false)
+      setLogoUrl(data.hostedLogoUrl ?? "")
+      setBackgroundImageUrl(data.hostedBackgroundImageUrl ?? "")
       setEnabled(data.hostedEnabled ?? false)
       setPublicUrls(data.publicUrls ?? null)
     } catch {
@@ -104,6 +110,34 @@ export function HostedPageSettings({
   useEffect(() => {
     load()
   }, [load])
+
+  const uploadHostedImage = async (file: File, which: "logo" | "background") => {
+    const setBusy = which === "logo" ? setLogoUploading : setBackgroundUploading
+    const setUrl = which === "logo" ? setLogoUrl : setBackgroundImageUrl
+    setBusy(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("purpose", "hosted")
+      const res = await fetch(`/api/client/${clientId}/widget-upload`, {
+        method: "POST",
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "Upload failed")
+      }
+      if (!data.url) {
+        throw new Error("Upload did not return a URL")
+      }
+      setUrl(data.url as string)
+      toast.success(which === "logo" ? "Logo uploaded" : "Background uploaded")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed")
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const checkSlug = useCallback(
     async (value: string) => {
@@ -162,6 +196,8 @@ export function HostedPageSettings({
           hostedFooterText: footerText,
           hostedTheme: theme,
           hostedShowLogo: showLogo,
+          hostedLogoUrl: logoUrl.trim() || null,
+          hostedBackgroundImageUrl: backgroundImageUrl.trim() || null,
         }),
       })
       const data = await res.json()
@@ -174,6 +210,12 @@ export function HostedPageSettings({
       }
       if (typeof data.data?.hostedShowLogo === "boolean") {
         setShowLogo(data.data.hostedShowLogo)
+      }
+      if (data.data?.hostedLogoUrl !== undefined) {
+        setLogoUrl(data.data.hostedLogoUrl ?? "")
+      }
+      if (data.data?.hostedBackgroundImageUrl !== undefined) {
+        setBackgroundImageUrl(data.data.hostedBackgroundImageUrl ?? "")
       }
       onSaved?.({
         hostedSlug: data.data?.hostedSlug ?? (slugInput.trim() || null),
@@ -206,8 +248,8 @@ export function HostedPageSettings({
       <div>
         <h3 className="text-sm font-semibold">Hosted announcement page</h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Share a standalone live page (no widget install required). Uses your
-          logo, colors, and latest announcement from {siteName}.
+          Share a standalone live page (no widget install required). Branding
+          below is only for this page — not the website widget on {siteName}.
         </p>
       </div>
 
@@ -298,10 +340,9 @@ export function HostedPageSettings({
 
       <div className="flex items-center justify-between gap-4">
         <div>
-          <Label htmlFor="hosted-show-logo">Show logo on hosted page</Label>
+          <Label htmlFor="hosted-show-logo">Show logo on announcement page</Label>
           <p className="text-xs text-muted-foreground">
-            Uses the logo from Attach Logo in widget settings. Turn off to hide
-            it on the public page only.
+            Uses the announcement page logo below (separate from widget logo).
           </p>
         </div>
         <Switch
@@ -309,6 +350,132 @@ export function HostedPageSettings({
           checked={showLogo}
           onCheckedChange={setShowLogo}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Announcement page logo</Label>
+        <p className="text-xs text-muted-foreground">
+          JPEG, PNG, WebP, or GIF (max 5MB). Separate from the website widget
+          logo.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            id="hosted-logo-upload"
+            disabled={logoUploading}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              e.target.value = ""
+              if (file) void uploadHostedImage(file, "logo")
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full shrink-0 sm:w-auto"
+            disabled={logoUploading}
+            onClick={() => document.getElementById("hosted-logo-upload")?.click()}
+          >
+            {logoUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Upload logo"
+            )}
+          </Button>
+          <Input
+            type="text"
+            placeholder="https://example.com/logo.png"
+            value={logoUrl}
+            onChange={(e) => setLogoUrl(e.target.value)}
+            className="w-full flex-1"
+          />
+        </div>
+        {logoUrl ? (
+          <div className="rounded-md border bg-background p-2">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">Preview</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setLogoUrl("")}
+              >
+                Remove
+              </Button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logoUrl}
+              alt="Announcement logo preview"
+              className="max-h-16 max-w-full object-contain"
+            />
+          </div>
+        ) : null}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Announcement page background</Label>
+        <p className="text-xs text-muted-foreground">
+          Optional. Separate from the website widget background image.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            id="hosted-bg-upload"
+            disabled={backgroundUploading}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              e.target.value = ""
+              if (file) void uploadHostedImage(file, "background")
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full shrink-0 sm:w-auto"
+            disabled={backgroundUploading}
+            onClick={() => document.getElementById("hosted-bg-upload")?.click()}
+          >
+            {backgroundUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Upload background"
+            )}
+          </Button>
+          <Input
+            type="text"
+            placeholder="https://example.com/background.jpg"
+            value={backgroundImageUrl}
+            onChange={(e) => setBackgroundImageUrl(e.target.value)}
+            className="w-full flex-1"
+          />
+        </div>
+        {backgroundImageUrl ? (
+          <div className="h-20 w-full overflow-hidden rounded-md border bg-background">
+            <div className="flex justify-end p-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs bg-background/80"
+                onClick={() => setBackgroundImageUrl("")}
+              >
+                Remove
+              </Button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={backgroundImageUrl}
+              alt="Announcement background preview"
+              className="h-full w-full object-cover -mt-7"
+            />
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-2">

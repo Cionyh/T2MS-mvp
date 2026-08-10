@@ -13,6 +13,14 @@ import {
 
 type RouteContext = { params: Promise<{ id: string }> }
 
+function normalizeOptionalUrl(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined
+  if (value === null) return null
+  if (typeof value !== "string") return null
+  const trimmed = value.trim()
+  return trimmed ? trimmed.slice(0, 2000) : null
+}
+
 export async function GET(_req: NextRequest, context: RouteContext) {
   try {
     const session = await auth.api.getSession({
@@ -38,6 +46,8 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         hostedFooterText: true,
         hostedTheme: true,
         hostedShowLogo: true,
+        hostedLogoUrl: true,
+        hostedBackgroundImageUrl: true,
         hostedPublishedAt: true,
       },
     })
@@ -89,6 +99,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedFooterText,
       hostedTheme,
       hostedShowLogo,
+      hostedLogoUrl,
+      hostedBackgroundImageUrl,
     } = body as {
       hostedSlug?: string | null
       hostedEnabled?: boolean
@@ -96,6 +108,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedFooterText?: string | null
       hostedTheme?: string | null
       hostedShowLogo?: boolean
+      hostedLogoUrl?: string | null
+      hostedBackgroundImageUrl?: string | null
     }
 
     const existing = await prisma.client.findUnique({
@@ -118,6 +132,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedFooterText?: string | null
       hostedTheme?: string
       hostedShowLogo?: boolean
+      hostedLogoUrl?: string | null
+      hostedBackgroundImageUrl?: string | null
       hostedPublishedAt?: Date | null
     } = {}
 
@@ -148,6 +164,16 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
     if (hostedShowLogo !== undefined) {
       updateData.hostedShowLogo = Boolean(hostedShowLogo)
+    }
+
+    const logo = normalizeOptionalUrl(hostedLogoUrl)
+    if (logo !== undefined) {
+      updateData.hostedLogoUrl = logo
+    }
+
+    const bg = normalizeOptionalUrl(hostedBackgroundImageUrl)
+    if (bg !== undefined) {
+      updateData.hostedBackgroundImageUrl = bg
     }
 
     if (hostedSlug !== undefined) {
@@ -205,6 +231,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         hostedFooterText: true,
         hostedTheme: true,
         hostedShowLogo: true,
+        hostedLogoUrl: true,
+        hostedBackgroundImageUrl: true,
         hostedPublishedAt: true,
       },
     })

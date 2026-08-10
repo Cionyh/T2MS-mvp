@@ -709,8 +709,13 @@ export function renderHostedPageHtml(
 
   const theme = normalizeHostedTheme(data.hostedTheme)
   const showLogo = data.hostedShowLogo !== false
-  const logoUrl = widgetConfig.logoUrl || ""
-  const backgroundImageUrl = widgetConfig.backgroundImageUrl || ""
+  // Announcement page uses dedicated brand assets (not shared with the website widget)
+  const logoUrl =
+    (data.hostedLogoUrl?.trim() || widgetConfig.logoUrl || "").trim()
+  const backgroundImageUrl =
+    (data.hostedBackgroundImageUrl?.trim() ||
+      widgetConfig.backgroundImageUrl ||
+      "").trim()
   const attachImage = widgetConfig.attachImage || ""
   const presetText = widgetConfig.presetText || ""
   const fontSize = widgetConfig.fontSize || 18
