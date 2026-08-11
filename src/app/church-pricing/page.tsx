@@ -8,6 +8,7 @@ import {
 import { isChurchPlanEnabled } from "@/lib/church-pricing";
 import { CHURCH_PLAN_FEATURES } from "@/lib/plan-features";
 import { useChurchIntroPrice } from "@/hooks/use-church-intro-price";
+import { CHURCH_FUNNEL_PATH } from "@/lib/church-funnel";
 
 export default function ChurchPricingPage() {
   const churchPrice = useChurchIntroPrice();
@@ -20,11 +21,11 @@ export default function ChurchPricingPage() {
       <ChurchPlanSessionPriming />
       <div className="cp-wrap">
         <header className="cp-top">
-          <Link href="/church-page-announcements" className="cp-brand">
+          <Link href={CHURCH_FUNNEL_PATH} className="cp-brand">
             Text2MySite<span>™</span> for Churches
           </Link>
           <nav className="cp-nav" aria-label="Church pricing">
-            <Link href="/church-page-announcements" className="cp-link">
+            <Link href={CHURCH_FUNNEL_PATH} className="cp-link">
               Church homepage
             </Link>
             <Link href="/" className="cp-btn cp-btn-ghost">
@@ -117,7 +118,7 @@ export default function ChurchPricingPage() {
                 Business pricing
               </Link>
               <Link
-                href="/church-page-announcements"
+                href={CHURCH_FUNNEL_PATH}
                 className="cp-btn cp-btn-ghost"
               >
                 Back to church funnel
