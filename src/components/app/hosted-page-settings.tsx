@@ -73,8 +73,10 @@ export function HostedPageSettings({
   )
   const [logoUrl, setLogoUrl] = useState("")
   const [backgroundImageUrl, setBackgroundImageUrl] = useState("")
+  const [contentImageUrl, setContentImageUrl] = useState("")
   const [logoUploading, setLogoUploading] = useState(false)
   const [backgroundUploading, setBackgroundUploading] = useState(false)
+  const [contentImageUploading, setContentImageUploading] = useState(false)
   const [enabled, setEnabled] = useState(false)
   const [publicUrls, setPublicUrls] = useState<HostedState["publicUrls"]>(null)
   const [slugStatus, setSlugStatus] = useState<
@@ -118,6 +120,7 @@ export function HostedPageSettings({
       )
       setLogoUrl(data.hostedLogoUrl ?? "")
       setBackgroundImageUrl(data.hostedBackgroundImageUrl ?? "")
+      setContentImageUrl(data.hostedContentImageUrl ?? "")
       // First-time setup: default publish on when no slug has been saved yet
       if (data.hostedSlug) {
         setEnabled(Boolean(data.hostedEnabled))
@@ -136,9 +139,22 @@ export function HostedPageSettings({
     load()
   }, [load])
 
-  const uploadHostedImage = async (file: File, which: "logo" | "background") => {
-    const setBusy = which === "logo" ? setLogoUploading : setBackgroundUploading
-    const setUrl = which === "logo" ? setLogoUrl : setBackgroundImageUrl
+  const uploadHostedImage = async (
+    file: File,
+    which: "logo" | "background" | "content"
+  ) => {
+    const setBusy =
+      which === "logo"
+        ? setLogoUploading
+        : which === "background"
+          ? setBackgroundUploading
+          : setContentImageUploading
+    const setUrl =
+      which === "logo"
+        ? setLogoUrl
+        : which === "background"
+          ? setBackgroundImageUrl
+          : setContentImageUrl
     setBusy(true)
     try {
       const formData = new FormData()
@@ -156,7 +172,13 @@ export function HostedPageSettings({
         throw new Error("Upload did not return a URL")
       }
       setUrl(data.url as string)
-      toast.success(which === "logo" ? "Logo uploaded" : "Background uploaded")
+      toast.success(
+        which === "logo"
+          ? "Logo uploaded"
+          : which === "background"
+            ? "Background uploaded"
+            : "Content image uploaded"
+      )
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed")
     } finally {
@@ -264,6 +286,7 @@ export function HostedPageSettings({
             : false,
           hostedLogoUrl: logoUrl.trim() || null,
           hostedBackgroundImageUrl: backgroundImageUrl.trim() || null,
+          hostedContentImageUrl: contentImageUrl.trim() || null,
         }),
       })
       const data = await res.json()
@@ -285,6 +308,9 @@ export function HostedPageSettings({
       }
       if (data.data?.hostedBackgroundImageUrl !== undefined) {
         setBackgroundImageUrl(data.data.hostedBackgroundImageUrl ?? "")
+      }
+      if (data.data?.hostedContentImageUrl !== undefined) {
+        setContentImageUrl(data.data.hostedContentImageUrl ?? "")
       }
       if (typeof data.data?.hostedEnabled === "boolean") {
         setEnabled(data.data.hostedEnabled)
@@ -552,6 +578,72 @@ export function HostedPageSettings({
               src={backgroundImageUrl}
               alt="Announcement background preview"
               className="h-full w-full object-cover -mt-7"
+            />
+          </div>
+        ) : null}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Content image (optional)</Label>
+        <p className="text-xs text-muted-foreground">
+          Shown under the announcement message when set. Separate from the
+          website widget image. JPEG, PNG, WebP, or GIF (max 5MB).
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            id="hosted-content-upload"
+            disabled={contentImageUploading}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              e.target.value = ""
+              if (file) void uploadHostedImage(file, "content")
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full shrink-0 sm:w-auto"
+            disabled={contentImageUploading}
+            onClick={() =>
+              document.getElementById("hosted-content-upload")?.click()
+            }
+          >
+            {contentImageUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Upload content image"
+            )}
+          </Button>
+          <Input
+            type="text"
+            placeholder="https://example.com/image.jpg"
+            value={contentImageUrl}
+            onChange={(e) => setContentImageUrl(e.target.value)}
+            className="w-full flex-1"
+          />
+        </div>
+        {contentImageUrl ? (
+          <div className="rounded-md border bg-background p-2">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">Preview</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setContentImageUrl("")}
+              >
+                Remove
+              </Button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={contentImageUrl}
+              alt="Content image preview"
+              className="max-h-40 max-w-full object-contain"
             />
           </div>
         ) : null}

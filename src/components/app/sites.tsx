@@ -875,20 +875,22 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                                 website.domain
                               )}
                             </p>
-                            <p>
-                              <span className="font-medium text-muted-foreground">
-                                SMS:{" "}
-                              </span>
-                              {website.keyword ? (
-                                <code className="text-xs bg-muted px-1 rounded">
-                                  {website.keyword}: message
-                                </code>
-                              ) : (
-                                <span className="italic text-muted-foreground">
-                                  Keyword not set
+                            {planRequiresSmsKeyword(plan) ? (
+                              <p>
+                                <span className="font-medium text-muted-foreground">
+                                  SMS:{" "}
                                 </span>
-                              )}
-                            </p>
+                                {website.keyword ? (
+                                  <code className="text-xs bg-muted px-1 rounded">
+                                    {website.keyword}: message
+                                  </code>
+                                ) : (
+                                  <span className="italic text-muted-foreground">
+                                    Keyword not set
+                                  </span>
+                                )}
+                              </p>
+                            ) : null}
                           </div>
                           {!siteReadyForWidget(website, plan) && (
                             <div className="rounded-lg border border-amber-300/80 bg-amber-50 px-2.5 py-2 text-xs text-amber-950 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-100">
@@ -1388,36 +1390,34 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
               )}
             </div>
 
-            <div>
-              <Label className="mb-2 text-sm font-medium">
-                SMS Keyword
-                {planRequiresSmsKeyword(plan) ? "" : " (optional)"}
-              </Label>
-              <Input
-                value={editedKeyword}
-                onChange={(e) =>
-                  setEditedKeyword(e.target.value.replace(/\s/g, "").toUpperCase())
-                }
-                placeholder={
-                  planRequiresSmsKeyword(plan) ? "e.g. BAKERY" : "Optional"
-                }
-                className="w-full"
-                maxLength={50}
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                {planRequiresSmsKeyword(plan)
-                  ? "Required for multi-site routing. "
-                  : "Optional on single-site plans. "}
-                To post via text to{" "}
-                <strong>{getT2msSmsDisplayNumber()}</strong>, send:{" "}
-                <strong>{editedKeyword || "KEYWORD"}: your message</strong>
-                {planRequiresSmsKeyword(plan) && !editedKeyword.trim() && (
-                  <span className="block mt-1 text-amber-700 dark:text-amber-400">
-                    Required to enable the website widget.
-                  </span>
-                )}
-              </p>
-            </div>
+            {planRequiresSmsKeyword(plan) ? (
+              <div>
+                <Label className="mb-2 text-sm font-medium">SMS Keyword</Label>
+                <Input
+                  value={editedKeyword}
+                  onChange={(e) =>
+                    setEditedKeyword(
+                      e.target.value.replace(/\s/g, "").toUpperCase()
+                    )
+                  }
+                  placeholder="e.g. BAKERY"
+                  className="w-full"
+                  maxLength={50}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Required for multi-site routing. To post via text to{" "}
+                  <strong>{getT2msSmsDisplayNumber()}</strong>, send:{" "}
+                  <strong>
+                    {editedKeyword || "KEYWORD"}: your message
+                  </strong>
+                  {!editedKeyword.trim() && (
+                    <span className="block mt-1 text-amber-700 dark:text-amber-400">
+                      Required to enable the website widget.
+                    </span>
+                  )}
+                </p>
+              </div>
+            ) : null}
             
             {/* Phone Numbers Section - Managed separately */}
             {selectedWebsite && (
