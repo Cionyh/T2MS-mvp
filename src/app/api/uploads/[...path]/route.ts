@@ -22,7 +22,8 @@ export async function GET(
     }
 
     const joined = segments.join("/");
-    if (!joined.startsWith("widget/")) {
+    // Serve widget + announcement-page (hosted) uploads only
+    if (!joined.startsWith("widget/") && !joined.startsWith("hosted/")) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 

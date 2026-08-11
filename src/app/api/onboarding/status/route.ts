@@ -81,11 +81,14 @@ export async function GET() {
               hostedSlug: true,
               hostedEnabled: true,
             },
-            orderBy: { createdAt: "asc" },
+            // Newest first so onboarding continues on the latest site if duplicates exist
+            orderBy: { createdAt: "desc" },
           })
         : [];
     const hasRegisteredSite = clients.length > 0;
-    const firstClient = clients[0] ?? null;
+    // Prefer a site that still needs hosted setup; else the most recent site
+    const firstClient =
+      clients.find((c) => !c.hostedSlug?.trim()) ?? clients[0] ?? null;
     const firstClientId = firstClient?.id ?? null;
     const setupPath = onboarding?.setupPath ?? null;
     const hostedOnly = isHostedOnlyPath(setupPath);

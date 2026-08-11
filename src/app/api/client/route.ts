@@ -44,14 +44,23 @@ export async function POST(req: Request) {
     }
 
     // Check site limit based on organization's plan
+    // Re-check right before create to reduce double-submit races during onboarding
     const siteLimit = await checkSiteLimit(organizationId);
     if (!siteLimit.allowed) {
+      // Prefer resuming the existing site rather than failing opaquely during onboarding
+      const existing = await prisma.client.findFirst({
+        where: { organizationId },
+        orderBy: { createdAt: "asc" },
+        select: { id: true, name: true, domain: true },
+      });
       return NextResponse.json(
-        { 
-          error: `Site limit exceeded. You can create up to ${siteLimit.limit === -1 ? 'unlimited' : siteLimit.limit} sites on your current plan. You currently have ${siteLimit.current} sites.`,
+        {
+          error: `Site limit exceeded. You can create up to ${siteLimit.limit === -1 ? "unlimited" : siteLimit.limit} sites on your current plan. You currently have ${siteLimit.current} sites.`,
           limitExceeded: true,
           current: siteLimit.current,
-          limit: siteLimit.limit
+          limit: siteLimit.limit,
+          existingClientId: existing?.id ?? null,
+          existingClient: existing,
         },
         { status: 403 }
       );
