@@ -49,6 +49,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         hostedShowWebsiteLink: true,
         hostedLogoUrl: true,
         hostedBackgroundImageUrl: true,
+        hostedContentImageUrl: true,
         hostedPublishedAt: true,
         widgetConfig: true,
       },
@@ -116,6 +117,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedShowWebsiteLink,
       hostedLogoUrl,
       hostedBackgroundImageUrl,
+      hostedContentImageUrl,
     } = body as {
       hostedSlug?: string | null
       hostedEnabled?: boolean
@@ -126,6 +128,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedShowWebsiteLink?: boolean
       hostedLogoUrl?: string | null
       hostedBackgroundImageUrl?: string | null
+      hostedContentImageUrl?: string | null
     }
 
     const existing = await prisma.client.findUnique({
@@ -151,6 +154,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedShowWebsiteLink?: boolean
       hostedLogoUrl?: string | null
       hostedBackgroundImageUrl?: string | null
+      hostedContentImageUrl?: string | null
       hostedPublishedAt?: Date | null
     } = {}
 
@@ -195,6 +199,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const bg = normalizeOptionalUrl(hostedBackgroundImageUrl)
     if (bg !== undefined) {
       updateData.hostedBackgroundImageUrl = bg
+    }
+
+    const contentImage = normalizeOptionalUrl(hostedContentImageUrl)
+    if (contentImage !== undefined) {
+      updateData.hostedContentImageUrl = contentImage
     }
 
     if (hostedSlug !== undefined) {
@@ -255,6 +264,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         hostedShowWebsiteLink: true,
         hostedLogoUrl: true,
         hostedBackgroundImageUrl: true,
+        hostedContentImageUrl: true,
         hostedPublishedAt: true,
       },
     })

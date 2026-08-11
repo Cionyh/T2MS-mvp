@@ -27,6 +27,7 @@ export async function getHostedPageBySlug(
       hostedShowWebsiteLink: true,
       hostedLogoUrl: true,
       hostedBackgroundImageUrl: true,
+      hostedContentImageUrl: true,
       defaultBgColor: true,
       defaultTextColor: true,
       defaultFont: true,
@@ -56,6 +57,7 @@ export async function getHostedPageBySlug(
     hostedShowWebsiteLink: Boolean(client.hostedShowWebsiteLink),
     hostedLogoUrl: client.hostedLogoUrl,
     hostedBackgroundImageUrl: client.hostedBackgroundImageUrl,
+    hostedContentImageUrl: client.hostedContentImageUrl,
     messageContent:
       client.messages[0]?.content ??
       "No announcement yet. Check back soon.",

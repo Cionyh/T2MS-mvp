@@ -24,6 +24,8 @@ export type HostedPageData = {
   hostedLogoUrl?: string | null
   /** Announcement page background image */
   hostedBackgroundImageUrl?: string | null
+  /** Optional image under the announcement message */
+  hostedContentImageUrl?: string | null
   messageContent: string
   defaultBgColor: string
   defaultTextColor: string

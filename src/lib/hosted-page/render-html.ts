@@ -745,7 +745,11 @@ export function renderHostedPageHtml(
     (data.hostedBackgroundImageUrl?.trim() ||
       widgetConfig.backgroundImageUrl ||
       "").trim()
-  const attachImage = widgetConfig.attachImage || ""
+  // Content image under the message; prefer announcement-specific, fall back to widget attach
+  const contentImageUrl =
+    (data.hostedContentImageUrl?.trim() ||
+      widgetConfig.attachImage ||
+      "").trim()
   const presetText = widgetConfig.presetText || ""
   const fontSize = widgetConfig.fontSize || 18
 
@@ -763,8 +767,8 @@ export function renderHostedPageHtml(
   // Banner theme: header lives outside the page content column
   const headerBlock = `<header class="t2ms-header">${logoImg}<h1 class="t2ms-title">${escapeHtml(name)}</h1></header>`
 
-  const attachBlock = attachImage
-    ? `<div class="t2ms-attach"><img src="${escapeHtml(attachImage)}" alt="" /></div>`
+  const attachBlock = contentImageUrl
+    ? `<div class="t2ms-attach"><img src="${escapeHtml(contentImageUrl)}" alt="" /></div>`
     : ""
 
   const websiteHref =
