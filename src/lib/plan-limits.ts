@@ -48,11 +48,22 @@ export async function getOrganizationPlan(organizationId: string): Promise<strin
       orderBy: { periodStart: "desc" }
     });
 
-    if (!activeSubscription) {
-      return "free";
+    if (activeSubscription?.plan) {
+      return activeSubscription.plan;
     }
 
-    return activeSubscription.plan;
+    // During checkout lag / before Stripe sync, honor the plan chosen in onboarding
+    // so single-site plans are not treated as free (10 sites).
+    const onboarding = await prisma.onboarding.findUnique({
+      where: { userId: ownerUserId },
+      select: { planId: true },
+    });
+    const intended = (onboarding?.planId ?? "").toLowerCase().trim();
+    if (intended && intended !== "free" && PLAN_LIMITS[intended]) {
+      return intended;
+    }
+
+    return "free";
   } catch (error) {
     console.error("Error getting organization plan:", error);
     return "free";

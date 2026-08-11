@@ -127,6 +127,7 @@ function OnboardingContent() {
   const PENDING_VERIFY_STORAGE_KEY = "t2ms_onboarding_verify_pending";
   const RESEND_COOLDOWN_SECONDS = 60;
   const churchPlanAutoStarted = useRef(false);
+  const registerInFlight = useRef(false);
 
   const refreshStatus = useCallback(async () => {
     try {
@@ -134,7 +135,7 @@ function OnboardingContent() {
       const data = await res.json();
       if (data.completed) {
         router.replace("/app");
-        return;
+        return data;
       }
       setStatus(data);
       setStatusLoaded(true);
@@ -144,10 +145,21 @@ function OnboardingContent() {
       if (data.needsHostedSetup && data.firstClientId && !hostedSetupClientId) {
         setHostedSetupClientId(data.firstClientId);
       }
+      // Resume phone verification for an existing site (never create a second one)
+      if (
+        data.needsPhoneVerification &&
+        data.firstClientId &&
+        !installSetupClientId &&
+        !hostedSetupClientId
+      ) {
+        setPhoneStepClientId((prev) => prev ?? data.firstClientId);
+      }
+      return data;
     } catch {
       setStatusLoaded(true);
+      return null;
     }
-  }, [installSetupClientId, router]);
+  }, [installSetupClientId, hostedSetupClientId, router]);
 
   useEffect(() => {
     refreshStatus();
@@ -201,13 +213,14 @@ function OnboardingContent() {
     redeemCoupon();
   }, [couponRedeeming, refreshStatus, status, statusLoaded, successParam]);
 
-  // Restore pending verify from sessionStorage so dialog shows again after refresh (only when on register step)
+  // Restore pending verify from sessionStorage after refresh / mid-onboarding
   useEffect(() => {
     if (typeof window === "undefined" || !statusLoaded || !status) return;
-    const onRegisterStep =
-      (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("success") === "1") ||
-      status?.needsSiteRegistration === true;
-    if (!onRegisterStep) return;
+    const shouldRestoreVerify =
+      status.needsPhoneVerification === true ||
+      status.needsSiteRegistration === true ||
+      Boolean(phoneStepClientId);
+    if (!shouldRestoreVerify) return;
     const raw = sessionStorage.getItem(PENDING_VERIFY_STORAGE_KEY);
     if (!raw) return;
     try {
@@ -222,13 +235,14 @@ function OnboardingContent() {
         setPendingVerifyPhoneId(data.phoneId);
         setPendingVerifyPhoneDisplay(data.phoneDisplay);
         setPendingVerifyPhone(data.phone || data.phoneDisplay);
+        setPhoneStepClientId((prev) => prev ?? data.clientId);
         setVerifyCodeDialogOpen(true);
         setResendCooldownSeconds(0); // allow resend immediately after restore
       }
     } catch {
       sessionStorage.removeItem(PENDING_VERIFY_STORAGE_KEY);
     }
-  }, [statusLoaded, status]);
+  }, [statusLoaded, status, phoneStepClientId]);
 
   // Resend cooldown timer
   useEffect(() => {
@@ -374,6 +388,9 @@ function OnboardingContent() {
 
   const handleRegisterSite = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (registerInFlight.current || loading === "register") {
+      return;
+    }
     if (!registerForm.name.trim()) {
       toast.error(registerSiteCopy.nameRequired);
       return;
@@ -391,8 +408,30 @@ function OnboardingContent() {
       toast.error(registerSiteCopy.ownershipRequired);
       return;
     }
+
+    // Never create a second site if one already exists for this paid account
+    if (status?.firstClientId && status.needsSiteRegistration === false) {
+      toast.message("You already registered a site. Continue with phone verification.");
+      setPhoneStepClientId(status.firstClientId);
+      await refreshStatus();
+      return;
+    }
+
+    registerInFlight.current = true;
     setLoading("register");
     try {
+      // Fresh status check right before create (guards double-submit / back navigation)
+      const latest = await fetch("/api/onboarding/status").then((r) => r.json());
+      if (latest?.firstClientId && !latest.needsSiteRegistration) {
+        toast.message(
+          "You already registered a site. Continue with phone verification."
+        );
+        setPhoneStepClientId(latest.firstClientId);
+        setStatus(latest);
+        setStatusLoaded(true);
+        return;
+      }
+
       const domainTrimmed = registerForm.domain.trim();
       const clientRes = await fetch("/api/client", {
         method: "POST",
@@ -405,6 +444,21 @@ function OnboardingContent() {
         }),
       });
       const clientData = await clientRes.json();
+
+      // Site limit: resume existing site instead of creating another
+      if (
+        !clientRes.ok &&
+        clientData.limitExceeded &&
+        clientData.existingClientId
+      ) {
+        toast.message(
+          "You already have a site on this plan. Continue verifying your phone."
+        );
+        setPhoneStepClientId(clientData.existingClientId as string);
+        await refreshStatus();
+        return;
+      }
+
       if (!clientRes.ok) {
         throw new Error(clientData.error || registerSiteCopy.registerFailed);
       }
@@ -418,10 +472,64 @@ function OnboardingContent() {
       });
       if (!addPhoneRes.ok) {
         const addErr = await addPhoneRes.json();
+        // If phone already on this client (retry), load it and continue to verify
+        if (addPhoneRes.status === 409) {
+          const phonesRes = await fetch(`/api/client/${clientId}/phone`);
+          const phones = await phonesRes.json();
+          const existing = Array.isArray(phones)
+            ? phones.find(
+                (p: { phone: string; id: string }) =>
+                  p.phone === registerForm.phone.trim() ||
+                  p.phone?.replace(/\D/g, "") ===
+                    registerForm.phone.trim().replace(/\D/g, "")
+              ) ?? phones[0]
+            : null;
+          if (existing?.id) {
+            const verifyRes = await fetch("/api/phone/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                clientId,
+                phone: existing.phone || registerForm.phone.trim(),
+              }),
+            });
+            if (!verifyRes.ok) {
+              const verifyErr = await verifyRes.json();
+              throw new Error(
+                verifyErr.error || "Failed to send verification code"
+              );
+            }
+            const phoneForResend =
+              existing.phone || registerForm.phone.trim();
+            setPhoneStepClientId(clientId);
+            setPendingVerifyClientId(clientId);
+            setPendingVerifyPhoneId(existing.id);
+            setPendingVerifyPhoneDisplay(phoneForResend);
+            setPendingVerifyPhone(phoneForResend);
+            setVerifyCode("");
+            setResendCooldownSeconds(RESEND_COOLDOWN_SECONDS);
+            setVerifyCodeDialogOpen(true);
+            sessionStorage.setItem(
+              PENDING_VERIFY_STORAGE_KEY,
+              JSON.stringify({
+                clientId,
+                phoneId: existing.id,
+                phoneDisplay: phoneForResend,
+                phone: phoneForResend,
+              })
+            );
+            toast.success("Verification code sent via SMS.");
+            await refreshStatus();
+            return;
+          }
+        }
         throw new Error(addErr.error || "Failed to add phone number");
       }
       const addPhoneData = await addPhoneRes.json();
-      const phoneRecord = addPhoneData.phoneNumber as { id: string; phone: string };
+      const phoneRecord = addPhoneData.phoneNumber as {
+        id: string;
+        phone: string;
+      };
 
       const verifyRes = await fetch("/api/phone/verify", {
         method: "POST",
@@ -438,6 +546,8 @@ function OnboardingContent() {
 
       toast.success("Verification code sent via SMS.");
       const phoneForResend = registerForm.phone.trim();
+      // Immediately leave register step — prevents duplicate site creation on retry
+      setPhoneStepClientId(clientId);
       setPendingVerifyClientId(clientId);
       setPendingVerifyPhoneId(phoneRecord.id);
       setPendingVerifyPhoneDisplay(phoneRecord.phone);
@@ -454,9 +564,11 @@ function OnboardingContent() {
           phone: phoneForResend,
         })
       );
+      await refreshStatus();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
+      registerInFlight.current = false;
       setLoading(null);
     }
   };
@@ -553,15 +665,21 @@ function OnboardingContent() {
     }
   };
 
+  // Register site only when status says we still need a site.
+  // Do NOT open this solely for Stripe ?success=1 — that caused duplicate sites.
   const showRegisterSiteStep =
     statusLoaded &&
-    (successParam === "1" || status?.needsSiteRegistration === true) &&
-    !phoneStepClientId;
+    status?.needsSiteRegistration === true &&
+    !phoneStepClientId &&
+    !status?.needsPhoneVerification &&
+    !installSetupClientId &&
+    !hostedSetupClientId;
 
   const phoneVerificationClientId =
     phoneStepClientId ?? status?.firstClientId ?? null;
   const showPhoneVerificationStep =
     statusLoaded &&
+    !showRegisterSiteStep &&
     (phoneStepClientId !== null || status?.needsPhoneVerification === true) &&
     phoneVerificationClientId !== null &&
     !installSetupClientId &&
