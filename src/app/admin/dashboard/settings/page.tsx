@@ -10,10 +10,14 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { User, Bell, Shield, LogOut, Save, Edit, Key } from "lucide-react";
+import { User, Bell, Shield, LogOut, Save, Edit, Key, Church, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { DotPattern } from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
+import {
+  CHURCH_FUNNEL_PATH,
+  getChurchFunnelPublicUrl,
+} from "@/lib/church-funnel";
 
 export default function AdminSettingsPage() {
   const { data: session } = useSession();
@@ -199,6 +203,72 @@ export default function AdminSettingsPage() {
         </div>
 
         <div className="grid gap-6">
+          {/* Church funnel campaign URL */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Church className="h-5 w-5" />
+                Church campaign funnel
+              </CardTitle>
+              <CardDescription>
+                Private landing page for the Church Partner program. Share this
+                URL only through your outreach channels — it is not linked from
+                the public site navigation.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label>Public path</Label>
+                <Input
+                  readOnly
+                  value={CHURCH_FUNNEL_PATH}
+                  className="mt-1 font-mono text-sm"
+                />
+              </div>
+              <div>
+                <Label>Full URL</Label>
+                <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <Input
+                    readOnly
+                    value={getChurchFunnelPublicUrl()}
+                    className="font-mono text-sm flex-1"
+                  />
+                  <div className="flex gap-2 shrink-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(
+                          getChurchFunnelPublicUrl()
+                        );
+                        toast.success("Church funnel URL copied");
+                      }}
+                    >
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy
+                    </Button>
+                    <Button type="button" variant="outline" asChild>
+                      <a
+                        href={CHURCH_FUNNEL_PATH}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Open
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Legacy links{" "}
+                <span className="font-mono">/church-page-announcements</span> and{" "}
+                <span className="font-mono">/church-announcement</span> redirect
+                here permanently.
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Account Information */}
       <Card>
             <CardHeader>

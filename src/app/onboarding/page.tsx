@@ -1158,7 +1158,7 @@ function OnboardingContent() {
           ) : null}
         </div>
 
-        {/* Church funnel from /church or /church-page-announcements — only Church Partner, not business plans */}
+        {/* Church funnel from private path or /church — only Church Partner, not business plans */}
         {isChurchFunnel ? (
           <div className="mx-auto max-w-md">
             <Card className="relative flex flex-col border-2 border-amber-600/50 shadow-md overflow-hidden ring-2 ring-amber-600/15">

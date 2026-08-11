@@ -2,6 +2,10 @@
 
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import {
+  CHURCH_FUNNEL_PATH,
+  CHURCH_FUNNEL_LEGACY_PATHS,
+} from "@/lib/church-funnel";
 
 const CHAT_URL =
   process.env.NEXT_PUBLIC_CHAT_ASSISTANT_URL ??
@@ -15,9 +19,9 @@ const HIDDEN_PREFIXES = [
   "/sign-in",
   "/signup",
   "/church",
-  "/church-page-announcements",
+  CHURCH_FUNNEL_PATH,
+  ...CHURCH_FUNNEL_LEGACY_PATHS,
   "/church-pricing",
-  "/church-announcement",
   "/announce",
   "/affiliate",
 ] as const;
