@@ -261,10 +261,10 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Legacy links{" "}
+                Only this URL is active. Former paths{" "}
                 <span className="font-mono">/church-page-announcements</span> and{" "}
-                <span className="font-mono">/church-announcement</span> redirect
-                here permanently.
+                <span className="font-mono">/church-announcement</span> return
+                404 (no redirect).
               </p>
             </CardContent>
           </Card>

@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
   CHURCH_FUNNEL_PATH,
-  CHURCH_FUNNEL_LEGACY_PATHS,
+  CHURCH_FUNNEL_DISABLED_PATHS,
 } from "@/lib/church-funnel";
 
 const CHAT_URL =
@@ -20,7 +20,7 @@ const HIDDEN_PREFIXES = [
   "/signup",
   "/church",
   CHURCH_FUNNEL_PATH,
-  ...CHURCH_FUNNEL_LEGACY_PATHS,
+  ...CHURCH_FUNNEL_DISABLED_PATHS,
   "/church-pricing",
   "/announce",
   "/affiliate",
