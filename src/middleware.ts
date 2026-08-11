@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionCookie } from "better-auth/cookies"
 import { getHostedPageDomain } from "@/lib/hosted-page/constants"
 import { normalizeHostedSlug } from "@/lib/hosted-page/slug"
+import { isDisabledChurchFunnelPath } from "@/lib/church-funnel"
 
 const PROTECTED_PREFIXES = ["/app", "/admin/dashboard", "/affiliate", "/onboarding"]
 
@@ -44,12 +45,20 @@ function rewriteHostedDomain(request: NextRequest): NextResponse | null {
 }
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Church partner funnel is only available at the private path
+  if (isDisabledChurchFunnelPath(pathname)) {
+    return new NextResponse("Not Found", {
+      status: 404,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    })
+  }
+
   const hostedRewrite = rewriteHostedDomain(request)
   if (hostedRewrite) {
     return hostedRewrite
   }
-
-  const { pathname } = request.nextUrl
 
   if (!isProtectedPath(pathname)) {
     return NextResponse.next()
