@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  getWidgetResponsiveCss,
+  widgetLogoHtml,
+  widgetMobileFontVars,
+} from "@/lib/widget-responsive-styles";
+import { youtubeEmbedHtml, getYoutubeEmbedUrl } from "@/lib/youtube-embed";
 
 export async function GET(req: NextRequest) {
   try {
@@ -223,6 +229,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
     animationDuration: widgetConfig.animationDuration || 300,
     fontSize: widgetConfig.fontSize || 14,
     mobileFontSize: widgetConfig.mobileFontSize,
+    youtubeUrl: widgetConfig.youtubeUrl || "",
   };
 
   function escapeHtml(text: string): string {
@@ -247,6 +254,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
       opacity: "1",
       transition: `all ${config.animationDuration}ms ease`,
+      ...widgetMobileFontVars(config),
     };
 
     let containerStyle: Record<string, string | undefined> = { ...baseContainerStyle };
@@ -459,21 +467,11 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
         if (config.attachImage) {
           fullscreenContent += `<div style="margin-bottom: 20px; text-align: center; max-width: min(384px, 70vw);"><img src="${config.attachImage}" style="max-width: 100%; max-height: 40vh; object-fit: contain; display: block; margin: 0 auto;" alt="Widget Image" /></div>`;
         }
+
+        fullscreenContent += youtubeEmbedHtml(config.youtubeUrl);
         
         fullscreenContent += `<div class="t2ms-content" style="font-size: ${config.fontSize + 10}px; line-height: 1.5; max-width: 85vw; text-align: center; padding: 20px; margin-bottom: 20px;">${escapeHtml(content)}</div>`;
-        additionalStyles += `
-    @media (max-width: 768px) {
-      .t2ms-widget-container[data-type="fullscreen"] .t2ms-content {
-        font-size: ${Math.max(config.fontSize + 6, 18)}px !important;
-        padding: 16px !important;
-        max-width: 95vw !important;
-      }
-      .t2ms-widget-container[data-type="fullscreen"] > div {
-        padding: 16px !important;
-      }
-    }`;
         fullscreenContent += `</div>`;
-        
         contentHTML = fullscreenContent;
         additionalStyles = `
     body {
@@ -483,13 +481,14 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       }
 
       case "modal": {
+        const hasYoutube = Boolean(getYoutubeEmbedUrl(config.youtubeUrl));
         containerStyle = {
           ...baseContainerStyle,
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          width: "auto",
-          maxWidth: "90vw",
+          width: hasYoutube ? "min(720px, 92vw)" : "auto",
+          maxWidth: hasYoutube ? "min(720px, 92vw)" : "90vw",
           padding: "32px 40px",
           paddingRight: "56px",
           borderRadius: "12px",
@@ -505,7 +504,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
     .t2ms-widget-container[data-type="modal"] .t2ms-content {
       font-size: ${config.fontSize + 4}px;
       line-height: 1.5;
-      max-width: min(480px, 90vw);
+      max-width: ${hasYoutube ? "100%" : "min(480px, 90vw)"};
     }
     @media (max-width: 768px) {
       .t2ms-widget-container[data-type="modal"] {
@@ -519,6 +518,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
         max-width: 100%;
       }
     }`;
+        contentHTML = `<div class="t2ms-content">${escapeHtml(content)}</div>${youtubeEmbedHtml(config.youtubeUrl)}`;
         break;
       }
 
@@ -534,21 +534,8 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       }
     }
 
-    if (config.logoUrl && ["popup", "fullscreen", "modal"].includes(type)) {
-      additionalHTML += `<div class="t2ms-logo-container" style="position: absolute; top: 8px; left: 12px; z-index: 10; display: inline-flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(1px);"><img src="${config.logoUrl}" style="max-width: 32px; max-height: 32px; width: auto; height: auto; object-fit: contain; border-radius: 50%;" alt="Logo" /></div>`;
-      additionalStyles += `
-    @media (max-width: 768px) {
-      .t2ms-logo-container {
-        width: 40px !important;
-        height: 40px !important;
-        top: 6px !important;
-        left: 8px !important;
-      }
-      .t2ms-logo-container img {
-        max-width: 24px !important;
-        max-height: 24px !important;
-      }
-    }`;
+    if (config.logoUrl) {
+      additionalHTML += widgetLogoHtml(escapeHtml(config.logoUrl));
     }
 
     if (config.companyWebsiteLink && !["ticker", "banner", "popup"].includes(type)) {
@@ -635,6 +622,8 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       }
     }
     
+    ${getWidgetResponsiveCss()}
+    
     ${additionalStyles}
     
     ${config.backgroundImageUrl ? `
@@ -648,7 +637,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
   </style>
 </head>
 <body>
-  <div id="t2ms-widget" class="t2ms-widget-container" data-type="${type}" role="${type === "fullscreen" || type === "modal" ? "dialog" : "status"}" ${type === "fullscreen" || type === "modal" ? 'aria-modal="true"' : 'aria-live="polite"'}>
+  <div id="t2ms-widget" class="t2ms-widget-container${config.logoUrl ? " has-logo" : ""}${getYoutubeEmbedUrl(config.youtubeUrl) && (type === "fullscreen" || type === "modal") ? " has-youtube" : ""}" data-type="${type}" role="${type === "fullscreen" || type === "modal" ? "dialog" : "status"}" ${type === "fullscreen" || type === "modal" ? 'aria-modal="true"' : 'aria-live="polite"'}>
     ${finalContentHTML}
     ${pinned ? `<button class="t2ms-close" aria-label="Close notification" title="Close" onclick="document.getElementById('t2ms-widget').style.display = 'none'">×</button>` : ""}
     ${additionalHTML}
