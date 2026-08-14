@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { Loader2, CreditCard, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { getSelectablePlanOptions, resolvePlanOption } from "@/lib/plan-display";
+import { getSelectablePlanOptions, resolvePlanOption, resolveEffectivePlan } from "@/lib/plan-display";
 import { preparePlanCheckout } from "@/lib/prepare-plan-checkout";
 import { CHURCH_PLAN_ID } from "@/lib/church-pricing";
 import { CHURCH_VERIFICATION_VERIFIED } from "@/lib/church-verification";
@@ -59,18 +59,25 @@ export default function ChangePlanPage() {
         const planFromSub = activeSubscription?.plan ?? null;
 
         let planFromOnboarding: string | null = null;
+        let churchVerificationStatus: string | null = null;
         let addon: string | null = null;
         if (onboardingRes.ok) {
           const ob = await onboardingRes.json();
           if (ob.onboarding) {
             planFromOnboarding = ob.onboarding.planId ?? null;
+            churchVerificationStatus =
+              ob.onboarding.churchVerificationStatus ?? null;
             addon = ob.onboarding.installAddonSku ?? null;
           }
         }
 
         setOnboardingPlanId(planFromOnboarding ?? null);
         setInstallAddonSku(addon);
-        const current = planFromSub || planFromOnboarding || "free";
+        const current = resolveEffectivePlan({
+          subscriptionPlan: planFromSub,
+          onboardingPlanId: planFromOnboarding,
+          churchVerificationStatus,
+        });
         setCurrentPlanId(current);
         const defaultPlan =
           current === "free" || current === "enterprise" ? "starter" : current;
@@ -110,6 +117,9 @@ export default function ChangePlanPage() {
         referenceId: session.data.user.id,
         successUrl: `${window.location.origin}/app/settings?tab=setup`,
         cancelUrl: `${window.location.origin}/app/change-plan`,
+        ...(selectedPlanId === CHURCH_PLAN_ID
+          ? { metadata: { church_intro: "true", plan: CHURCH_PLAN_ID } }
+          : {}),
       });
 
       if (error) {

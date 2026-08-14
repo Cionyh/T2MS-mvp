@@ -311,6 +311,9 @@ function OnboardingContent() {
           planId === "church"
             ? `${window.location.origin}/onboarding?plan=church`
             : `${window.location.origin}/onboarding`,
+        ...(planId === "church"
+          ? { metadata: { church_intro: "true", plan: "church" } }
+          : {}),
       });
 
       if (error) {

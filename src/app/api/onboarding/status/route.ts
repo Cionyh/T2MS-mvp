@@ -7,6 +7,7 @@ import {
   isHostedOnlyPath,
   SETUP_PATH_HOSTED_ONLY,
 } from "@/lib/setup-path";
+import { resolveEffectivePlan } from "@/lib/plan-display";
 
 export async function GET() {
   try {
@@ -41,6 +42,11 @@ export async function GET() {
       where: getActiveSubscriptionWhere(session.user.id),
     });
     const hasPaidPlan = !!activeSubscription;
+    const effectivePlanId = resolveEffectivePlan({
+      subscriptionPlan: activeSubscription?.plan,
+      onboardingPlanId: onboarding?.planId,
+      churchVerificationStatus: onboarding?.churchVerificationStatus,
+    });
 
     // Check if user has registered at least one site (Client in their orgs)
     const members = await prisma.member.findMany({
@@ -58,7 +64,7 @@ export async function GET() {
       return NextResponse.json({
         completed: true,
         step: undefined,
-        planId: activeSubscription?.plan ?? onboarding?.planId,
+        planId: effectivePlanId,
         installAddonSku: onboarding?.installAddonSku,
         installAddonStatus: onboarding?.installAddonStatus,
         needsSiteRegistration: false,
@@ -152,7 +158,7 @@ export async function GET() {
       completed,
       step: onboarding ? undefined : 1,
       // Prefer live subscription so Register Site UI matches keyword rules on POST /api/client
-      planId: activeSubscription?.plan ?? onboarding?.planId ?? null,
+      planId: effectivePlanId,
       installAddonSku: onboarding?.installAddonSku,
       installAddonStatus: onboarding?.installAddonStatus,
       needsSiteRegistration,

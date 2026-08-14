@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getChurchStripePriceId, CHURCH_PLAN_ID } from "@/lib/church-pricing";
 import { getChurchPriceLockUntil } from "@/lib/church-verification";
 import { getStripePriceIds, getStripeServerClient } from "@/lib/stripe-config";
+import type Stripe from "stripe";
 
 const churchPriceId = getChurchStripePriceId();
 const stripePriceIds = getStripePriceIds();
@@ -17,14 +18,25 @@ const PLAN_PRICE_IDS = [
 ].filter(Boolean) as string[];
 
 const PRICE_TO_PLAN: Record<string, string> = {
-  [stripePriceIds.starter || ""]: "starter",
-  [stripePriceIds.pro || ""]: "pro",
-  [stripePriceIds.enterprise || ""]: "enterprise",
+  ...(stripePriceIds.starter ? { [stripePriceIds.starter]: "starter" } : {}),
+  ...(stripePriceIds.pro ? { [stripePriceIds.pro]: "pro" } : {}),
+  ...(stripePriceIds.enterprise ? { [stripePriceIds.enterprise]: "enterprise" } : {}),
   ...(churchPriceId ? { [churchPriceId]: "church" } : {}),
 };
 
-function getPlanFromPriceId(priceId: string): string {
-  return PRICE_TO_PLAN[priceId] || "starter";
+function getPlanFromPriceId(
+  priceId: string,
+  stripeMetadata?: Stripe.Metadata | null
+): string {
+  const mapped = PRICE_TO_PLAN[priceId]
+  if (mapped) return mapped
+  if (
+    stripeMetadata?.church_intro === "true" ||
+    stripeMetadata?.plan === CHURCH_PLAN_ID
+  ) {
+    return CHURCH_PLAN_ID
+  }
+  return "starter"
 }
 
 /**
@@ -90,9 +102,24 @@ export async function POST() {
       if (!item) continue;
 
       const priceId = item.price.id;
-      if (!PLAN_PRICE_IDS.includes(priceId)) continue;
+      if (!PLAN_PRICE_IDS.includes(priceId) && sub.metadata?.church_intro !== "true") {
+        continue;
+      }
 
-      const plan = getPlanFromPriceId(priceId);
+      let plan = getPlanFromPriceId(priceId, sub.metadata);
+      const onboarding = await prisma.onboarding.findUnique({
+        where: { userId },
+        select: { planId: true, churchVerificationStatus: true },
+      });
+      // Church checkout must not be stored as starter when price IDs overlap or webhook named it wrong
+      if (
+        plan === "starter" &&
+        (onboarding?.planId === CHURCH_PLAN_ID ||
+          onboarding?.churchVerificationStatus === "verified" ||
+          sub.metadata?.church_intro === "true")
+      ) {
+        plan = CHURCH_PLAN_ID;
+      }
       const periodStart = new Date(item.current_period_start * 1000);
       const periodEnd = new Date(item.current_period_end * 1000);
       const trialStart = sub.trial_start
@@ -118,9 +145,10 @@ export async function POST() {
         where: {
           OR: [
             { stripeSubscriptionId: sub.id },
-            { referenceId: userId, plan, status: { in: ["active", "trialing"] } },
+            { referenceId: userId, status: { in: ["active", "trialing"] } },
           ],
         },
+        orderBy: { periodStart: "desc" },
       });
 
       if (existing) {

@@ -155,6 +155,11 @@ export function buildBetterAuthStripePlans(): BetterAuthStripePlan[] {
   }
 
   if (ids.church) {
+    if (ids.starter && ids.church === ids.starter) {
+      console.warn(
+        "[stripe] Church and Starter share the same price ID. Church checkouts may be stored as starter until sync."
+      )
+    }
     plans.push({
       name: "church",
       priceId: ids.church,

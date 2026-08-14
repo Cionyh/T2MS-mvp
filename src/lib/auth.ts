@@ -7,6 +7,7 @@ import { organization } from "better-auth/plugins";
 import { stripe } from "@better-auth/stripe";
 import { sendEmail } from "@/lib/sendgrid";
 import { renderPasswordResetEmail } from "@/lib/email-templates";
+import { CHURCH_PLAN_ID } from "@/lib/church-pricing";
 import {
   buildBetterAuthStripePlans,
   getStripeWebhookSecret,
@@ -69,7 +70,46 @@ if (stripeClient && stripeWebhookSecret && stripeSubscriptionPlans.length > 0) {
           }
           return false;
         },
-        requireEmailVerification: false
+        requireEmailVerification: false,
+        getCheckoutSessionParams: async ({ plan }) => {
+          if (plan?.name !== CHURCH_PLAN_ID) {
+            return {};
+          }
+          return {
+            params: {
+              metadata: {
+                church_intro: "true",
+                plan: CHURCH_PLAN_ID,
+              },
+            },
+          };
+        },
+        onSubscriptionComplete: async ({ stripeSubscription, subscription }) => {
+          try {
+            const userId = subscription.referenceId;
+            if (!userId) return;
+            const onboarding = await db.onboarding.findUnique({
+              where: { userId },
+              select: {
+                planId: true,
+                churchVerificationStatus: true,
+              },
+            });
+            const isChurch =
+              onboarding?.planId === CHURCH_PLAN_ID ||
+              onboarding?.churchVerificationStatus === "verified" ||
+              stripeSubscription.metadata?.church_intro === "true" ||
+              stripeSubscription.metadata?.plan === CHURCH_PLAN_ID;
+            if (!isChurch) return;
+
+            await db.subscription.updateMany({
+              where: { stripeSubscriptionId: stripeSubscription.id },
+              data: { plan: CHURCH_PLAN_ID },
+            });
+          } catch (error) {
+            console.warn("[stripe] church plan correction failed:", error);
+          }
+        },
       }
     })
   );
