@@ -128,6 +128,8 @@ function OnboardingContent() {
   const RESEND_COOLDOWN_SECONDS = 60;
   const churchPlanAutoStarted = useRef(false);
   const registerInFlight = useRef(false);
+  const postCheckoutSyncAttempted = useRef(false);
+  const [checkoutSyncing, setCheckoutSyncing] = useState(false);
 
   const refreshStatus = useCallback(async () => {
     try {
@@ -164,6 +166,32 @@ function OnboardingContent() {
   useEffect(() => {
     refreshStatus();
   }, [refreshStatus]);
+
+  // After Stripe checkout: sync subscription before deciding the next onboarding step.
+  // Webhooks can lag, which previously left church users stuck on the plan card.
+  useEffect(() => {
+    if (successParam !== "1" || postCheckoutSyncAttempted.current) return;
+    postCheckoutSyncAttempted.current = true;
+
+    let cancelled = false;
+    const syncAfterCheckout = async () => {
+      setCheckoutSyncing(true);
+      try {
+        await fetch("/api/subscription/sync", { method: "POST" });
+        if (cancelled) return;
+        await refreshStatus();
+      } catch {
+        if (!cancelled) await refreshStatus();
+      } finally {
+        if (!cancelled) setCheckoutSyncing(false);
+      }
+    };
+
+    void syncAfterCheckout();
+    return () => {
+      cancelled = true;
+    };
+  }, [successParam, refreshStatus]);
 
   useEffect(() => {
     const redeemCoupon = async () => {
@@ -276,7 +304,9 @@ function OnboardingContent() {
       const { data, error } = await client.subscription.upgrade({
         plan: planId,
         referenceId: userId,
-        successUrl: `${window.location.origin}/onboarding?success=1`,
+        successUrl: `${window.location.origin}/onboarding?success=1${
+          planId === "church" ? "&plan=church" : ""
+        }`,
         cancelUrl:
           planId === "church"
             ? `${window.location.origin}/onboarding?plan=church`
@@ -665,11 +695,19 @@ function OnboardingContent() {
     }
   };
 
-  // Register site only when status says we still need a site.
-  // Do NOT open this solely for Stripe ?success=1 — that caused duplicate sites.
+  // After Stripe checkout: treat as paid even if webhook lag still hides the subscription.
+  // Only skip register if they already have a site (avoids the previous duplicate-site bug).
+  const returnedFromCheckout = successParam === "1";
+  const alreadyHasSite = Boolean(
+    status?.firstClientId ||
+      status?.needsPhoneVerification ||
+      phoneStepClientId
+  );
   const showRegisterSiteStep =
     statusLoaded &&
-    status?.needsSiteRegistration === true &&
+    !checkoutSyncing &&
+    (status?.needsSiteRegistration === true ||
+      (returnedFromCheckout && !alreadyHasSite)) &&
     !phoneStepClientId &&
     !status?.needsPhoneVerification &&
     !installSetupClientId &&
@@ -751,18 +789,19 @@ function OnboardingContent() {
   }, [showRegisterSiteStep, isChurchFunnel]);
 
   useEffect(() => {
-    if (!statusLoaded || churchPlanAutoStarted.current) return;
+    if (!statusLoaded || churchPlanAutoStarted.current || checkoutSyncing) return;
 
     const targetIsChurch =
       isChurchFunnel || planParam === "church" || readChurchPlanIntent(planParam);
     if (!targetIsChurch) return;
 
+    // Already paid / just returned from Stripe — never send them through checkout again
     if (
+      successParam === "1" ||
       showRegisterSiteStep ||
       showPhoneVerificationStep ||
       showInstallSetupStep ||
       showHostedSetupStep ||
-      successParam === "1" ||
       couponRedeeming
     ) {
       return;
@@ -771,6 +810,7 @@ function OnboardingContent() {
     churchPlanAutoStarted.current = true;
     void handlePaidPlan("church");
   }, [
+    checkoutSyncing,
     couponRedeeming,
     isChurchFunnel,
     planParam,
@@ -814,10 +854,15 @@ function OnboardingContent() {
       .catch(() => setHostedSetupSiteName("Your site"));
   }, [hostedSetupClientId]);
 
-  if (!statusLoaded) {
+  if (!statusLoaded || checkoutSyncing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/30">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          {checkoutSyncing
+            ? "Confirming your subscription…"
+            : null}
+        </div>
       </div>
     );
   }
