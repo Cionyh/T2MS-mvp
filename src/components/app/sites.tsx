@@ -86,6 +86,10 @@ import {
   getWidgetSetupGaps,
 } from "@/lib/client-setup";
 import { planRequiresSmsKeyword } from "@/lib/plan-keyword";
+import {
+  parseYoutubeVideoId,
+  youtubeThumbnailUrl,
+} from "@/lib/youtube-embed";
 
 // Widget type instructions
 const widgetTypeInstructions = {
@@ -181,6 +185,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [mobileFontSize, setMobileFontSize] = useState<number | "">("");
   const [attachImage, setAttachImage] = useState("");
   const [presetText, setPresetText] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [iframeWidth, setIframeWidth] = useState("100%");
   const [iframeHeight, setIframeHeight] = useState("100vh");
   const [logoUploading, setLogoUploading] = useState(false);
@@ -393,6 +398,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
     setMobileFontSize(widgetConfig.mobileFontSize ?? "");
     setAttachImage(widgetConfig.attachImage || "");
     setPresetText(widgetConfig.presetText || "");
+    setYoutubeUrl(widgetConfig.youtubeUrl || "");
     setIframeWidth(widgetConfig.iframeWidth || "100%");
     setIframeHeight(widgetConfig.iframeHeight || "100vh");
     
@@ -460,6 +466,18 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
 
   const handleSaveClick = async (websiteId: string) => {
     if (isSaving) return; // Prevent multiple saves
+
+    const trimmedYoutube = youtubeUrl.trim();
+    if (
+      (editedDefaultType === "fullscreen" || editedDefaultType === "modal") &&
+      trimmedYoutube &&
+      !parseYoutubeVideoId(trimmedYoutube)
+    ) {
+      toast.error(
+        "Enter a valid YouTube link (youtube.com/watch, youtu.be, Shorts, or embed)."
+      );
+      return;
+    }
     
     setIsSaving(true);
     
@@ -480,6 +498,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
         ...(mobileFontSize !== "" ? { mobileFontSize } : {}),
         attachImage,
         presetText,
+        youtubeUrl: youtubeUrl.trim(),
         iframeWidth,
         iframeHeight,
       };
@@ -1487,6 +1506,45 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                 </div>
               </div>
             </div>
+
+            {/* YouTube embed - Fullscreen and Modal only */}
+            {(editedDefaultType === "fullscreen" ||
+              editedDefaultType === "modal") && (
+              <div>
+                <Label className="mb-2 text-sm font-medium">
+                  YouTube video link
+                </Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Paste a YouTube watch, share, Shorts, or embed link. Shown in
+                  the {editedDefaultType === "modal" ? "modal" : "fullscreen"}{" "}
+                  widget.
+                </p>
+                <Input
+                  type="url"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  className="w-full"
+                />
+                {parseYoutubeVideoId(youtubeUrl) ? (
+                  <div className="mt-2 rounded-md border bg-muted/30 p-2">
+                    <p className="mb-1 text-xs text-muted-foreground">
+                      Video preview
+                    </p>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={youtubeThumbnailUrl(parseYoutubeVideoId(youtubeUrl)!)}
+                      alt="YouTube video thumbnail"
+                      className="max-h-40 max-w-full object-contain"
+                    />
+                  </div>
+                ) : youtubeUrl.trim() ? (
+                  <p className="mt-1 text-xs text-destructive">
+                    This does not look like a valid YouTube link.
+                  </p>
+                ) : null}
+              </div>
+            )}
 
             {/* Attach Image - Only for Fullscreen Widget */}
             {editedDefaultType === "fullscreen" && (

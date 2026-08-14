@@ -75,7 +75,7 @@ export async function GET() {
     if (!document.getElementById('t2ms-iframe-responsive-styles')) {
       const responsiveStyleTag = document.createElement('style');
       responsiveStyleTag.id = 't2ms-iframe-responsive-styles';
-      responsiveStyleTag.textContent = '@media (max-width: 768px) { #' + containerId + ' { width: 100% !important; max-width: 100vw !important; height: auto !important; min-height: 200px !important; } }';
+      responsiveStyleTag.textContent = '@media (max-width: 768px) { #' + containerId + ' { width: 100% !important; max-width: 100% !important; } }';
       document.head.appendChild(responsiveStyleTag);
     }
 

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-
+import { getWidgetResponsiveCss } from "@/lib/widget-responsive-styles";
 
 export async function GET() {
+  const responsiveCss = getWidgetResponsiveCss();
   const js = `
 (async function () {
   try {
@@ -324,6 +325,7 @@ export async function GET() {
     const wrapper = document.createElement("div");
     wrapper.id = WIDGET_ID;
     wrapper.setAttribute("aria-live", "polite");
+    wrapper.setAttribute("data-type", type);
 
     // Add custom CSS classes if provided
     if (rawConfig.customCssClasses) {
@@ -358,9 +360,39 @@ export async function GET() {
       // Typography
       fontSize: rawConfig.fontSize || 14,
       mobileFontSize: rawConfig.mobileFontSize,
+      youtubeUrl: typeof rawConfig.youtubeUrl === "string" ? rawConfig.youtubeUrl : "",
     };
 
-    // Apply base styles with sensible defaults
+    function t2msYoutubeEmbedUrl(raw) {
+      if (!raw || typeof raw !== "string") return "";
+      var s = raw.trim();
+      var id = "";
+      var m;
+      if (/^[a-zA-Z0-9_-]{11}$/.test(s)) id = s;
+      else if ((m = s.match(/[?&]v=([a-zA-Z0-9_-]{11})/))) id = m[1];
+      else if ((m = s.match(/youtu\\.be\\/([a-zA-Z0-9_-]{11})/))) id = m[1];
+      else if ((m = s.match(/youtube(?:-nocookie)?\\.com\\/(?:embed|shorts|live|v)\\/([a-zA-Z0-9_-]{11})/))) id = m[1];
+      if (!id) return "";
+      return "https://www.youtube-nocookie.com/embed/" + id;
+    }
+
+    function t2msAppendYoutube(parent) {
+      if (type !== "fullscreen" && type !== "modal") return;
+      var embedUrl = t2msYoutubeEmbedUrl(config.youtubeUrl);
+      if (!embedUrl) return;
+      wrapper.classList.add("has-youtube");
+      var box = document.createElement("div");
+      box.className = "t2ms-youtube";
+      var frame = document.createElement("iframe");
+      frame.src = embedUrl;
+      frame.title = "YouTube video";
+      frame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+      frame.setAttribute("allowfullscreen", "");
+      frame.setAttribute("loading", "lazy");
+      frame.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+      box.appendChild(frame);
+      parent.appendChild(box);
+    }
     Object.assign(wrapper.style, {
       position: "fixed",
       zIndex: "999999",
@@ -781,6 +813,8 @@ export async function GET() {
           imageContainer.appendChild(img);
           contentContainer.appendChild(imageContainer);
         }
+
+        t2msAppendYoutube(contentContainer);
         
         // Style the wrapper
         Object.assign(wrapper.style, {
@@ -833,8 +867,8 @@ export async function GET() {
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%) scale(0.85)",
-          width: "auto",
-          maxWidth: "90vw",
+          width: t2msYoutubeEmbedUrl(config.youtubeUrl) ? "min(720px, 92vw)" : "auto",
+          maxWidth: t2msYoutubeEmbedUrl(config.youtubeUrl) ? "min(720px, 92vw)" : "90vw",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
@@ -845,8 +879,10 @@ export async function GET() {
         Object.assign(contentDiv.style, {
           fontSize: \`\${config.fontSize + 4}px\`,
           lineHeight: "1.5",
-          maxWidth: "min(480px, 90vw)",
+          maxWidth: t2msYoutubeEmbedUrl(config.youtubeUrl) ? "100%" : "min(480px, 90vw)",
         });
+
+        t2msAppendYoutube(wrapper);
 
         document.body.style.overflow = "hidden";
         document.body.dataset.t2msLock = "1";
@@ -870,44 +906,13 @@ export async function GET() {
       }
     }
 
-    // Add logo if provided - display in circular box
     if (config.logoUrl) {
-       if (["popup", "fullscreen", "modal"].includes(type)) {
-    wrapper.style.paddingTop = "70px";   // 50px logo + 20px spacing
-    wrapper.style.paddingLeft = "70px";
-  }
-
-
+      wrapper.classList.add("has-logo");
       const logoContainer = document.createElement("div");
-      logoContainer.style.cssText = \`
-         position: absolute;
-    top: 8px;
-    left: 12px;
-    z-index: 10;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(1px);
-    margin: 0;   /* margin not needed since padding handles spacing */
-    padding: 0;
-    flex-shrink: 0;
-      \`;
-      
+      logoContainer.className = "t2ms-logo-container";
       const logoImg = document.createElement("img");
       logoImg.src = config.logoUrl;
-      logoImg.style.cssText = \`
-        max-width: 32px;
-    max-height: 32px;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    border-radius: 50%;
-      \`;
-      
+      logoImg.alt = "Logo";
       logoContainer.appendChild(logoImg);
       wrapper.appendChild(logoContainer);
     }
@@ -945,32 +950,20 @@ export async function GET() {
 
     scheduleDismiss(type, dismissAfter);
 
-    // Add mobile responsive styles
-    if (!document.getElementById('t2ms-mobile-styles')) {
-      const mobileStyleTag = document.createElement('style');
-      mobileStyleTag.id = 't2ms-mobile-styles';
-      const resolvedMobileFontSize =
-        typeof config.mobileFontSize === "number"
-          ? config.mobileFontSize
-          : Math.max(15, config.fontSize);
-      const tickerFontSize = Math.max(14, config.fontSize + 2);
-      const modalFontSize = Math.max(15, config.fontSize + 2);
-      const fullscreenFontSize = Math.max(18, config.fontSize + 6);
-      mobileStyleTag.textContent = '@media (max-width: 768px) {' +
-        '#t2ms-widget { max-width: calc(100vw - 32px) !important; }' +
-        '#t2ms-widget[data-type="banner"] { height: auto !important; min-height: 56px !important; line-height: 1.4 !important; white-space: normal !important; }' +
-        '#t2ms-widget[data-type="banner"] .t2ms-content { padding: 14px 52px 14px 16px !important; height: auto !important; min-height: 56px !important; line-height: 1.45 !important; font-size: ' + resolvedMobileFontSize + 'px !important; white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }' +
-        '#t2ms-widget[data-type="ticker"] { height: auto !important; min-height: 50px !important; }' +
-        '#t2ms-widget[data-type="ticker"] .t2ms-content { padding-right: 50px !important; font-size: ' + tickerFontSize + 'px !important; height: auto !important; min-height: 50px !important; line-height: 50px !important; }' +
-        '#t2ms-widget[data-type="popup"] { min-width: calc(100vw - 32px) !important; max-width: calc(100vw - 32px) !important; width: calc(100vw - 32px) !important; left: 16px !important; right: 16px !important; top: auto !important; bottom: 16px !important; transform: none !important; padding: 12px !important; }' +
-        '#t2ms-widget[data-type="popup"] .t2ms-content { font-size: ' + resolvedMobileFontSize + 'px !important; }' +
-        '#t2ms-widget[data-type="modal"] { max-width: calc(100vw - 32px) !important; width: calc(100vw - 32px) !important; padding: 20px 24px !important; padding-right: 40px !important; }' +
-        '#t2ms-widget[data-type="modal"] .t2ms-content { font-size: ' + modalFontSize + 'px !important; max-width: 100% !important; }' +
-        '#t2ms-widget[data-type="fullscreen"] .t2ms-content { font-size: ' + fullscreenFontSize + 'px !important; padding: 16px !important; max-width: 95vw !important; }' +
-        '#t2ms-widget[data-type="fullscreen"] > div { padding: 16px !important; }' +
-        '#t2ms-widget .t2ms-close { top: 6px !important; right: 8px !important; font-size: 1.3em !important; padding: 6px !important; min-width: 32px !important; min-height: 32px !important; display: flex !important; align-items: center !important; justify-content: center !important; }' +
-        '}';
-      document.head.appendChild(mobileStyleTag);
+    const resolvedMobileFontSize =
+      typeof config.mobileFontSize === "number"
+        ? config.mobileFontSize
+        : Math.max(15, config.fontSize);
+    wrapper.style.setProperty("--t2ms-mobile-font-size", resolvedMobileFontSize + "px");
+    wrapper.style.setProperty("--t2ms-ticker-font-size", Math.max(14, config.fontSize + 2) + "px");
+    wrapper.style.setProperty("--t2ms-modal-font-size", Math.max(15, config.fontSize + 2) + "px");
+    wrapper.style.setProperty("--t2ms-fullscreen-font-size", Math.max(18, config.fontSize + 6) + "px");
+
+    if (!document.getElementById("t2ms-responsive-styles")) {
+      const responsiveStyleTag = document.createElement("style");
+      responsiveStyleTag.id = "t2ms-responsive-styles";
+      responsiveStyleTag.textContent = ${JSON.stringify(responsiveCss)};
+      document.head.appendChild(responsiveStyleTag);
     }
   }
 
