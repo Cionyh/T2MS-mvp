@@ -58,13 +58,14 @@ export function getSelectablePlanOptions(): PlanOption[] {
 }
 
 export function getPlanOptionById(planId: string): PlanOption | undefined {
-  if (planId === CHURCH_PLAN_ID && isChurchPlanEnabled()) {
+  if (planId === CHURCH_PLAN_ID) {
     return CHURCH_OPTION
   }
   return getSelectablePlanOptions().find((p) => p.id === planId)
 }
 
 export function resolvePlanOption(planId: string): PlanOption {
+  if (planId === CHURCH_PLAN_ID) return CHURCH_OPTION
   return (
     getPlanOptionById(planId) ??
     (planId === "enterprise"
@@ -76,7 +77,33 @@ export function resolvePlanOption(planId: string): PlanOption {
 }
 
 export function formatPlanLabel(planId: string): string {
+  if (planId === CHURCH_PLAN_ID) return "Church Partner"
   return resolvePlanOption(planId).name
+}
+
+/**
+ * Church checkout can be stored as "starter" when Stripe price IDs overlap
+ * or Better Auth maps the webhook by price first. Prefer the church
+ * onboarding/verification intent unless the user has since moved to another paid plan.
+ */
+export function resolveEffectivePlan(input: {
+  subscriptionPlan?: string | null
+  onboardingPlanId?: string | null
+  churchVerificationStatus?: string | null
+}): string {
+  const sub = (input.subscriptionPlan ?? "").toLowerCase().trim()
+  const onboarding = (input.onboardingPlanId ?? "").toLowerCase().trim()
+  const churchIntent =
+    onboarding === CHURCH_PLAN_ID ||
+    input.churchVerificationStatus === "verified"
+
+  if (churchIntent && (!sub || sub === "starter" || sub === CHURCH_PLAN_ID)) {
+    return CHURCH_PLAN_ID
+  }
+
+  if (sub) return sub
+  if (onboarding && onboarding !== "free") return onboarding
+  return "free"
 }
 
 export { CHURCH_PLAN_FEATURES, STARTER_PLAN_FEATURES, isChurchPlanEnabled, getChurchIntroPriceLabel }

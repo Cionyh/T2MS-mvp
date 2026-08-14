@@ -44,6 +44,7 @@ import {
 import { signOut, client } from "@/lib/auth-client";
 import { AuthGetSessionResult, isImpersonating } from "@/lib/auth-types";
 import { isAffiliateRole } from "@/lib/user-roles";
+import { formatPlanLabel, resolveEffectivePlan } from "@/lib/plan-display";
 import { toast } from "sonner"; 
 
 const navItems = [
@@ -118,13 +119,61 @@ export default function ClientDashboardLayout({
         });
         
         if (data && data.length > 0) {
-          const activeSubscription = data.find((sub: any) => 
+          const activeSubscription = data.find((sub: { status: string; plan: string }) => 
             sub.status === "active" || sub.status === "trialing"
           );
           
+          const onboardingRes = await fetch("/api/onboarding");
+          const onboardingData = onboardingRes.ok
+            ? await onboardingRes.json()
+            : null;
+          const onboarding = onboardingData?.onboarding as
+            | {
+                planId?: string
+                churchVerificationStatus?: string
+              }
+            | undefined;
+
+          const effectivePlan = resolveEffectivePlan({
+            subscriptionPlan: activeSubscription?.plan,
+            onboardingPlanId: onboarding?.planId,
+            churchVerificationStatus: onboarding?.churchVerificationStatus,
+          });
+
+          if (
+            effectivePlan === "church" &&
+            activeSubscription &&
+            activeSubscription.plan !== "church"
+          ) {
+            try {
+              await fetch("/api/subscription/sync", { method: "POST" });
+            } catch {
+              // Display church immediately even if sync lags
+            }
+          }
+
           if (activeSubscription) {
-            setCurrentPlan(activeSubscription.plan);
+            setCurrentPlan(effectivePlan);
             setPlanStatus(activeSubscription.status);
+            return;
+          }
+
+          if (effectivePlan !== "free") {
+            setCurrentPlan(effectivePlan);
+          }
+          return;
+        }
+
+        const onboardingRes = await fetch("/api/onboarding");
+        if (onboardingRes.ok) {
+          const onboardingData = await onboardingRes.json();
+          const onboarding = onboardingData.onboarding;
+          const effectivePlan = resolveEffectivePlan({
+            onboardingPlanId: onboarding?.planId,
+            churchVerificationStatus: onboarding?.churchVerificationStatus,
+          });
+          if (effectivePlan !== "free") {
+            setCurrentPlan(effectivePlan);
           }
         }
       } catch (error) {
@@ -277,22 +326,24 @@ export default function ClientDashboardLayout({
                   "cursor-pointer transition-colors",
                   currentPlan === "free" && "bg-muted text-muted-foreground",
                   currentPlan === "starter" && "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                  currentPlan === "church" && "bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100",
                   currentPlan === "pro" && "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
                   currentPlan === "enterprise" && "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                 )}
               >
-                {currentPlan === "free" ? "Free" : currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}
+                {formatPlanLabel(currentPlan)}
                 {planStatus === "trialing" && " (Trial)"}
               </Badge>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-64 space-y-2">
               <div className="space-y-1">
                 <p className="text-sm font-medium leading-none">
-                  Current Plan: {currentPlan === "free" ? "Free" : currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}
+                  Current Plan: {formatPlanLabel(currentPlan)}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {currentPlan === "free" && "Limited features and usage"}
                   {currentPlan === "starter" && "Basic features with moderate limits"}
+                  {currentPlan === "church" && "Church Partner — hosted page & widget, intro pricing"}
                   {currentPlan === "pro" && "Advanced features with higher limits"}
                   {currentPlan === "enterprise" && "Full features with unlimited usage"}
                 </p>

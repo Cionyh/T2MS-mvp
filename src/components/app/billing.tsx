@@ -9,7 +9,7 @@ import { client } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { CreditCard, Calendar, Users, Globe, MessageSquare, HardDrive } from "lucide-react";
 import { PLAN_LIMITS } from "@/lib/plan-limits";
-import { formatPlanLabel } from "@/lib/plan-display";
+import { formatPlanLabel, resolveEffectivePlan } from "@/lib/plan-display";
 import { preparePlanCheckout } from "@/lib/prepare-plan-checkout";
 import Link from "next/link";
 
@@ -40,6 +40,9 @@ const planLimits: Record<string, PlanLimits> = PLAN_LIMITS;
 export function BillingSection() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [onboardingPlanId, setOnboardingPlanId] = useState<string | null>(null);
+  const [churchVerificationStatus, setChurchVerificationStatus] = useState<
+    string | null
+  >(null);
   const [churchPriceLockedUntil, setChurchPriceLockedUntil] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -50,13 +53,28 @@ export function BillingSection() {
     fetchOnboardingPlan();
   }, []);
 
-  // When payment pending, try syncing from Stripe once (webhook may have succeeded but DB wasn't updated)
+  // When payment pending, or church signup was stored as starter, sync from Stripe
   useEffect(() => {
-    if (loading || !onboardingPlanId || onboardingPlanId === "free") return;
+    if (loading) return;
+    const churchIntent =
+      onboardingPlanId === "church" ||
+      churchVerificationStatus === "verified";
+    if (!churchIntent && (!onboardingPlanId || onboardingPlanId === "free")) {
+      return;
+    }
     const hasActive = subscriptions.some(
       (s) => s.status === "active" || s.status === "trialing"
     );
-    if (hasActive || syncAttempted.current) return;
+    const churchMislabelled =
+      (onboardingPlanId === "church" ||
+        churchVerificationStatus === "verified") &&
+      hasActive &&
+      subscriptions.some(
+        (s) =>
+          (s.status === "active" || s.status === "trialing") &&
+          s.plan !== "church"
+      );
+    if ((hasActive && !churchMislabelled) || syncAttempted.current) return;
 
     syncAttempted.current = true;
     const sync = async () => {
@@ -65,14 +83,14 @@ export function BillingSection() {
         const data = await res.json();
         if (res.ok && data.synced > 0) {
           await fetchSubscriptions();
-          toast.success("Subscription synced successfully");
+          await fetchOnboardingPlan();
         }
       } catch {
         // Ignore
       }
     };
     sync();
-  }, [loading, onboardingPlanId, subscriptions.length]);
+  }, [loading, onboardingPlanId, churchVerificationStatus, subscriptions]);
 
   const fetchSubscriptions = async () => {
     try {
@@ -109,6 +127,9 @@ export function BillingSection() {
       const onboarding = data.onboarding;
       if (onboarding?.planId && onboarding.planId !== "free") {
         setOnboardingPlanId(onboarding.planId);
+      }
+      if (onboarding?.churchVerificationStatus) {
+        setChurchVerificationStatus(onboarding.churchVerificationStatus);
       }
       if (onboarding?.churchPriceLockedUntil) {
         setChurchPriceLockedUntil(onboarding.churchPriceLockedUntil);
@@ -246,6 +267,9 @@ export function BillingSection() {
         referenceId: session.data.user.id,
         successUrl: `${window.location.origin}/app/billing?upgraded=true`,
         cancelUrl: `${window.location.origin}/app/billing`,
+        ...(onboardingPlanId === "church"
+          ? { metadata: { church_intro: "true", plan: "church" } }
+          : {}),
       });
       if (error) {
         toast.error(error.message || "Failed to start checkout");
@@ -291,8 +315,11 @@ export function BillingSection() {
   }
 
   const activeSubscription = subscriptions.find(sub => sub.status === "active" || sub.status === "trialing");
-  // Use onboarding plan as fallback when user chose a paid plan during onboarding but subscription isn't synced yet
-  const currentPlan = activeSubscription?.plan || onboardingPlanId || "free";
+  const currentPlan = resolveEffectivePlan({
+    subscriptionPlan: activeSubscription?.plan,
+    onboardingPlanId,
+    churchVerificationStatus,
+  });
   const limits = planLimits[currentPlan] || { websites: 1, messages: 10, storage: 0.1 };
   const paymentPending = !activeSubscription && onboardingPlanId && onboardingPlanId !== "free";
 

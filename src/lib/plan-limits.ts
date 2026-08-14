@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getActiveSubscriptionWhere } from "@/lib/subscriptions";
+import { resolveEffectivePlan } from "@/lib/plan-display";
 
 export interface PlanLimits {
   websites: number;
@@ -48,22 +49,16 @@ export async function getOrganizationPlan(organizationId: string): Promise<strin
       orderBy: { periodStart: "desc" }
     });
 
-    if (activeSubscription?.plan) {
-      return activeSubscription.plan;
-    }
-
-    // During checkout lag / before Stripe sync, honor the plan chosen in onboarding
-    // so single-site plans are not treated as free (10 sites).
     const onboarding = await prisma.onboarding.findUnique({
       where: { userId: ownerUserId },
-      select: { planId: true },
+      select: { planId: true, churchVerificationStatus: true },
     });
-    const intended = (onboarding?.planId ?? "").toLowerCase().trim();
-    if (intended && intended !== "free" && PLAN_LIMITS[intended]) {
-      return intended;
-    }
 
-    return "free";
+    return resolveEffectivePlan({
+      subscriptionPlan: activeSubscription?.plan,
+      onboardingPlanId: onboarding?.planId,
+      churchVerificationStatus: onboarding?.churchVerificationStatus,
+    });
   } catch (error) {
     console.error("Error getting organization plan:", error);
     return "free";
@@ -88,11 +83,16 @@ export async function getUserPlan(userId: string): Promise<string> {
       orderBy: { periodStart: "desc" }
     });
 
-    if (!activeSubscription) {
-      return "free";
-    }
+    const onboarding = await prisma.onboarding.findUnique({
+      where: { userId },
+      select: { planId: true, churchVerificationStatus: true },
+    });
 
-    return activeSubscription.plan;
+    return resolveEffectivePlan({
+      subscriptionPlan: activeSubscription?.plan,
+      onboardingPlanId: onboarding?.planId,
+      churchVerificationStatus: onboarding?.churchVerificationStatus,
+    });
   } catch (error) {
     console.error("Error getting user plan:", error);
     return "free";
