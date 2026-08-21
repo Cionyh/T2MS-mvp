@@ -10,6 +10,7 @@ import {
   isHostedThemeId,
   normalizeHostedTheme,
 } from "@/lib/hosted-page/themes"
+import { parseYoutubeVideoId } from "@/lib/youtube-embed"
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -50,6 +51,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         hostedLogoUrl: true,
         hostedBackgroundImageUrl: true,
         hostedContentImageUrl: true,
+        hostedYoutubeUrl: true,
         hostedPublishedAt: true,
         widgetConfig: true,
       },
@@ -118,6 +120,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedLogoUrl,
       hostedBackgroundImageUrl,
       hostedContentImageUrl,
+      hostedYoutubeUrl,
     } = body as {
       hostedSlug?: string | null
       hostedEnabled?: boolean
@@ -129,6 +132,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedLogoUrl?: string | null
       hostedBackgroundImageUrl?: string | null
       hostedContentImageUrl?: string | null
+      hostedYoutubeUrl?: string | null
     }
 
     const existing = await prisma.client.findUnique({
@@ -155,6 +159,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       hostedLogoUrl?: string | null
       hostedBackgroundImageUrl?: string | null
       hostedContentImageUrl?: string | null
+      hostedYoutubeUrl?: string | null
       hostedPublishedAt?: Date | null
     } = {}
 
@@ -204,6 +209,29 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const contentImage = normalizeOptionalUrl(hostedContentImageUrl)
     if (contentImage !== undefined) {
       updateData.hostedContentImageUrl = contentImage
+    }
+
+    if (hostedYoutubeUrl !== undefined) {
+      if (hostedYoutubeUrl === null) {
+        updateData.hostedYoutubeUrl = null
+      } else if (typeof hostedYoutubeUrl === "string") {
+        const trimmed = hostedYoutubeUrl.trim()
+        if (!trimmed) {
+          updateData.hostedYoutubeUrl = null
+        } else if (!parseYoutubeVideoId(trimmed)) {
+          return NextResponse.json(
+            {
+              error:
+                "Enter a valid YouTube link (youtube.com/watch, youtu.be, Shorts, or embed).",
+            },
+            { status: 400 }
+          )
+        } else {
+          updateData.hostedYoutubeUrl = trimmed.slice(0, 2000)
+        }
+      } else {
+        updateData.hostedYoutubeUrl = null
+      }
     }
 
     if (hostedSlug !== undefined) {
@@ -265,6 +293,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         hostedLogoUrl: true,
         hostedBackgroundImageUrl: true,
         hostedContentImageUrl: true,
+        hostedYoutubeUrl: true,
         hostedPublishedAt: true,
       },
     })

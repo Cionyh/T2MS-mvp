@@ -3,6 +3,7 @@ export type WidgetConfigJson = {
   companyWebsiteLink?: string
   backgroundImageUrl?: string
   attachImage?: string
+  youtubeUrl?: string
   presetText?: string
   fontSize?: number
   mobileFontSize?: number
@@ -26,6 +27,8 @@ export type HostedPageData = {
   hostedBackgroundImageUrl?: string | null
   /** Optional image under the announcement message */
   hostedContentImageUrl?: string | null
+  /** Optional YouTube link below the announcement card */
+  hostedYoutubeUrl?: string | null
   messageContent: string
   defaultBgColor: string
   defaultTextColor: string

@@ -1,5 +1,6 @@
 import type { HostedPageData } from "./types"
 import { normalizeHostedTheme, type HostedThemeId } from "./themes"
+import { youtubeEmbedHtml } from "@/lib/youtube-embed"
 
 function escapeHtml(text: string): string {
   return text
@@ -68,6 +69,22 @@ function themeStyles(
       object-fit: contain;
       border-radius: 8px;
       margin-top: 16px;
+    }
+    .t2ms-youtube {
+      width: 100%;
+      max-width: min(720px, 100%);
+      aspect-ratio: 16 / 9;
+      margin: 0 auto 20px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      flex-shrink: 0;
+    }
+    .t2ms-youtube iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
     }
     .t2ms-message {
       font-size: ${msgSize}px;
@@ -750,6 +767,8 @@ export function renderHostedPageHtml(
     (data.hostedContentImageUrl?.trim() ||
       widgetConfig.attachImage ||
       "").trim()
+  // Announcement YouTube is independent of the website widget video setting
+  const youtubeBlock = youtubeEmbedHtml(data.hostedYoutubeUrl)
   const presetText = widgetConfig.presetText || ""
   const fontSize = widgetConfig.fontSize || 18
 
@@ -801,13 +820,15 @@ export function renderHostedPageHtml(
     <section class="t2ms-announcement" aria-live="polite">
       <div id="t2ms-message" class="t2ms-message">${escapeHtml(messageContent)}</div>
       ${attachBlock}
-    </section>`
+    </section>
+    ${youtubeBlock}`
       : `${headerBlock}
     ${introBlock}
     <section class="t2ms-announcement" aria-live="polite">
       <div id="t2ms-message" class="t2ms-message">${escapeHtml(messageContent)}</div>
       ${attachBlock}
-    </section>`
+    </section>
+    ${youtubeBlock}`
 
   const bannerHeader = theme === "banner" ? headerBlock : ""
 

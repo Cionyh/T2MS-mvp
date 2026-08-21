@@ -23,6 +23,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  parseYoutubeVideoId,
+  youtubeThumbnailUrl,
+} from "@/lib/youtube-embed"
 
 type HostedPageSettingsProps = {
   clientId: string
@@ -74,6 +78,7 @@ export function HostedPageSettings({
   const [logoUrl, setLogoUrl] = useState("")
   const [backgroundImageUrl, setBackgroundImageUrl] = useState("")
   const [contentImageUrl, setContentImageUrl] = useState("")
+  const [youtubeUrl, setYoutubeUrl] = useState("")
   const [logoUploading, setLogoUploading] = useState(false)
   const [backgroundUploading, setBackgroundUploading] = useState(false)
   const [contentImageUploading, setContentImageUploading] = useState(false)
@@ -121,6 +126,7 @@ export function HostedPageSettings({
       setLogoUrl(data.hostedLogoUrl ?? "")
       setBackgroundImageUrl(data.hostedBackgroundImageUrl ?? "")
       setContentImageUrl(data.hostedContentImageUrl ?? "")
+      setYoutubeUrl(data.hostedYoutubeUrl ?? "")
       // First-time setup: default publish on when no slug has been saved yet
       if (data.hostedSlug) {
         setEnabled(Boolean(data.hostedEnabled))
@@ -233,6 +239,14 @@ export function HostedPageSettings({
       return false
     }
 
+    const trimmedYoutube = youtubeUrl.trim()
+    if (trimmedYoutube && !parseYoutubeVideoId(trimmedYoutube)) {
+      toast.error(
+        "Enter a valid YouTube link (youtube.com/watch, youtu.be, Shorts, or embed)."
+      )
+      return false
+    }
+
     // Re-check slug availability right before publish so suggested names work
     let currentSlugStatus = slugStatus
     if (enabled && slug && slugStatus !== "available") {
@@ -287,6 +301,7 @@ export function HostedPageSettings({
           hostedLogoUrl: logoUrl.trim() || null,
           hostedBackgroundImageUrl: backgroundImageUrl.trim() || null,
           hostedContentImageUrl: contentImageUrl.trim() || null,
+          hostedYoutubeUrl: youtubeUrl.trim() || null,
         }),
       })
       const data = await res.json()
@@ -311,6 +326,9 @@ export function HostedPageSettings({
       }
       if (data.data?.hostedContentImageUrl !== undefined) {
         setContentImageUrl(data.data.hostedContentImageUrl ?? "")
+      }
+      if (data.data?.hostedYoutubeUrl !== undefined) {
+        setYoutubeUrl(data.data.hostedYoutubeUrl ?? "")
       }
       if (typeof data.data?.hostedEnabled === "boolean") {
         setEnabled(data.data.hostedEnabled)
@@ -646,6 +664,48 @@ export function HostedPageSettings({
               className="max-h-40 max-w-full object-contain"
             />
           </div>
+        ) : null}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="hosted-youtube">YouTube video link (optional)</Label>
+        <p className="text-xs text-muted-foreground">
+          Shown below the announcement card. Accepts watch, share, Shorts, or
+          embed links. Separate from the website widget video.
+        </p>
+        <Input
+          id="hosted-youtube"
+          type="url"
+          placeholder="https://www.youtube.com/watch?v=..."
+          value={youtubeUrl}
+          onChange={(e) => setYoutubeUrl(e.target.value)}
+          className="w-full"
+        />
+        {parseYoutubeVideoId(youtubeUrl) ? (
+          <div className="rounded-md border bg-background p-2">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">Video preview</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setYoutubeUrl("")}
+              >
+                Remove
+              </Button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={youtubeThumbnailUrl(parseYoutubeVideoId(youtubeUrl)!)}
+              alt="YouTube video thumbnail"
+              className="max-h-40 max-w-full object-contain"
+            />
+          </div>
+        ) : youtubeUrl.trim() ? (
+          <p className="text-xs text-destructive">
+            This does not look like a valid YouTube link.
+          </p>
         ) : null}
       </div>
 
