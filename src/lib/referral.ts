@@ -20,3 +20,18 @@ export function getStoredReferralCode(): string | null {
   if (typeof window === "undefined") return null;
   return normalizeReferralCode(window.localStorage.getItem(REFERRAL_STORAGE_KEY));
 }
+
+/** Public signup URL that captures this referral code via ?ref= */
+export function buildReferralSignupUrl(
+  code: string,
+  origin?: string
+): string {
+  const normalized = normalizeReferralCode(code) || code.trim().toUpperCase();
+  const base = (
+    origin ||
+    (typeof window !== "undefined" ? window.location.origin : "") ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "https://www.text2mysite.com"
+  ).replace(/\/$/, "");
+  return `${base}/signup?ref=${encodeURIComponent(normalized)}`;
+}

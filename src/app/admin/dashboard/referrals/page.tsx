@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { buildReferralSignupUrl } from "@/lib/referral";
 
 type ReferralCode = {
   id: string;
@@ -113,6 +114,16 @@ export default function AdminReferralCodesPage() {
     }
   };
 
+  const handleCopyReferralUrl = async (code: string) => {
+    const url = buildReferralSignupUrl(code);
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Referral URL copied");
+    } catch {
+      toast.error("Could not copy referral URL");
+    }
+  };
+
   return (
     <div className="space-y-6 p-6 bg-muted rounded-2xl">
       <div>
@@ -177,6 +188,15 @@ export default function AdminReferralCodesPage() {
                     checked={code.isActive}
                     onCheckedChange={() => handleToggle(code)}
                   />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Copy referral URL"
+                    aria-label={`Copy referral URL for ${code.code}`}
+                    onClick={() => handleCopyReferralUrl(code.code)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
