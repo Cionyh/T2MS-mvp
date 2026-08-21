@@ -276,6 +276,8 @@ model Client {
   hostedBackgroundImageUrl   String?
   /// Optional image shown under the announcement message
   hostedContentImageUrl      String?
+  /// Optional YouTube link shown below the announcement card
+  hostedYoutubeUrl           String?
   hostedPublishedAt DateTime?
   hostedWelcomeEmailSentAt DateTime?
 

@@ -28,6 +28,7 @@ export async function getHostedPageBySlug(
       hostedLogoUrl: true,
       hostedBackgroundImageUrl: true,
       hostedContentImageUrl: true,
+      hostedYoutubeUrl: true,
       defaultBgColor: true,
       defaultTextColor: true,
       defaultFont: true,
@@ -58,6 +59,7 @@ export async function getHostedPageBySlug(
     hostedLogoUrl: client.hostedLogoUrl,
     hostedBackgroundImageUrl: client.hostedBackgroundImageUrl,
     hostedContentImageUrl: client.hostedContentImageUrl,
+    hostedYoutubeUrl: client.hostedYoutubeUrl,
     messageContent:
       client.messages[0]?.content ??
       "No announcement yet. Check back soon.",
