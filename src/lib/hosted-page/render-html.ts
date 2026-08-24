@@ -1,6 +1,10 @@
 import type { HostedPageData } from "./types"
 import { normalizeHostedTheme, type HostedThemeId } from "./themes"
 import { youtubeEmbedHtml } from "@/lib/youtube-embed"
+import {
+  formatSmsMessageHtml,
+  FORMAT_SMS_MESSAGE_CLIENT_JS,
+} from "@/lib/sms-format"
 
 function escapeHtml(text: string): string {
   return text
@@ -90,6 +94,13 @@ function themeStyles(
       font-size: ${msgSize}px;
       line-height: 1.5;
       font-weight: 600;
+    }
+    .t2ms-message strong {
+      font-weight: 800;
+    }
+    .t2ms-message em {
+      font-style: italic;
+      font-weight: 500;
     }
     .t2ms-powered {
       font-size: 0.75rem;
@@ -818,14 +829,14 @@ export function renderHostedPageHtml(
     theme === "banner"
       ? `${introBlock}
     <section class="t2ms-announcement" aria-live="polite">
-      <div id="t2ms-message" class="t2ms-message">${escapeHtml(messageContent)}</div>
+      <div id="t2ms-message" class="t2ms-message">${formatSmsMessageHtml(messageContent)}</div>
       ${attachBlock}
     </section>
     ${youtubeBlock}`
       : `${headerBlock}
     ${introBlock}
     <section class="t2ms-announcement" aria-live="polite">
-      <div id="t2ms-message" class="t2ms-message">${escapeHtml(messageContent)}</div>
+      <div id="t2ms-message" class="t2ms-message">${formatSmsMessageHtml(messageContent)}</div>
       ${attachBlock}
     </section>
     ${youtubeBlock}`
@@ -853,6 +864,7 @@ export function renderHostedPageHtml(
       ? ""
       : `<script>
     (function() {
+      ${FORMAT_SMS_MESSAGE_CLIENT_JS}
       var clientId = ${JSON.stringify(clientId)};
       var apiBase = ${JSON.stringify(apiBase)};
       var lastContent = ${JSON.stringify(messageContent)};
@@ -864,7 +876,7 @@ export function renderHostedPageHtml(
             if (data.content !== lastContent) {
               lastContent = data.content;
               var el = document.getElementById("t2ms-message");
-              if (el) el.textContent = data.content;
+              if (el) el.innerHTML = formatSmsMessageHtml(data.content);
             }
           })
           .catch(function() {});

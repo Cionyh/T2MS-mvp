@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getWidgetResponsiveCss } from "@/lib/widget-responsive-styles";
+import { FORMAT_SMS_MESSAGE_CLIENT_JS } from "@/lib/sms-format";
 
 export async function GET() {
   const responsiveCss = getWidgetResponsiveCss();
@@ -115,7 +116,7 @@ export async function GET() {
         const contentDiv = existing.querySelector(".t2ms-content");
         if (!contentDiv) return false;
 
-        contentDiv.textContent = content || "";
+        contentDiv.innerHTML = formatSmsMessageHtml(content || "", type === "ticker");
         scheduleDismiss(type, dismissAfter);
         return true;
       }
@@ -333,7 +334,7 @@ export async function GET() {
     }
 
     wrapper.innerHTML = \`
-      <div class="t2ms-content">\${escapeHtml(content)}</div>
+      <div class="t2ms-content">\${formatSmsMessageHtml(content, type === "ticker")}</div>
       <button class="t2ms-close" aria-label="Close notification" title="Close">&times;</button>
     \`;
 
@@ -516,7 +517,7 @@ export async function GET() {
     bottom: "auto",
     borderRadius: "0",
     overflow: "hidden",
-    whiteSpace: "nowrap",
+    whiteSpace: "normal",
     margin: "0",
     padding: "0",
     display: "block",
@@ -529,10 +530,11 @@ export async function GET() {
   Object.assign(contentDiv.style, {
     display: "block",
     fontSize: \`\${config.fontSize}px\`,
-    lineHeight: "60px",
-    height: "60px",
+    lineHeight: "1.45",
+    height: "auto",
+    minHeight: "60px",
     margin: "0",
-    padding: "0 80px 0 80px",
+    padding: "12px 80px",
   });
 
   document.body.appendChild(wrapper);
@@ -966,6 +968,8 @@ export async function GET() {
       document.head.appendChild(responsiveStyleTag);
     }
   }
+
+      ${FORMAT_SMS_MESSAGE_CLIENT_JS}
 
       function escapeHtml(text) {
         const div = document.createElement("div");

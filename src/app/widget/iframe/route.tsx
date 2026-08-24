@@ -6,6 +6,10 @@ import {
   widgetMobileFontVars,
 } from "@/lib/widget-responsive-styles";
 import { youtubeEmbedHtml, getYoutubeEmbedUrl } from "@/lib/youtube-embed";
+import {
+  formatSmsMessageHtml,
+  FORMAT_SMS_MESSAGE_CLIENT_JS,
+} from "@/lib/sms-format";
 
 export async function GET(req: NextRequest) {
   try {
@@ -258,7 +262,10 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
     };
 
     let containerStyle: Record<string, string | undefined> = { ...baseContainerStyle };
-    let contentHTML = escapeHtml(content);
+    const formattedContent = formatSmsMessageHtml(content, {
+      singleLine: type === "ticker",
+    });
+    let contentHTML = formattedContent;
     let additionalStyles = "";
     let additionalHTML = "";
 
@@ -277,25 +284,27 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
           boxShadow: "none",
           minHeight: "60px",
         };
-        contentHTML = `<div class="t2ms-content">${escapeHtml(content)}</div>`;
+        contentHTML = `<div class="t2ms-content">${formattedContent}</div>`;
         const mobileBannerFontSize =
           typeof config.mobileFontSize === "number"
             ? config.mobileFontSize
             : Math.max(config.fontSize, 15);
         additionalStyles = `
     .t2ms-widget-container[data-type="banner"] {
-      height: 60px;
-      line-height: 60px;
-      white-space: nowrap;
+      height: auto;
+      min-height: 60px;
+      line-height: 1.45;
+      white-space: normal;
       overflow: hidden;
-      text-overflow: ellipsis;
     }
     .t2ms-widget-container[data-type="banner"] .t2ms-content {
       display: block;
-      padding: 0 80px;
-      height: 60px;
-      line-height: 60px;
+      padding: 12px 80px;
+      height: auto;
+      min-height: 60px;
+      line-height: 1.45;
       font-size: ${config.fontSize}px;
+      white-space: normal;
     }
     @media (max-width: 768px) {
       .t2ms-widget-container[data-type="banner"] {
@@ -334,7 +343,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
           boxShadow: "none",
           minHeight: "60px",
         };
-        contentHTML = `<div class="t2ms-content">${escapeHtml(content)}</div>`;
+        contentHTML = `<div class="t2ms-content">${formattedContent}</div>`;
         additionalStyles = `
     @keyframes t2ms-ticker-scroll {
       0% { transform: translateX(0); }
@@ -436,9 +445,9 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
     }`;
         
         if (config.companyWebsiteLink) {
-          contentHTML = `<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;"><div class="t2ms-content">${escapeHtml(content)}</div><a href="${config.companyWebsiteLink}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: underline; font-size: 14px; display: inline-block; word-break: break-word; opacity: 0.8; transition: opacity 0.2s ease;">${escapeHtml(config.companyWebsiteLink)}</a></div>`;
+          contentHTML = `<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;"><div class="t2ms-content">${formattedContent}</div><a href="${config.companyWebsiteLink}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: underline; font-size: 14px; display: inline-block; word-break: break-word; opacity: 0.8; transition: opacity 0.2s ease;">${escapeHtml(config.companyWebsiteLink)}</a></div>`;
         } else {
-          contentHTML = `<div class="t2ms-content">${escapeHtml(content)}</div>`;
+          contentHTML = `<div class="t2ms-content">${formattedContent}</div>`;
         }
         break;
       }
@@ -470,7 +479,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
 
         fullscreenContent += youtubeEmbedHtml(config.youtubeUrl);
         
-        fullscreenContent += `<div class="t2ms-content" style="font-size: ${config.fontSize + 10}px; line-height: 1.5; max-width: 85vw; text-align: center; padding: 20px; margin-bottom: 20px;">${escapeHtml(content)}</div>`;
+        fullscreenContent += `<div class="t2ms-content" style="font-size: ${config.fontSize + 10}px; line-height: 1.5; max-width: 85vw; text-align: center; padding: 20px; margin-bottom: 20px;">${formattedContent}</div>`;
         fullscreenContent += `</div>`;
         contentHTML = fullscreenContent;
         additionalStyles = `
@@ -518,7 +527,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
         max-width: 100%;
       }
     }`;
-        contentHTML = `<div class="t2ms-content">${escapeHtml(content)}</div>${youtubeEmbedHtml(config.youtubeUrl)}`;
+        contentHTML = `<div class="t2ms-content">${formattedContent}</div>${youtubeEmbedHtml(config.youtubeUrl)}`;
         break;
       }
 
@@ -530,7 +539,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
           padding: "16px",
           borderRadius: "8px",
         };
-        contentHTML = `<div class="t2ms-content">${escapeHtml(content)}</div>`;
+        contentHTML = `<div class="t2ms-content">${formattedContent}</div>`;
       }
     }
 
@@ -645,11 +654,13 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
   
   <script>
     (function() {
+      ${FORMAT_SMS_MESSAGE_CLIENT_JS}
       const clientId = "${clientId}";
       const API_BASE = "${apiBase}";
       const interval = 15000;
       let lastMessageContent = null;
       let lastPinnedState = ${pinned};
+      const tickerSingleLine = ${type === "ticker"};
       
       window.addEventListener('message', function(event) {
         if (event.data === 't2ms-close') {
@@ -676,7 +687,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
             const contentDiv = widget.querySelector('.t2ms-content');
             
             if (newPinned && content) {
-              contentDiv.textContent = content;
+              contentDiv.innerHTML = formatSmsMessageHtml(content, tickerSingleLine);
               widget.style.display = '';
             } else {
               widget.style.display = 'none';
