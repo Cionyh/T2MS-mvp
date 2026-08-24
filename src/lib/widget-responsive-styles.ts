@@ -16,6 +16,23 @@ export function getWidgetResponsiveCss(): string {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
+.t2ms-content strong {
+  font-weight: 800;
+}
+.t2ms-content em {
+  font-style: italic;
+}
+
+#t2ms-widget[data-type="banner"] {
+  white-space: normal;
+  height: auto;
+  min-height: 56px;
+}
+#t2ms-widget[data-type="banner"] .t2ms-content {
+  white-space: normal;
+  height: auto;
+  line-height: 1.45;
+}
 
 .t2ms-youtube {
   width: 100%;

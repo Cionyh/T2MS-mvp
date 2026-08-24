@@ -22,7 +22,7 @@ const STATIC_DEMO_PAGES: Record<BuiltinDemoSlug, HostedPageData> = {
     hostedTheme: "banner",
     hostedLogoUrl: DEMO_LOGO_PATHS.church,
     messageContent:
-      "Join us this Sunday at 10:00 AM for worship. All are welcome — bring a friend!",
+      "*Sunday Worship*\nJoin us this Sunday at 10:00 AM.\n- All are welcome\n- Bring a friend",
     defaultBgColor: "#1a2744",
     defaultTextColor: "#ffffff",
     defaultFont: "Georgia, serif",
