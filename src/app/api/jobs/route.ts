@@ -72,6 +72,10 @@ export async function GET(req: NextRequest) {
       where.assignedWorkerId = workerId;
     }
 
+    const orderBy = worker
+      ? [{ priority: "desc" as const }, { createdAt: "asc" as const }]
+      : [{ createdAt: "desc" as const }];
+
     const jobs = await prisma.installJob.findMany({
       where,
       include: {
@@ -111,10 +115,7 @@ export async function GET(req: NextRequest) {
           },
         },
       },
-      orderBy: [
-        { priority: "desc" },
-        { createdAt: "asc" },
-      ],
+      orderBy,
     });
 
     return NextResponse.json(jobs);
