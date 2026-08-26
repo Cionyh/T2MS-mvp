@@ -23,6 +23,7 @@ import {
   Loader2,
   ExternalLink,
   Wrench,
+  Code2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getHostedPageDomain } from "@/lib/hosted-page/constants";
@@ -73,6 +74,7 @@ import { DotPattern } from "@/components/magicui/dot-pattern";
 import { cn } from "@/lib/utils";
 import { EmbedDialog } from "./embed-dialog";
 import { IframeDialog } from "./iframe-dialog";
+import { GenericEmbedGuideDialog } from "./generic-embed-guide-dialog";
 import { InstallationGuideDialog } from "./installation-guide-dialog"; 
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -195,6 +197,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
   const [showClientId, setShowClientId] = useState<Record<string, boolean>>({});
   const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
   const [iframeDialogOpen, setIframeDialogOpen] = useState(false);
+  const [genericEmbedGuideOpen, setGenericEmbedGuideOpen] = useState(false);
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | null>(null);
   const [configureDialogOpen, setConfigureDialogOpen] = useState(false);
   const [hostedSettingsOpen, setHostedSettingsOpen] = useState(false);
@@ -636,7 +639,16 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
       
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-2xl font-semibold">Registered Sites</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="text-foreground"
+            onClick={() => setGenericEmbedGuideOpen(true)}
+          >
+            <Code2 className="mr-2 h-4 w-4" />
+            Widget embed code
+          </Button>
           <a
             href="/configure_widget_settings.pdf"
             target="_blank"
@@ -1254,6 +1266,11 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
           ))}
         </div>
       )}
+
+      <GenericEmbedGuideDialog
+        open={genericEmbedGuideOpen}
+        onOpenChange={setGenericEmbedGuideOpen}
+      />
 
       {/* Reusable Embed Dialog */}
       <EmbedDialog
