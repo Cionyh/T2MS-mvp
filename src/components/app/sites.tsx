@@ -92,6 +92,11 @@ import {
   parseYoutubeVideoId,
   youtubeThumbnailUrl,
 } from "@/lib/youtube-embed";
+import {
+  getWidgetInstallStatusLabel,
+  installJobAwaitingFormQueue,
+  installJobNeedsCustomerForm,
+} from "@/lib/install-job-display";
 
 // Widget type instructions
 const widgetTypeInstructions = {
@@ -691,8 +696,8 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
             >
               View install instructions
             </Button>
-            {primaryPendingInstallSite.installJob?.status === "QUEUED" &&
-              primaryPendingInstallSite.installJob.platform === "To be confirmed" && (
+            {primaryPendingInstallSite.installJob &&
+              installJobNeedsCustomerForm(primaryPendingInstallSite.installJob) && (
                 <Button
                   type="button"
                   size="sm"
@@ -783,10 +788,9 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                     const widgetLive = Boolean(website.pinned) && !hasInstallInProgress;
                     let widgetStatusLabel = "Widget hidden";
                     if (hasInstallInProgress && website.installJob) {
-                      widgetStatusLabel =
-                        website.installJob.platform === "To be confirmed"
-                          ? "Install form needed"
-                          : "Install in progress";
+                      widgetStatusLabel = getWidgetInstallStatusLabel(
+                        website.installJob
+                      );
                     } else if (website.pinned) {
                       widgetStatusLabel = "Widget live";
                     }
@@ -1124,8 +1128,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                                 }
                               >
                                 {website.installJob.status === "QUEUED"
-                                  ? website.installJob.platform ===
-                                    "To be confirmed"
+                                  ? installJobAwaitingFormQueue(website.installJob)
                                     ? "Install form not submitted"
                                     : "Installation In Progress"
                                   : website.installJob.status.replace(
@@ -1133,9 +1136,7 @@ export default function DashboardClient({ userId }: DashboardClientProps) {
                                       " "
                                     )}
                               </Badge>
-                              {website.installJob.status === "QUEUED" &&
-                                website.installJob.platform ===
-                                  "To be confirmed" && (
+                              {installJobNeedsCustomerForm(website.installJob) && (
                                   <Button
                                     variant="link"
                                     size="sm"
