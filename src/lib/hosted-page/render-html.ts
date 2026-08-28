@@ -107,6 +107,11 @@ function themeStyles(
     .t2ms-footer-text em {
       font-style: italic;
     }
+    .t2ms-intro br,
+    .t2ms-footer-text br {
+      display: block;
+      margin-top: 0.35em;
+    }
     .t2ms-powered {
       font-size: 0.75rem;
       opacity: 0.55;

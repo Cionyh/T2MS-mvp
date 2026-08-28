@@ -8,6 +8,7 @@ import {
   richTextPlainLength,
   richTextToEditorHtml,
   sanitizeBasicRichText,
+  serializeContentEditable,
 } from "@/lib/rich-text"
 
 type SimpleRichTextEditorProps = {
@@ -44,12 +45,18 @@ export function SimpleRichTextEditor({
     lastEmitted.current = value
   }, [value])
 
+  const readEditorValue = () => {
+    const el = editorRef.current
+    if (!el) return ""
+    const serialized = serializeContentEditable(el)
+    return sanitizeBasicRichText(serialized, maxLength)
+  }
+
   const emitFromEditor = (rewriteDom = false) => {
     const el = editorRef.current
     if (!el) return
-    const sanitized = sanitizeBasicRichText(el.innerHTML, maxLength)
-    // Never rewrite the live DOM while typing — that jumps the caret to the end.
-    // Only rewrite on blur so stored HTML matches what we sanitize for save.
+    const sanitized = readEditorValue()
+    // Never rewrite the live DOM while typing — that jumps the caret.
     if (rewriteDom && el.innerHTML !== sanitized) {
       el.innerHTML = sanitized || ""
     }
@@ -65,12 +72,12 @@ export function SimpleRichTextEditor({
   }
 
   const insertLineBreak = () => {
-    editorRef.current?.focus()
-    // Prefer native line break so caret stays in place.
-    const ok = document.execCommand("insertLineBreak")
-    if (!ok) {
-      document.execCommand("insertHTML", false, "<br>")
-    }
+    const el = editorRef.current
+    if (!el) return
+    el.focus()
+    // Explicit <br> so saved HTML matches what the announcement page renders.
+    // A trailing ZWSP helps some browsers keep the caret on the new line.
+    document.execCommand("insertHTML", false, "<br>\u200B")
     emitFromEditor(false)
   }
 
@@ -126,7 +133,7 @@ export function SimpleRichTextEditor({
           contentEditable
           suppressContentEditableWarning
           className={cn(
-            "w-full px-3 py-2 text-sm outline-none focus-visible:ring-0 whitespace-pre-wrap break-words",
+            "w-full px-3 py-2 text-sm outline-none focus-visible:ring-0 break-words",
             minHeightClassName
           )}
           onFocus={() => {
