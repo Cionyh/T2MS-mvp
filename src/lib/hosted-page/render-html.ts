@@ -5,6 +5,7 @@ import {
   formatSmsMessageHtml,
   FORMAT_SMS_MESSAGE_CLIENT_JS,
 } from "@/lib/sms-format"
+import { sanitizeBasicRichText } from "@/lib/rich-text"
 
 function escapeHtml(text: string): string {
   return text
@@ -13,10 +14,6 @@ function escapeHtml(text: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;")
-}
-
-function formatPlainTextBlock(text: string): string {
-  return escapeHtml(text).replace(/\n/g, "<br />")
 }
 
 /** Ensure href is a safe absolute-or-protocol-relative http(s) URL for the public page. */
@@ -101,6 +98,14 @@ function themeStyles(
     .t2ms-message em {
       font-style: italic;
       font-weight: 500;
+    }
+    .t2ms-intro strong,
+    .t2ms-footer-text strong {
+      font-weight: 700;
+    }
+    .t2ms-intro em,
+    .t2ms-footer-text em {
+      font-style: italic;
     }
     .t2ms-powered {
       font-size: 0.75rem;
@@ -784,9 +789,9 @@ export function renderHostedPageHtml(
   const fontSize = widgetConfig.fontSize || 18
 
   const introBlock = hostedIntroText
-    ? `<p class="t2ms-intro">${escapeHtml(hostedIntroText)}</p>`
+    ? `<div class="t2ms-intro">${sanitizeBasicRichText(hostedIntroText, 500)}</div>`
     : presetText
-      ? `<p class="t2ms-intro">${escapeHtml(presetText)}</p>`
+      ? `<div class="t2ms-intro">${escapeHtml(presetText)}</div>`
       : ""
 
   const logoImg =
@@ -809,7 +814,7 @@ export function renderHostedPageHtml(
     ? `<a class="t2ms-footer-link" href="${escapeHtml(websiteHref)}" target="_blank" rel="noopener noreferrer">Visit website</a>`
     : ""
   const footerTextInner = hostedFooterText
-    ? `<div class="t2ms-footer-text">${formatPlainTextBlock(hostedFooterText)}</div>`
+    ? `<div class="t2ms-footer-text">${sanitizeBasicRichText(hostedFooterText, 1000)}</div>`
     : ""
   const footerTextBlock =
     footerTextInner || websiteLinkBlock

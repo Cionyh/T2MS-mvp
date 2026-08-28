@@ -11,6 +11,7 @@ import {
   normalizeHostedTheme,
 } from "@/lib/hosted-page/themes"
 import { parseYoutubeVideoId } from "@/lib/youtube-embed"
+import { sanitizeBasicRichText } from "@/lib/rich-text"
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -164,15 +165,19 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     } = {}
 
     if (hostedIntroText !== undefined) {
-      const trimmed =
-        typeof hostedIntroText === "string" ? hostedIntroText.trim() : ""
-      updateData.hostedIntroText = trimmed ? trimmed.slice(0, 500) : null
+      const sanitized =
+        typeof hostedIntroText === "string"
+          ? sanitizeBasicRichText(hostedIntroText, 500)
+          : ""
+      updateData.hostedIntroText = sanitized || null
     }
 
     if (hostedFooterText !== undefined) {
-      const trimmed =
-        typeof hostedFooterText === "string" ? hostedFooterText.trim() : ""
-      updateData.hostedFooterText = trimmed ? trimmed.slice(0, 1000) : null
+      const sanitized =
+        typeof hostedFooterText === "string"
+          ? sanitizeBasicRichText(hostedFooterText, 1000)
+          : ""
+      updateData.hostedFooterText = sanitized || null
     }
 
     if (hostedTheme !== undefined) {

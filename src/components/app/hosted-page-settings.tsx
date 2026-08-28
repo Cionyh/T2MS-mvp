@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { Loader2, ExternalLink, Copy } from "lucide-react"
 import { toast } from "sonner"
+import { SimpleRichTextEditor } from "@/components/app/simple-rich-text-editor"
+import { sanitizeBasicRichText } from "@/lib/rich-text"
 import { getHostedPageDomain } from "@/lib/hosted-page/constants"
 import { slugFromSiteName } from "@/lib/hosted-page/slug"
 import {
@@ -291,8 +292,8 @@ export function HostedPageSettings({
         body: JSON.stringify({
           hostedSlug: slug || null,
           hostedEnabled: enabled,
-          hostedIntroText: introText,
-          hostedFooterText: footerText,
+          hostedIntroText: sanitizeBasicRichText(introText, 500) || null,
+          hostedFooterText: sanitizeBasicRichText(footerText, 1000) || null,
           hostedTheme: theme,
           hostedShowLogo: showLogo,
           hostedShowWebsiteLink: companyWebsiteLink
@@ -711,13 +712,16 @@ export function HostedPageSettings({
 
       <div className="space-y-2">
         <Label htmlFor="hosted-intro">Short intro (optional)</Label>
-        <Textarea
+        <p className="text-xs text-muted-foreground">
+          Use the toolbar for bold and italics. Press Enter for a new line.
+        </p>
+        <SimpleRichTextEditor
           id="hosted-intro"
           value={introText}
-          onChange={(e) => setIntroText(e.target.value)}
+          onChange={setIntroText}
           placeholder="Welcome — see our latest update below."
-          rows={2}
           maxLength={500}
+          minHeightClassName="min-h-[64px]"
         />
       </div>
 
@@ -725,15 +729,16 @@ export function HostedPageSettings({
         <Label htmlFor="hosted-footer">Page footer text (optional)</Label>
         <p className="text-xs text-muted-foreground">
           Shown at the bottom of your announcement page. Use for hours,
-          contact info, or any message you want visitors to see.
+          contact info, or any message you want visitors to see. Bold, italics,
+          and line breaks are supported.
         </p>
-        <Textarea
+        <SimpleRichTextEditor
           id="hosted-footer"
           value={footerText}
-          onChange={(e) => setFooterText(e.target.value)}
+          onChange={setFooterText}
           placeholder="Open Sundays · All welcome"
-          rows={3}
           maxLength={1000}
+          minHeightClassName="min-h-[88px]"
         />
       </div>
 
