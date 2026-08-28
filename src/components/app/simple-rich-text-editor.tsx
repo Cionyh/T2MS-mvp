@@ -31,38 +31,29 @@ export function SimpleRichTextEditor({
 }: SimpleRichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const lastEmitted = useRef<string | null>(null)
+  const focusedRef = useRef(false)
 
+  // Only push external value into the DOM when not actively typing.
   useEffect(() => {
     const el = editorRef.current
     if (!el) return
-    // Skip rewrite while typing the same value we just emitted
+    if (focusedRef.current) return
     if (lastEmitted.current === value && el.dataset.hydrated === "1") return
     el.innerHTML = richTextToEditorHtml(value)
     el.dataset.hydrated = "1"
     lastEmitted.current = value
   }, [value])
 
-  const emitFromEditor = () => {
+  const emitFromEditor = (rewriteDom = false) => {
     const el = editorRef.current
     if (!el) return
     const sanitized = sanitizeBasicRichText(el.innerHTML, maxLength)
-    // Keep editor in sync if sanitize changed content (e.g. truncated)
-    if (el.innerHTML !== sanitized && sanitized) {
-      const sel = window.getSelection()
-      const hadFocus = document.activeElement === el
-      el.innerHTML = sanitized
-      if (hadFocus) {
-        el.focus()
-        // Place caret at end
-        const range = document.createRange()
-        range.selectNodeContents(el)
-        range.collapse(false)
-        sel?.removeAllRanges()
-        sel?.addRange(range)
-      }
-    } else if (!sanitized) {
-      // empty
+    // Never rewrite the live DOM while typing — that jumps the caret to the end.
+    // Only rewrite on blur so stored HTML matches what we sanitize for save.
+    if (rewriteDom && el.innerHTML !== sanitized) {
+      el.innerHTML = sanitized || ""
     }
+    if (sanitized === lastEmitted.current) return
     lastEmitted.current = sanitized
     onChange(sanitized)
   }
@@ -70,11 +61,22 @@ export function SimpleRichTextEditor({
   const runCommand = (command: "bold" | "italic") => {
     editorRef.current?.focus()
     document.execCommand(command, false)
-    emitFromEditor()
+    emitFromEditor(false)
+  }
+
+  const insertLineBreak = () => {
+    editorRef.current?.focus()
+    // Prefer native line break so caret stays in place.
+    const ok = document.execCommand("insertLineBreak")
+    if (!ok) {
+      document.execCommand("insertHTML", false, "<br>")
+    }
+    emitFromEditor(false)
   }
 
   const plainLen = richTextPlainLength(value)
-  const showPlaceholder = !value || value.replace(/<br\s*\/?>/gi, "").trim() === ""
+  const showPlaceholder =
+    !value || value.replace(/<br\s*\/?>/gi, "").replace(/&nbsp;/gi, "").trim() === ""
 
   return (
     <div className={cn("rounded-md border border-input bg-background", className)}>
@@ -124,12 +126,23 @@ export function SimpleRichTextEditor({
           contentEditable
           suppressContentEditableWarning
           className={cn(
-            "w-full px-3 py-2 text-sm outline-none focus-visible:ring-0",
+            "w-full px-3 py-2 text-sm outline-none focus-visible:ring-0 whitespace-pre-wrap break-words",
             minHeightClassName
           )}
-          onInput={emitFromEditor}
-          onBlur={emitFromEditor}
+          onFocus={() => {
+            focusedRef.current = true
+          }}
+          onInput={() => emitFromEditor(false)}
+          onBlur={() => {
+            focusedRef.current = false
+            emitFromEditor(true)
+          }}
           onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault()
+              insertLineBreak()
+              return
+            }
             if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
               e.preventDefault()
               runCommand("bold")

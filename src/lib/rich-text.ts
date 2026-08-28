@@ -53,15 +53,17 @@ export function sanitizeBasicRichText(
         m.toLowerCase().startsWith("</") ? "</em>" : "<em>"
       )
       .replace(/<br\s*\/?>/gi, "<br />")
-      .replace(/<\/p>\s*<p\b[^>]*>/gi, "<br />")
-      .replace(/<\/?p\b[^>]*>/gi, "")
-      .replace(/<\/div>\s*<div\b[^>]*>/gi, "<br />")
-      .replace(/<\/?div\b[^>]*>/gi, "")
+      // Chrome contentEditable uses <div> for Enter — treat as line breaks
+      .replace(/<div\b[^>]*>/gi, "<br />")
+      .replace(/<\/div>/gi, "")
+      .replace(/<p\b[^>]*>/gi, "<br />")
+      .replace(/<\/p>/gi, "")
       // Drop any other tags (keeps text content)
       .replace(/<(?!\/?(?:strong|em|br)\b)[^>]*>/gi, "")
       // Collapse empty wrappers
       .replace(/<strong>\s*<\/strong>/gi, "")
       .replace(/<em>\s*<\/em>/gi, "")
+      .replace(/^(?:<br \/>\s*)+/i, "")
       .replace(/(?:<br \/>\s*){3,}/gi, "<br /><br />")
       .trim()
 
