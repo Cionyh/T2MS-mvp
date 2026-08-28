@@ -42,8 +42,14 @@ const INSTALL_ADDON_OPTIONS = [
 const SMS_CONSENT_TEXT =
   "I confirm I have permission to message my contacts using T2MS and understand SMS compliance requirements (TCPA/CTIA).";
 
+const PLATFORM_ACCESS_TEXT =
+  "I have granted access to the website platform (install@t2ms.biz has been invited).";
+
 const setupSchemaWithSite = z.object({
   installForSiteId: z.string().optional(),
+  platformAccessChecked: z.boolean().refine((val) => val === true, {
+    message: "You must confirm you have granted website platform access.",
+  }),
   smsConsentChecked: z.boolean().refine((val) => val === true, {
     message: "You must confirm SMS consent to continue.",
   }),
@@ -69,6 +75,7 @@ function InstallRequestContent() {
     resolver: zodResolver(setupSchemaWithSite),
     defaultValues: {
       installForSiteId: clientIdFromUrl ?? "",
+      platformAccessChecked: false,
       smsConsentChecked: false,
     },
   });
@@ -113,6 +120,7 @@ function InstallRequestContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clientId: effectiveClientId,
+          platformAccessConfirmed: values.platformAccessChecked,
           smsConsentConfirmed: values.smsConsentChecked,
         }),
       });
@@ -257,6 +265,26 @@ function InstallRequestContent() {
               <div className="space-y-4 p-4 border-2 rounded-lg bg-muted/50">
                 <FormField
                   control={setupForm.control}
+                  name="platformAccessChecked"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1">
+                        <FormDescription className="text-sm">
+                          {PLATFORM_ACCESS_TEXT}
+                        </FormDescription>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={setupForm.control}
                   name="smsConsentChecked"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
@@ -268,6 +296,7 @@ function InstallRequestContent() {
                       </FormControl>
                       <div className="space-y-1">
                         <FormDescription className="text-sm">{SMS_CONSENT_TEXT}</FormDescription>
+                        <FormMessage />
                       </div>
                     </FormItem>
                   )}

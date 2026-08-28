@@ -28,13 +28,20 @@ export async function POST(req: NextRequest) {
     const userId = session.user.id;
 
     const body = await req.json();
-    const { clientId, smsConsentConfirmed } = body as {
+    const { clientId, smsConsentConfirmed, platformAccessConfirmed } = body as {
       clientId?: string;
       smsConsentConfirmed?: boolean;
+      platformAccessConfirmed?: boolean;
     };
 
     if (!clientId || typeof clientId !== "string") {
       return NextResponse.json({ error: "clientId is required" }, { status: 400 });
+    }
+    if (platformAccessConfirmed !== true) {
+      return NextResponse.json(
+        { error: "Website platform access must be confirmed." },
+        { status: 400 }
+      );
     }
     if (smsConsentConfirmed !== true) {
       return NextResponse.json(

@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
       accessCredentials,
       notes,
       smsConsentConfirmed,
+      platformAccessConfirmed,
     } = body as {
       clientId?: string;
       websiteUrls?: string[];
@@ -43,11 +44,19 @@ export async function POST(req: NextRequest) {
       accessCredentials?: unknown;
       notes?: string;
       smsConsentConfirmed?: boolean;
+      platformAccessConfirmed?: boolean;
     };
 
     if (!clientId || typeof clientId !== "string") {
       return NextResponse.json(
         { error: "clientId is required" },
+        { status: 400 }
+      );
+    }
+
+    if (platformAccessConfirmed !== true) {
+      return NextResponse.json(
+        { error: "Website platform access must be confirmed." },
         { status: 400 }
       );
     }
