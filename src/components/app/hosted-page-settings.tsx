@@ -545,6 +545,19 @@ export function HostedPageSettings({
         <p className="text-xs text-muted-foreground">
           Optional. Separate from the website widget background image.
         </p>
+        <a
+          href="https://text2my.site/backgrounds/gallery.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 underline underline-offset-2 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300"
+        >
+          Browse background image library
+          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+        </a>
+        <p className="text-xs text-muted-foreground">
+          Copy an image URL from the library, then paste it below — or upload
+          your own.
+        </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             type="file"
