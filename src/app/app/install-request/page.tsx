@@ -47,9 +47,7 @@ const PLATFORM_ACCESS_TEXT =
 
 const setupSchemaWithSite = z.object({
   installForSiteId: z.string().optional(),
-  platformAccessChecked: z.boolean().refine((val) => val === true, {
-    message: "You must confirm you have granted website platform access.",
-  }),
+  platformAccessChecked: z.boolean().optional(),
   smsConsentChecked: z.boolean().refine((val) => val === true, {
     message: "You must confirm SMS consent to continue.",
   }),
@@ -120,7 +118,7 @@ function InstallRequestContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clientId: effectiveClientId,
-          platformAccessConfirmed: values.platformAccessChecked,
+          platformAccessConfirmed: values.platformAccessChecked === true,
           smsConsentConfirmed: values.smsConsentChecked,
         }),
       });
@@ -259,30 +257,34 @@ function InstallRequestContent() {
                 </div>
               )}
 
+              <FormField
+                control={setupForm.control}
+                name="platformAccessChecked"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border bg-muted/50 p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1">
+                      <FormDescription className="text-sm">
+                        {PLATFORM_ACCESS_TEXT}
+                      </FormDescription>
+                      <p className="text-xs text-muted-foreground">
+                        Optional — you can invite install@t2ms.biz now or after
+                        continuing.
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
               <div className="rounded-lg border bg-muted/30 p-4">
                 <InstallSetupInstructions />
               </div>
               <div className="space-y-4 p-4 border-2 rounded-lg bg-muted/50">
-                <FormField
-                  control={setupForm.control}
-                  name="platformAccessChecked"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1">
-                        <FormDescription className="text-sm">
-                          {PLATFORM_ACCESS_TEXT}
-                        </FormDescription>
-                        <FormMessage />
-                      </div>
-                    </FormItem>
-                  )}
-                />
                 <FormField
                   control={setupForm.control}
                   name="smsConsentChecked"

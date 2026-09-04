@@ -37,12 +37,6 @@ export async function POST(req: NextRequest) {
     if (!clientId || typeof clientId !== "string") {
       return NextResponse.json({ error: "clientId is required" }, { status: 400 });
     }
-    if (platformAccessConfirmed !== true) {
-      return NextResponse.json(
-        { error: "Website platform access must be confirmed." },
-        { status: 400 }
-      );
-    }
     if (smsConsentConfirmed !== true) {
       return NextResponse.json(
         { error: "SMS consent must be confirmed." },
