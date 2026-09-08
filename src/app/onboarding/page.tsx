@@ -897,7 +897,7 @@ function OnboardingContent() {
             // redirect anyway
           }
           setHostedSetupClientId(null);
-          router.replace("/app/sites");
+          router.replace("/app");
         }}
       />
     );

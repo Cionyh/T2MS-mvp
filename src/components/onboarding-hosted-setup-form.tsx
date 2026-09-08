@@ -24,15 +24,23 @@ export function OnboardingHostedSetupForm({
 }: OnboardingHostedSetupFormProps) {
   return (
     <div className="min-h-screen bg-muted/30 py-12 px-4 flex flex-col items-center">
-      <div className="w-full max-w-lg text-center mb-8">
+      <div className="w-full max-w-lg mb-8">
         <h1 className="text-2xl font-bold text-foreground tracking-tight">
-          Set up your hosted page
+          Your T2MS announcement page is included
         </h1>
-        <p className="mt-2 text-muted-foreground">
-          Choose your public web address on t2ms.live — this is the link
-          visitors will open in a browser to see your announcements. Your page
-          is published by default; you can change that before finishing.
-        </p>
+        <div className="mt-3 space-y-3 text-muted-foreground">
+          <p>
+            Every T2MS plan includes a standalone announcement page in addition
+            to your website widget. This gives you a live page you can use
+            immediately, even if your website widget has not been installed
+            yet.
+          </p>
+          <p>
+            The options below simply let you customize how your announcement
+            page looks. If you want to get started quickly, you can use the
+            defaults and change these settings later.
+          </p>
+        </div>
       </div>
       <Card className="w-full max-w-lg">
         <CardHeader>
@@ -41,7 +49,7 @@ export function OnboardingHostedSetupForm({
             {siteName}
           </CardTitle>
           <CardDescription>
-            No widget install required — share this link for live announcements.
+            Customize your page, or keep the defaults and change this later.
           </CardDescription>
         </CardHeader>
         <CardContent>

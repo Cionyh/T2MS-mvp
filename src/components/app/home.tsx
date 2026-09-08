@@ -18,10 +18,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, BarChart3, Wrench } from "lucide-react";
+import { Plus, BarChart3, Wrench, Copy, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
+import { toast } from "sonner";
+import { getHostedPageDomain } from "@/lib/hosted-page/constants";
 import { Skeleton } from "../ui/skeleton";
 
 // The `useMessages` hook is no longer needed here, so we can remove it.
@@ -31,6 +33,7 @@ interface Website {
   name: string;
   domain: string;
   organizationId: string | null;
+  hostedSlug?: string | null;
   phoneNumbers: Array<{
     id: string;
     phone: string;
@@ -86,8 +89,19 @@ export default function ClientDashboardPage({
       .catch(() => setInstallJobCount(0));
   }, []);
 
-  // 3. The `useMessages` hook and all its related logic are GONE.
-  //    This makes the component lighter and faster.
+  const hostedSite = websites?.find((site) => site.hostedSlug?.trim()) ?? null;
+  const hostedSlug = hostedSite?.hostedSlug?.trim() ?? "";
+  const hostedUrl = hostedSlug
+    ? `https://${hostedSlug}.${getHostedPageDomain()}`
+    : null;
+  const hostedDisplay = hostedSlug
+    ? `${hostedSlug}.${getHostedPageDomain()}`
+    : null;
+
+  const handleCopyHostedUrl = (url: string) => {
+    navigator.clipboard.writeText(url);
+    toast.success("Announcement page link copied");
+  };
 
   return (
     <div className="space-y-6">
@@ -147,6 +161,123 @@ export default function ClientDashboardPage({
           </Link>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>I signed up. Now what?</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ol className="list-none space-y-5 p-0">
+            <li className="space-y-2">
+              <p className="font-medium text-foreground">
+                1. Your announcement page is ready.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You can share your T2MS announcement-page link immediately. No
+                website installation is required.
+              </p>
+              {hostedUrl && hostedDisplay ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <a
+                    href={hostedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-amber-800 dark:text-amber-300 hover:underline break-all"
+                  >
+                    {hostedDisplay}
+                  </a>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-foreground"
+                    onClick={() => handleCopyHostedUrl(hostedUrl)}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    Copy link
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-foreground"
+                    asChild
+                  >
+                    <a
+                      href={hostedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Open
+                    </a>
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-sm">
+                  <Link
+                    href="/app/sites"
+                    className="font-medium text-foreground underline underline-offset-4"
+                  >
+                    Go to Sites
+                  </Link>{" "}
+                  <span className="text-muted-foreground">
+                    to set your announcement-page link.
+                  </span>
+                </p>
+              )}
+            </li>
+            <li className="space-y-1">
+              <p className="font-medium text-foreground">
+                2. Send your first announcement.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Text your announcement from your verified phone number to the
+                T2MS number. Your update will appear automatically.
+              </p>
+            </li>
+            <li className="space-y-1">
+              <p className="font-medium text-foreground">
+                3. Want announcements on your existing website too?
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Add your website domain and get the T2MS widget installed.
+              </p>
+              <p className="text-sm">
+                <Link
+                  href="/app/sites"
+                  className="font-medium text-foreground underline underline-offset-4"
+                >
+                  Go to Sites
+                </Link>
+                <span className="text-muted-foreground"> or </span>
+                <Link
+                  href="/app/install-request"
+                  className="font-medium text-foreground underline underline-offset-4"
+                >
+                  Get Widget Installed
+                </Link>
+              </p>
+            </li>
+            <li className="space-y-1">
+              <p className="font-medium text-foreground">
+                4. Want to customize your announcement page?
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Go to{" "}
+                <Link
+                  href="/app/sites"
+                  className="font-medium text-foreground underline underline-offset-4"
+                >
+                  Sites → Announcement Page
+                </Link>{" "}
+                anytime to add your logo, background, images, video, intro or
+                footer.
+              </p>
+            </li>
+          </ol>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {/* Sites Card */}
