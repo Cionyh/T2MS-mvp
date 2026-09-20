@@ -2,36 +2,17 @@
 
 import { MessageCircle } from "lucide-react"
 import { getT2msSmsDisplayNumber } from "@/lib/sms-display"
+import { getMessageFormatExamples } from "@/lib/message-format-examples"
 
 type PostByTextCalloutProps = {
   plan: string
   className?: string
 }
 
-const FORMAT_EXAMPLES = [
-  {
-    syntax: "*Sunday Worship*",
-    result: "Sunday Worship",
-    resultClass: "font-bold",
-    label: "Bold/title",
-  },
-  {
-    syntax: "_Join us this Sunday_",
-    result: "Join us this Sunday",
-    resultClass: "italic",
-    label: "Italics",
-  },
-  {
-    syntax: "- Bible Study",
-    result: "• Bible Study",
-    resultClass: "",
-    label: "Bullet",
-  },
-] as const
-
 export function PostByTextCallout({ plan, className }: PostByTextCalloutProps) {
   const isStarter = plan === "starter" || plan === "free" || !plan
   const textNumber = getT2msSmsDisplayNumber()
+  const formatExamples = getMessageFormatExamples(plan)
 
   return (
     <div
@@ -72,7 +53,7 @@ export function PostByTextCallout({ plan, className }: PostByTextCalloutProps) {
             page and widget. Line breaks in your text are kept.
           </p>
           <div className="overflow-hidden rounded-md border border-amber-600/25 dark:border-amber-500/25">
-            {FORMAT_EXAMPLES.map((row) => (
+            {formatExamples.map((row) => (
               <div
                 key={row.label}
                 className="grid grid-cols-1 gap-1 border-b border-amber-600/20 px-3 py-2 last:border-b-0 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto] sm:items-center sm:gap-3 dark:border-amber-500/20"

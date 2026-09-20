@@ -12,6 +12,7 @@ import {
 import { Settings, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { formatPlanLabel } from "@/lib/plan-display";
 
 // Plan + add-on only. Install setup data lives in InstallJob (see installJobs).
 interface OnboardingData {
@@ -69,7 +70,7 @@ export function SetupDetailsTab() {
           </CardHeader>
           <CardContent>
             <p className="text-sm">
-              Plan: <span className="font-medium">{data.planId}</span>
+              Plan: <span className="font-medium">{formatPlanLabel(data.planId)}</span>
               {data.installAddonSku && (
                 <> · Install add-on: {data.installAddonSku} ({data.installAddonStatus ?? "pending"})</>
               )}

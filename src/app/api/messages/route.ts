@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
               id: true,
               name: true,
               domain: true,
+              hostedSlug: true,
               organizationId: true,
             },
           },
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages: total === 0 ? 0 : Math.ceil(total / limit),
       },
     });
   } catch (error) {

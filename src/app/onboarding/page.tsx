@@ -886,6 +886,7 @@ function OnboardingContent() {
       <OnboardingHostedSetupForm
         clientId={hostedSetupClientId}
         siteName={hostedSetupSiteName}
+        plan={status?.planId}
         onSuccess={async () => {
           try {
             await fetch("/api/onboarding/complete", {

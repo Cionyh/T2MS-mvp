@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getActiveOrganization } from "@/lib/organization-helpers";
+import { displaySiteLabel } from "@/lib/site-display";
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,7 +14,6 @@ export async function GET(req: NextRequest) {
 
     const days = parseInt(req.nextUrl.searchParams.get("days") || "30", 10);
 
-    // Get active organization for the user
     const organizationId = await getActiveOrganization();
     if (!organizationId) {
       return NextResponse.json({
@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
         },
         siteStats: [],
         messageTrends: {
+          timestamps: [],
           daily: [],
           weekly: [],
           monthly: []
@@ -37,7 +38,6 @@ export async function GET(req: NextRequest) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // Get overview stats based on organizationId
     const [totalSites, totalMessages, messagesThisWeek, messagesThisMonth] = await Promise.all([
       prisma.client.count({
         where: { organizationId }
@@ -63,13 +63,13 @@ export async function GET(req: NextRequest) {
       })
     ]);
 
-    // Get site stats
     const siteStats = await prisma.client.findMany({
       where: { organizationId },
       select: {
         id: true,
         name: true,
         domain: true,
+        hostedSlug: true,
         createdAt: true,
         _count: {
           select: { messages: true }
@@ -90,6 +90,11 @@ export async function GET(req: NextRequest) {
           id: site.id,
           name: site.name,
           domain: site.domain,
+          hostedSlug: site.hostedSlug,
+          displayLabel: displaySiteLabel({
+            domain: site.domain,
+            hostedSlug: site.hostedSlug,
+          }),
           messageCount: site._count.messages,
           lastMessageDate: lastMessage?.createdAt || null,
           createdAt: site.createdAt
@@ -97,57 +102,17 @@ export async function GET(req: NextRequest) {
       })
     );
 
-    // Get message trends - fetch all messages and group them in JavaScript
     const allMessages = await prisma.message.findMany({
       where: {
         client: { organizationId },
         createdAt: { gte: startDate }
       },
       select: { createdAt: true },
-      orderBy: { createdAt: 'asc' }
+      orderBy: { createdAt: "asc" }
     });
 
-    // Group messages by day
-    const dailyTrends = allMessages.reduce((acc, message) => {
-      const date = message.createdAt.toISOString().split('T')[0];
-      acc[date] = (acc[date] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const trendTimestamps = allMessages.map((m) => m.createdAt.toISOString());
 
-    const dailyTrendsArray = Object.entries(dailyTrends).map(([date, count]) => ({
-      date,
-      count
-    }));
-
-    // Group messages by week
-    const weeklyTrends = allMessages.reduce((acc, message) => {
-      const date = new Date(message.createdAt);
-      const year = date.getFullYear();
-      const week = Math.ceil((date.getTime() - new Date(year, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
-      const weekKey = `${year}-W${week.toString().padStart(2, '0')}`;
-      acc[weekKey] = (acc[weekKey] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const weeklyTrendsArray = Object.entries(weeklyTrends).map(([week, count]) => ({
-      week,
-      count
-    }));
-
-    // Group messages by month
-    const monthlyTrends = allMessages.reduce((acc, message) => {
-      const date = new Date(message.createdAt);
-      const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-      acc[monthKey] = (acc[monthKey] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const monthlyTrendsArray = Object.entries(monthlyTrends).map(([month, count]) => ({
-      month,
-      count
-    }));
-
-    // Get recent activity
     const recentMessages = await prisma.message.findMany({
       where: { client: { organizationId } },
       select: {
@@ -157,7 +122,8 @@ export async function GET(req: NextRequest) {
         client: {
           select: {
             name: true,
-            domain: true
+            domain: true,
+            hostedSlug: true,
           }
         }
       },
@@ -171,6 +137,7 @@ export async function GET(req: NextRequest) {
         id: true,
         name: true,
         domain: true,
+        hostedSlug: true,
         createdAt: true
       },
       orderBy: { createdAt: "desc" },
@@ -178,25 +145,39 @@ export async function GET(req: NextRequest) {
     });
 
     const recentActivity = [
-      ...recentMessages.map(msg => ({
+      ...recentMessages.map((msg) => ({
         id: msg.id,
-        type: 'message' as const,
+        type: "message" as const,
         content: msg.content,
         siteName: msg.client.name,
-        siteDomain: msg.client.domain,
+        siteDomain: displaySiteLabel({
+          domain: msg.client.domain,
+          hostedSlug: msg.client.hostedSlug,
+        }),
         createdAt: msg.createdAt
       })),
-      ...recentSites.map(site => ({
+      ...recentSites.map((site) => ({
         id: site.id,
-        type: 'site_created' as const,
-        content: 'Site created',
+        type: "site_created" as const,
+        content: "Site created",
         siteName: site.name,
-        siteDomain: site.domain,
+        siteDomain: displaySiteLabel({
+          domain: site.domain,
+          hostedSlug: site.hostedSlug,
+        }),
         createdAt: site.createdAt
       }))
-    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 15);
+    ]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .slice(0, 15);
 
-    const averageMessagesPerSite = totalSites > 0 ? Math.round(totalMessages / totalSites * 100) / 100 : 0;
+    const averageMessagesPerSite =
+      totalSites > 0
+        ? Math.round((totalMessages / totalSites) * 100) / 100
+        : 0;
 
     return NextResponse.json({
       overview: {
@@ -208,9 +189,11 @@ export async function GET(req: NextRequest) {
       },
       siteStats: siteStatsWithLastMessage,
       messageTrends: {
-        daily: dailyTrendsArray,
-        weekly: weeklyTrendsArray,
-        monthly: monthlyTrendsArray
+        timestamps: trendTimestamps,
+        // Kept for backward compatibility; UI prefers local bucketing from timestamps
+        daily: [],
+        weekly: [],
+        monthly: []
       },
       recentActivity
     });

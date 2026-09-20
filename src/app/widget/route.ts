@@ -55,7 +55,8 @@ export async function GET() {
       let lastPinnedState = null;
       let lastMessageType = null;
       let lastRenderKey = null;
-      let dismissTimeoutId = null;
+      // Content the visitor closed with [x]/Esc/overlay — do not re-show until SMS changes
+      let userDismissedContent = null;
       
       // Race condition protection: prevent concurrent fetches
       let isFetching = false;
@@ -69,24 +70,7 @@ export async function GET() {
         return;
       }
 
-    
-
-      function clearDismissTimer() {
-        if (dismissTimeoutId) {
-          clearTimeout(dismissTimeoutId);
-          dismissTimeoutId = null;
-        }
-      }
-
-      function scheduleDismiss(type, dismissAfter) {
-        clearDismissTimer();
-        if (type !== "ticker" && dismissAfter && type !== "fullscreen" && type !== "modal") {
-          dismissTimeoutId = setTimeout(() => removeWidget(), dismissAfter);
-        }
-      }
-
-      function removeWidget(keepShownFlag = false) {
-        clearDismissTimer();
+      function removeWidget(keepShownFlag = false, fromUser = false) {
         const existing = document.getElementById(WIDGET_ID);
         if (existing) existing.remove();
         const overlay = document.getElementById(WIDGET_ID + "-overlay");
@@ -101,6 +85,10 @@ export async function GET() {
           window.removeEventListener("keydown", window.__t2msEscHandler__);
           window.__t2msEscHandler__ = null;
         }
+
+        if (fromUser) {
+          userDismissedContent = lastMessageContent;
+        }
         
         // Reset widget shown flag when widget is removed, unless this is
         // an internal teardown immediately followed by a re-render.
@@ -109,7 +97,7 @@ export async function GET() {
         }
       }
 
-      function updateWidgetInPlace({ content, type, dismissAfter }) {
+      function updateWidgetInPlace({ content, type }) {
         const existing = document.getElementById(WIDGET_ID);
         if (!existing) return false;
 
@@ -117,7 +105,6 @@ export async function GET() {
         if (!contentDiv) return false;
 
         contentDiv.innerHTML = formatSmsMessageHtml(content || "", type === "ticker");
-        scheduleDismiss(type, dismissAfter);
         return true;
       }
 
@@ -213,7 +200,7 @@ export async function GET() {
             return;
           }
           
-          const { content, type, bgColor, textColor, font, dismissAfter, pinned, widgetConfig } = data;
+          const { content, type, bgColor, textColor, font, pinned, widgetConfig } = data;
 
           // Check if pinned state changed
           if (!pinned) {
@@ -224,6 +211,7 @@ export async function GET() {
               lastMessageContent = null;
               lastMessageType = null;
               lastRenderKey = null;
+              userDismissedContent = null;
             }
             return;
           }
@@ -233,7 +221,6 @@ export async function GET() {
             bgColor || "",
             textColor || "",
             font || "",
-            dismissAfter || 0,
             stableSerialize(widgetConfig || {}),
           ].join("|");
 
@@ -241,6 +228,25 @@ export async function GET() {
           const contentChanged = content !== lastMessageContent;
           const pinnedStateChanged = pinned !== lastPinnedState;
           const appearanceChanged = renderKey !== lastRenderKey;
+
+          // New SMS: allow the widget to show again after a prior manual close
+          if (contentChanged) {
+            userDismissedContent = null;
+          }
+
+          // Visitor closed this message — stay hidden until content changes
+          if (
+            userDismissedContent !== null &&
+            content === userDismissedContent &&
+            !pinnedStateChanged &&
+            !appearanceChanged
+          ) {
+            lastMessageContent = content;
+            lastPinnedState = pinned;
+            lastMessageType = type;
+            lastRenderKey = renderKey;
+            return;
+          }
 
           // Update existing widget in place to prevent flicker when only message text changes.
           if (
@@ -251,7 +257,7 @@ export async function GET() {
             !appearanceChanged &&
             type === lastMessageType
           ) {
-            const updated = updateWidgetInPlace({ content, type, dismissAfter });
+            const updated = updateWidgetInPlace({ content, type });
             if (updated) {
               lastMessageContent = content;
               lastPinnedState = pinned;
@@ -265,16 +271,14 @@ export async function GET() {
           lastMessageType = type;
           lastRenderKey = renderKey;
 
-          // Render if:
-          // 1. Content exists
-          // 2. Either content changed OR pinned state changed OR widget not shown yet
+          // Render if content exists and something meaningful changed, or first show
           if (
             content &&
             (contentChanged || pinnedStateChanged || appearanceChanged || !window.__T2MS_WIDGET_SHOWN__)
           ) {
             // Reset flag to allow re-rendering
             window.__T2MS_WIDGET_SHOWN__ = false;
-            renderMessage({ content, type, bgColor, textColor, font, dismissAfter, widgetConfig });
+            renderMessage({ content, type, bgColor, textColor, font, widgetConfig });
           }
         } catch (err) {
           console.error("T2MS widget fetch error:", err);
@@ -283,7 +287,7 @@ export async function GET() {
         }
       }
 
-      function renderMessage({ content, type, bgColor, textColor, font, dismissAfter, widgetConfig = {} }) {
+      function renderMessage({ content, type, bgColor, textColor, font, widgetConfig = {} }) {
         if (window.__T2MS_WIDGET_SHOWN__) return;
         window.__T2MS_WIDGET_SHOWN__ = true;
 
@@ -453,7 +457,7 @@ export async function GET() {
       btn.style.transform = "none";
       btn.style.color = textColor || "#000";
     };
-    btn.onclick = () => removeWidget();
+    btn.onclick = () => removeWidget(false, true);
 
     // Apply position-specific styles
     function applyPosition(wrapper, type) {
@@ -839,7 +843,7 @@ export async function GET() {
         document.body.dataset.t2msLock = "1";
         document.body.appendChild(wrapper);
         requestAnimationFrame(() => (wrapper.style.opacity = "1"));
-        window.__t2msEscHandler__ = (e) => { if (e.key === "Escape") removeWidget(); };
+        window.__t2msEscHandler__ = (e) => { if (e.key === "Escape") removeWidget(false, true); };
         window.addEventListener("keydown", window.__t2msEscHandler__);
         break;
       }
@@ -861,7 +865,7 @@ export async function GET() {
           opacity: "0",
           transition: \`opacity \${config.animationDuration}ms ease\`,
         });
-        overlay.onclick = () => removeWidget();
+        overlay.onclick = () => removeWidget(false, true);
         document.body.appendChild(overlay);
         requestAnimationFrame(() => (overlay.style.opacity = "1"));
 
@@ -895,7 +899,7 @@ export async function GET() {
           wrapper.style.opacity = "1";
         });
 
-        window.__t2msEscHandler__ = (e) => { if (e.key === "Escape") removeWidget(); };
+        window.__t2msEscHandler__ = (e) => { if (e.key === "Escape") removeWidget(false, true); };
         window.addEventListener("keydown", window.__t2msEscHandler__);
         break;
       }
@@ -949,8 +953,6 @@ export async function GET() {
       linkContainer.appendChild(link);
       wrapper.appendChild(linkContainer);
     }
-
-    scheduleDismiss(type, dismissAfter);
 
     const resolvedMobileFontSize =
       typeof config.mobileFontSize === "number"

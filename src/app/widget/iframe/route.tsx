@@ -136,7 +136,7 @@ export async function GET(req: NextRequest) {
       bgColor: client.defaultBgColor || "#222",
       textColor: client.defaultTextColor || "#fff",
       font: client.defaultFont || "sans-serif",
-      dismissAfter: client.defaultDismissAfter || 5000,
+      dismissAfter: client.defaultDismissAfter ?? 0,
       pinned: client.pinned || false,
       widgetConfig: client.widgetConfig || {},
     };
@@ -648,7 +648,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
 <body>
   <div id="t2ms-widget" class="t2ms-widget-container${config.logoUrl ? " has-logo" : ""}${getYoutubeEmbedUrl(config.youtubeUrl) && (type === "fullscreen" || type === "modal") ? " has-youtube" : ""}" data-type="${type}" role="${type === "fullscreen" || type === "modal" ? "dialog" : "status"}" ${type === "fullscreen" || type === "modal" ? 'aria-modal="true"' : 'aria-live="polite"'}>
     ${finalContentHTML}
-    ${pinned ? `<button class="t2ms-close" aria-label="Close notification" title="Close" onclick="document.getElementById('t2ms-widget').style.display = 'none'">×</button>` : ""}
+    ${pinned ? `<button class="t2ms-close" aria-label="Close notification" title="Close" onclick="window.__t2msUserDismissed=true;document.getElementById('t2ms-widget').style.display='none'">×</button>` : ""}
     ${additionalHTML}
   </div>
   
@@ -661,9 +661,11 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       let lastMessageContent = null;
       let lastPinnedState = ${pinned};
       const tickerSingleLine = ${type === "ticker"};
+      window.__t2msUserDismissed = false;
       
       window.addEventListener('message', function(event) {
         if (event.data === 't2ms-close') {
+          window.__t2msUserDismissed = true;
           document.getElementById('t2ms-widget').style.display = 'none';
         }
       });
@@ -679,6 +681,10 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
           const contentChanged = content !== lastMessageContent;
           const pinnedChanged = newPinned !== lastPinnedState;
           
+          if (contentChanged) {
+            window.__t2msUserDismissed = false;
+          }
+          
           lastMessageContent = content;
           lastPinnedState = newPinned;
           
@@ -686,10 +692,10 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
             const widget = document.getElementById('t2ms-widget');
             const contentDiv = widget.querySelector('.t2ms-content');
             
-            if (newPinned && content) {
+            if (newPinned && content && !window.__t2msUserDismissed) {
               contentDiv.innerHTML = formatSmsMessageHtml(content, tickerSingleLine);
               widget.style.display = '';
-            } else {
+            } else if (!newPinned || !content) {
               widget.style.display = 'none';
             }
           }

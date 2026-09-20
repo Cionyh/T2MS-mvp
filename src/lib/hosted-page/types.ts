@@ -15,7 +15,7 @@ export type HostedPageData = {
   hostedSlug: string
   hostedIntroText: string | null
   hostedFooterText: string | null
-  /** classic | light | spotlight | banner | minimal | aurora | stage */
+  /** classic | light | spotlight | banner | minimal | aurora | aurora-soft | harbor | stage */
   hostedTheme?: string | null
   /** When false, logo is hidden on hosted page even if logo URL is set */
   hostedShowLogo?: boolean | null

@@ -14,12 +14,14 @@ import { toast } from "sonner"
 type OnboardingHostedSetupFormProps = {
   clientId: string
   siteName: string
+  plan?: string | null
   onSuccess: () => void | Promise<void>
 }
 
 export function OnboardingHostedSetupForm({
   clientId,
   siteName,
+  plan = null,
   onSuccess,
 }: OnboardingHostedSetupFormProps) {
   return (
@@ -56,6 +58,7 @@ export function OnboardingHostedSetupForm({
           <HostedPageSettings
             clientId={clientId}
             siteName={siteName}
+            plan={plan}
             defaultPublishOn
             saveLabel="Save and finish setup"
             saveButtonFullWidth

@@ -45,7 +45,7 @@ export async function GET(
       bgColor: client.defaultBgColor || "#222",
       textColor: client.defaultTextColor || "#fff",
       font: client.defaultFont || "sans-serif",
-      dismissAfter: client.defaultDismissAfter ?? 5000,
+      dismissAfter: client.defaultDismissAfter ?? 0,
       pinned: client.pinned ?? false,
       widgetConfig: client.widgetConfig || {},
     };

@@ -185,7 +185,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         return NextResponse.json(
           {
             error:
-              "Invalid page style. Choose classic, light, spotlight, banner, minimal, aurora, or stage.",
+              "Invalid page style. Choose classic, light, spotlight, banner, minimal, aurora, aurora-soft, harbor, or stage.",
           },
           { status: 400 }
         )

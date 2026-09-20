@@ -167,7 +167,7 @@ export default function AnalyticsPage({}: AnalyticsProps) {
           <CardHeader>
             <CardTitle>Message Trends</CardTitle>
             <CardDescription>
-              Daily message activity over the selected period
+              Daily message activity over the selected period (your local time)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -243,7 +243,7 @@ export default function AnalyticsPage({}: AnalyticsProps) {
                 >
                   <div className="space-y-1">
                     <h3 className="font-medium">{site.name}</h3>
-                    <p className="text-sm text-muted-foreground">{site.domain}</p>
+                    <p className="text-sm text-muted-foreground">{site.displayLabel || site.domain}</p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
                       {site.lastMessageDate

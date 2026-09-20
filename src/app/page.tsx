@@ -6,6 +6,7 @@ import { Suspense, useEffect, useRef } from "react";
 import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer2";
 import { Hero } from "@/components/landing/hero";
+import { TwoWays } from "@/components/landing/two-ways";
 import { How } from "@/components/landing/how";
 import { Title } from "@/components/landing/title";
 import { About } from "@/components/landing/about";
@@ -81,6 +82,7 @@ export default function Home() {
     >
       {/* Hero Section */}
       <Hero logoRef={logoRef} textVariants={textVariants} buttonVariants={buttonVariants}/>
+        <TwoWays textVariants={textVariants} />
         <About footerRef={footerRef} textVariants={textVariants} buttonVariants={buttonVariants} />
                <How  textVariants={textVariants}/> 
 

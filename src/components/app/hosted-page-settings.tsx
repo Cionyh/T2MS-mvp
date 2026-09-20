@@ -28,10 +28,13 @@ import {
   parseYoutubeVideoId,
   youtubeThumbnailUrl,
 } from "@/lib/youtube-embed"
+import { getHostedFooterPlaceholder } from "@/lib/message-format-examples"
 
 type HostedPageSettingsProps = {
   clientId: string
   siteName: string
+  /** Used for plan-aware footer placeholder (church vs neutral) */
+  plan?: string | null
   /** Prefer publish on for first-time setup (e.g. onboarding) when no slug saved yet */
   defaultPublishOn?: boolean
   /** Primary action label (dashboard: "Save hosted page") */
@@ -59,6 +62,7 @@ type HostedState = {
 export function HostedPageSettings({
   clientId,
   siteName,
+  plan = null,
   defaultPublishOn = false,
   saveLabel = "Save hosted page",
   saveButtonFullWidth = false,
@@ -749,7 +753,7 @@ export function HostedPageSettings({
           id="hosted-footer"
           value={footerText}
           onChange={setFooterText}
-          placeholder="Open Sundays · All welcome"
+          placeholder={getHostedFooterPlaceholder(plan)}
           maxLength={1000}
           minHeightClassName="min-h-[88px]"
         />

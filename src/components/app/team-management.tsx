@@ -39,6 +39,12 @@ import { Users, UserPlus, Trash2, Mail, Shield, Crown, User } from "lucide-react
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
+import {
+  formatPlanLabel,
+  planAllowsTeamInvites,
+  resolveEffectivePlan,
+} from "@/lib/plan-display";
 
 interface Member {
   id: string;
@@ -63,6 +69,7 @@ export function TeamManagementTab() {
   const [isInviting, setIsInviting] = useState(false);
   const [activeOrganization, setActiveOrganization] = useState<any>(null);
   const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null);
+  const [effectivePlan, setEffectivePlan] = useState<string>("starter");
 
   // Ensure members is always an array
   const safeMembers = Array.isArray(members) ? members : [];
@@ -71,12 +78,60 @@ export function TeamManagementTab() {
   );
   const currentRole = (currentUserMember?.role || "").toLowerCase();
   const canManageTeam = currentRole.includes("owner") || currentRole.includes("admin");
+  const canInviteMembers = planAllowsTeamInvites(effectivePlan);
 
   // Fetch active organization and members
   useEffect(() => {
     ensureOrganizationAndFetch();
+    fetchPlanForTeamGate();
   }, []);
 
+  const fetchPlanForTeamGate = async () => {
+    try {
+      let subscriptionPlan: string | null = null;
+      let onboardingPlanId: string | null = null;
+      let churchVerificationStatus: string | null = null;
+
+      try {
+        const sessionRes = await client.getSession();
+        const userId = sessionRes?.data?.user?.id;
+        if (userId) {
+          const { data } = await client.subscription.list({
+            query: { referenceId: userId },
+          });
+          const subs = (data as Array<{ status?: string; plan?: string }>) || [];
+          const active = subs.find(
+            (s) => s.status === "active" || s.status === "trialing"
+          );
+          subscriptionPlan = active?.plan ?? null;
+        }
+      } catch {
+        // ignore subscription lookup failures
+      }
+
+      try {
+        const res = await fetch("/api/onboarding");
+        if (res.ok) {
+          const data = await res.json();
+          onboardingPlanId = data.onboarding?.planId ?? null;
+          churchVerificationStatus =
+            data.onboarding?.churchVerificationStatus ?? null;
+        }
+      } catch {
+        // ignore
+      }
+
+      setEffectivePlan(
+        resolveEffectivePlan({
+          subscriptionPlan,
+          onboardingPlanId,
+          churchVerificationStatus,
+        })
+      );
+    } catch {
+      setEffectivePlan("starter");
+    }
+  };
   const ensureOrganizationAndFetch = async () => {
     try {
       // First, ensure organization exists by calling our API
@@ -154,6 +209,11 @@ export function TeamManagementTab() {
   const handleInviteMember = async () => {
     if (!canManageTeam) {
       toast.error("You do not have permission to invite members.");
+      return;
+    }
+
+    if (!canInviteMembers) {
+      toast.error("Additional team members require the Growth plan.");
       return;
     }
 
@@ -296,71 +356,100 @@ export function TeamManagementTab() {
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Invite Team Member</DialogTitle>
-                    <DialogDescription>
-                      Send an invitation to join your organization. They will receive an email with instructions.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="invite-email">Email Address</Label>
-                      <Input
-                        id="invite-email"
-                        type="email"
-                        placeholder="colleague@example.com"
-                        value={inviteEmail}
-                        onChange={(e) => setInviteEmail(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="invite-role">Role</Label>
-                      <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as "member" | "admin" | "owner")}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="member">
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4" />
-                              Member
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="admin">
-                            <div className="flex items-center gap-2">
-                              <Shield className="h-4 w-4" />
-                              Admin
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Members can manage sites and messages. Admins can also manage team members.
-                      </p>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setInviteDialogOpen(false)}
-                      disabled={isInviting}
-                    >
-                      Cancel
-                    </Button>
-                    <Button onClick={handleInviteMember} disabled={isInviting}>
-                      {isInviting ? (
-                        <>
-                          <UserPlus className="mr-2 h-4 w-4 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Mail className="mr-2 h-4 w-4" />
-                          Send Invitation
-                        </>
-                      )}
-                    </Button>
-                  </DialogFooter>
+                  {canInviteMembers ? (
+                    <>
+                      <DialogHeader>
+                        <DialogTitle>Invite Team Member</DialogTitle>
+                        <DialogDescription>
+                          Send an invitation to join your organization. They will receive an email with instructions.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="invite-email">Email Address</Label>
+                          <Input
+                            id="invite-email"
+                            type="email"
+                            placeholder="colleague@example.com"
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="invite-role">Role</Label>
+                          <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as "member" | "admin" | "owner")}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="member">
+                                <div className="flex items-center gap-2">
+                                  <User className="h-4 w-4" />
+                                  Member
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="admin">
+                                <div className="flex items-center gap-2">
+                                  <Shield className="h-4 w-4" />
+                                  Admin
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">
+                            Members can manage sites and messages. Admins can also manage team members.
+                          </p>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          variant="outline"
+                          onClick={() => setInviteDialogOpen(false)}
+                          disabled={isInviting}
+                        >
+                          Cancel
+                        </Button>
+                        <Button onClick={handleInviteMember} disabled={isInviting}>
+                          {isInviting ? (
+                            <>
+                              <UserPlus className="mr-2 h-4 w-4 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="mr-2 h-4 w-4" />
+                              Send Invitation
+                            </>
+                          )}
+                        </Button>
+                      </DialogFooter>
+                    </>
+                  ) : (
+                    <>
+                      <DialogHeader>
+                        <DialogTitle>Upgrade to invite team members</DialogTitle>
+                        <DialogDescription>
+                          You are on the {formatPlanLabel(effectivePlan)}. Additional
+                          team members require the Growth plan.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="py-2 text-sm text-muted-foreground">
+                        Upgrade to Growth to invite colleagues with Member or Admin
+                        roles and collaborate on your sites.
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          variant="outline"
+                          onClick={() => setInviteDialogOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button asChild>
+                          <Link href="/app/change-plan">Upgrade to Growth</Link>
+                        </Button>
+                      </DialogFooter>
+                    </>
+                  )}
                 </DialogContent>
               </Dialog>
             )}

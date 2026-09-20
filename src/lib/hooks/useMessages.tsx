@@ -10,6 +10,7 @@ export interface Message {
     id: string;
     name: string;
     domain: string;
+    hostedSlug?: string | null;
     organizationId?: string | null;
   };
 }

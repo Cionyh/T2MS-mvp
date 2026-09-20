@@ -10,6 +10,8 @@ export const HOSTED_THEME_IDS = [
   "banner",
   "minimal",
   "aurora",
+  "aurora-soft",
+  "harbor",
   "stage",
 ] as const
 
@@ -64,6 +66,18 @@ export const HOSTED_THEMES: HostedThemeMeta[] = [
     name: "Aurora Glass",
     description: "Luminous glass card over soft teal and amber glows.",
     swatch: { bg: "#07131f", card: "rgba(255,255,255,0.1)", text: "#ecfeff", accent: "#2dd4bf" },
+  },
+  {
+    id: "aurora-soft",
+    name: "Aurora Soft",
+    description: "Same aurora glow and glass card, with a solid heading (no rainbow title).",
+    swatch: { bg: "#07131f", card: "rgba(255,255,255,0.1)", text: "#ecfeff", accent: "#5eead4" },
+  },
+  {
+    id: "harbor",
+    name: "Harbor Mist",
+    description: "Calm blue-gray light page with a soft card and clear readable type.",
+    swatch: { bg: "#e8eef3", card: "#ffffff", text: "#1e293b", accent: "#64748b" },
   },
   {
     id: "stage",

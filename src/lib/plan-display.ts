@@ -82,6 +82,15 @@ export function formatPlanLabel(planId: string): string {
 }
 
 /**
+ * Growth (pro) and Enterprise can invite additional team members.
+ * Starter, Free, and Church Partner are single-seat for V1 invite UI.
+ */
+export function planAllowsTeamInvites(plan?: string | null): boolean {
+  const normalized = (plan ?? "").toLowerCase().trim()
+  return normalized === "pro" || normalized === "enterprise"
+}
+
+/**
  * Church checkout can be stored as "starter" when Stripe price IDs overlap
  * or Better Auth maps the webhook by price first. Prefer the church
  * onboarding/verification intent unless the user has since moved to another paid plan.
