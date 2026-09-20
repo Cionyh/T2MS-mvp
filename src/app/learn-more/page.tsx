@@ -138,7 +138,7 @@ export default function LearnMorePage() {
                     onClick={handleCTA}
                     className="bg-primary text-foreground hover:bg-primary/90 px-8 py-4 text-lg"
                   >
-                    Register Your Site
+                    Start 14-Day Free Trial
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
@@ -368,7 +368,7 @@ export default function LearnMorePage() {
             onClick={handleCTA}
                     className="bg-primary text-foreground hover:bg-primary/90 px-8 py-4 text-lg"
           >
-            Register Your Site
+            Start 14-Day Free Trial
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>

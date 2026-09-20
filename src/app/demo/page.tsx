@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { ExternalLink, Megaphone } from "lucide-react"
+import { ExternalLink, Megaphone, Play } from "lucide-react"
 
 export const metadata = {
   title: "T2MS Live Announcements — Demo",
@@ -18,6 +18,8 @@ export const metadata = {
 }
 
 const T2MS_LIVE_LANDING = "https://t2ms.live"
+const DEMO_VIDEO_MAIN = "https://t2ms.site/videos/Retail20.mp4"
+const DEMO_VIDEO_SHORT = "https://t2ms.site/videos/cell2web.mp4"
 
 export default function DemoPage() {
   const examples = getPublicDemoExamples()
@@ -33,16 +35,62 @@ export default function DemoPage() {
               Hosted announcement pages
             </h1>
             <p className="text-muted-foreground mt-1 text-sm">
-              Share a live link like <span className="font-mono">yourname.{domain}</span> — no widget install required.
+              Share a live link like{" "}
+              <span className="font-mono">yourname.{domain}</span> — no widget
+              install required.
             </p>
           </div>
           <Button asChild className="!bg-amber-600 hover:!bg-amber-700 shrink-0">
-            <Link href="/signup">Get started</Link>
+            <Link href="/signup">Start 14-Day Free Trial</Link>
           </Button>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-10 space-y-8">
+        <Card className="border-amber-600/30 overflow-hidden">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Play className="h-5 w-5 text-amber-600" />
+              Watch the demo
+            </CardTitle>
+            <CardDescription>
+              See how a text message updates your site in seconds.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="relative w-full overflow-hidden rounded-lg border bg-black aspect-video">
+              <video
+                className="h-full w-full object-contain"
+                controls
+                playsInline
+                preload="metadata"
+                aria-label="Text2MySite retail demo video"
+              >
+                <source src={DEMO_VIDEO_MAIN} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            <div>
+              <p className="mb-2 text-sm font-medium text-foreground">
+                Short version (no audio)
+              </p>
+              <div className="relative w-full max-w-xl overflow-hidden rounded-lg border bg-black aspect-video">
+                <video
+                  className="h-full w-full object-contain"
+                  controls
+                  playsInline
+                  muted
+                  preload="metadata"
+                  aria-label="Text2MySite short silent demo video"
+                >
+                  <source src={DEMO_VIDEO_SHORT} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="border-amber-600/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -50,12 +98,17 @@ export default function DemoPage() {
               Primary demo
             </CardTitle>
             <CardDescription>
-              Open a live hosted page (updates when the account posts announcements).
+              Open a live hosted page (updates when the account posts
+              announcements).
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" className="gap-2">
-              <a href={T2MS_LIVE_LANDING} target="_blank" rel="noopener noreferrer">
+              <a
+                href={T2MS_LIVE_LANDING}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Learn More
                 <ExternalLink className="h-4 w-4" />
               </a>
@@ -64,8 +117,8 @@ export default function DemoPage() {
         </Card>
 
         <section>
-          <h2 className="text-lg font-semibold mb-4">Example pages</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <h2 className="mb-4 text-lg font-semibold">Example pages</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
             {examples.map((ex) => (
               <Card key={ex.slug} className="overflow-hidden pt-0 gap-0">
                 {ex.backgroundImage ? (
@@ -95,10 +148,12 @@ export default function DemoPage() {
                   {!ex.backgroundImage ? (
                     <CardTitle className="text-base">{ex.label}</CardTitle>
                   ) : null}
-                  <CardDescription className="text-sm">{ex.description}</CardDescription>
+                  <CardDescription className="text-sm">
+                    {ex.description}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-xs font-mono text-muted-foreground mb-3 break-all">
+                  <p className="mb-3 break-all font-mono text-xs text-muted-foreground">
                     {hostedPublicUrl(ex.slug)}
                   </p>
                   <Button asChild size="sm" variant="secondary" className="gap-2">

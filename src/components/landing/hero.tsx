@@ -38,7 +38,7 @@ export function Hero({
     },
   };
 
-  const logoSrc = "/images/logo.png";
+  const logoSrc = "https://t2ms.site/images/logo/main.png";
 
   return (
     <motion.div
@@ -80,6 +80,7 @@ export function Hero({
               sizes="(max-width: 768px) 80vw, (max-width: 1000px) 40vw, 400px"
               className="w-full h-auto max-w-[300px] sm:max-w-[350px] lg:max-w-[400px] object-contain"
               priority
+              unoptimized
             />
           </div>
 
@@ -91,9 +92,9 @@ export function Hero({
               asChild
               size="lg"
               className="text-foreground w-full max-w-xs py-4"
-              onClick={() => posthog.capture("register_site_click")}
+              onClick={() => posthog.capture("start_free_trial_click")}
             >
-              <Link href="/signup">Register Your Site</Link>
+              <Link href="/signup">Start 14-Day Free Trial</Link>
             </Button>
 
             <Button
