@@ -47,7 +47,12 @@ export function Footer({ footerRef }: { footerRef?: any }) {
 
           {/* Contact Info */}
           <div className="flex-1 flex flex-col items-center sm:items-end">
-            <p className="text-sm text-muted-foreground">CONTACT US</p>
+            <Link
+              href="/contact"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              CONTACT US
+            </Link>
             <a
               href="mailto:support@t2ms.biz"
               className="text-sm text-primary hover:underline mt-1"

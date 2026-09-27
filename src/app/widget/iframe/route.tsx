@@ -658,7 +658,7 @@ function generateWidgetHTML(clientId: string, messageData: any, apiBase: string)
       const clientId = "${clientId}";
       const API_BASE = "${apiBase}";
       const interval = 15000;
-      let lastMessageContent = null;
+      let lastMessageContent = ${JSON.stringify(content ?? null).replace(/</g, "\\u003c")};
       let lastPinnedState = ${pinned};
       const tickerSingleLine = ${type === "ticker"};
       window.__t2msUserDismissed = false;

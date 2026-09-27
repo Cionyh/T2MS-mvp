@@ -6,6 +6,14 @@ import {
   ChurchTrialLink,
 } from "@/app/church/church-trial-link";
 import { useChurchIntroPrice } from "@/hooks/use-church-intro-price";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+const SHORT_VIDEO_URL = "https://t2ms.site/videos/cell2web.mp4";
 
 export default function ChurchAnnouncementPage() {
   const churchPrice = useChurchIntroPrice();
@@ -200,10 +208,38 @@ export default function ChurchAnnouncementPage() {
         Special Church Partner pricing
        </div>
       </div>
-      <ChurchTrialLink className="btn btn-primary">Start My Free 14-Day Trial
-       <span>
-        →
-       </span></ChurchTrialLink>
+      <div className="hero-ctas">
+       <ChurchTrialLink className="btn btn-primary">Start My Free 14-Day Trial
+        <span>
+         →
+        </span></ChurchTrialLink>
+       <Dialog>
+        <DialogTrigger asChild>
+         <button className="btn btn-secondary" type="button">
+          <span aria-hidden="true">▶</span>
+          Watch Short Video
+         </button>
+        </DialogTrigger>
+        <DialogContent className="max-w-3xl gap-3 bg-black p-2 sm:max-w-3xl [&>button]:text-white">
+         <DialogTitle className="sr-only">Text2MySite short video</DialogTitle>
+         <div className="aspect-video w-full overflow-hidden rounded-md bg-black">
+          <video
+           className="h-full w-full object-contain"
+           autoPlay
+           controls
+           loop
+           muted
+           playsInline
+           preload="metadata"
+           aria-label="Text2MySite short video: a text message updating a website"
+          >
+           <source src={SHORT_VIDEO_URL} type="video/mp4" />
+           Your browser does not support the video tag.
+          </video>
+         </div>
+        </DialogContent>
+       </Dialog>
+      </div>
       <div className="hand-note">
        ↖ Get started in minutes!
       </div>
@@ -587,7 +623,7 @@ export default function ChurchAnnouncementPage() {
       </p>
       <ul>
        <li>
-        Unlimited announcements
+        Up to 100 announcements per month
        </li>
        <li>
         Instant updates by text
@@ -755,7 +791,7 @@ export default function ChurchAnnouncementPage() {
      <a href="mailto:support@t2ms.biz">
       Accessibility
      </a>
-     <a href="mailto:support@t2ms.biz">
+     <a href="/contact">
       Contact Us
      </a>
     </div>

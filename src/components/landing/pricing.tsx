@@ -2,6 +2,7 @@
 
 import { Check, ExternalLink, Zap, Layers, Rocket } from "lucide-react";
 import {
+  ENTERPRISE_PLAN_NOTE,
   GROWTH_PLAN_FEATURES,
   STARTER_PLAN_FEATURES,
   UNIFIED_PLAN_TAGLINE,
@@ -28,6 +29,7 @@ type PricingPlan = {
   highlight: boolean;
   offerBadge?: string;
   highlightedFeature?: string;
+  note?: string;
   powerfulFeatures?: {
     title: string;
     subtitle: string;
@@ -55,6 +57,7 @@ const plans: PricingPlan[] = [
     icon: Layers,
     features: [...GROWTH_PLAN_FEATURES],
     highlight: true,
+    highlightedFeature: "Optional professional install add-on",
   },
   {
     name: "Enterprise / Teams",
@@ -63,6 +66,7 @@ const plans: PricingPlan[] = [
     description: "For large enterprises and teams.",
     icon: Rocket,
     features: ["Contact us at sales@t2ms.biz"],
+    note: ENTERPRISE_PLAN_NOTE,
     highlight: false,
     powerfulFeatures: {
       title: "Powerful Features",
@@ -157,7 +161,8 @@ export function PricingSection() {
                 {plan.description}
               </p>
 
-              <ul className="space-y-3 flex-1">
+              <div className="flex-1">
+              <ul className="space-y-3">
                 {plan.features.map((feature) => {
                   const isFeatured = plan.highlightedFeature === feature;
                   return (
@@ -186,6 +191,12 @@ export function PricingSection() {
                   );
                 })}
               </ul>
+              {plan.note ? (
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                  {plan.note}
+                </p>
+              ) : null}
+              </div>
 
               {plan.powerfulFeatures ? (
                 <div className="mt-5 pt-5 border-t border-muted-foreground/20 space-y-2">

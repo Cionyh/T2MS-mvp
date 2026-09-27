@@ -27,6 +27,7 @@ import {
 } from "@/lib/church-verification";
 import {
   CHURCH_PLAN_FEATURES,
+  ENTERPRISE_PLAN_NOTE,
   GROWTH_PLAN_FEATURES,
   STARTER_PLAN_FEATURES,
   UNIFIED_PLAN_TAGLINE,
@@ -1354,12 +1355,34 @@ function OnboardingContent() {
             </CardHeader>
             <CardContent className="flex-1 min-h-0 overflow-y-auto">
               <ul className="space-y-2">
-                {GROWTH_PLAN_FEATURES.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 shrink-0 text-amber-600" />
-                    {feature}
-                  </li>
-                ))}
+                {GROWTH_PLAN_FEATURES.map((feature) => {
+                  const isFeatured =
+                    feature === "Optional professional install add-on";
+                  return (
+                    <li
+                      key={feature}
+                      className={cn(
+                        "flex items-start gap-2 text-sm",
+                        isFeatured &&
+                          "rounded-md border-y border-amber-400/70 bg-amber-50/80 px-2 py-2 dark:bg-amber-950/30"
+                      )}
+                    >
+                      <Check
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          isFeatured
+                            ? "text-amber-700 dark:text-amber-400 mt-0.5"
+                            : "text-amber-600"
+                        )}
+                      />
+                      <span
+                        className={cn(isFeatured && "font-semibold text-foreground")}
+                      >
+                        {feature}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </CardContent>
             <CardFooter className="flex-shrink-0 border-t border-amber-600/30 flex flex-col gap-2 pt-4 pb-2 mt-0">
@@ -1402,6 +1425,9 @@ function OnboardingContent() {
                   </a>
                 </li>
               </ul>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                {ENTERPRISE_PLAN_NOTE}
+              </p>
             </CardContent>
             <CardFooter className="flex-shrink-0 border-t border-border flex flex-col gap-2 pt-4 pb-2 mt-0">
               <Button
