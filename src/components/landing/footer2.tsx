@@ -45,20 +45,20 @@ export function Footer({ footerRef }: { footerRef?: any }) {
             </Link>
           </div>
 
-          {/* Contact Info */}
-          <div className="flex-1 flex flex-col items-center sm:items-end">
+          {/* Company Links */}
+          <div className="flex-1 flex flex-col items-center sm:items-end gap-4">
             <Link
               href="/contact"
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
-              CONTACT US
+              Contact Us
             </Link>
-            <a
-              href="mailto:support@t2ms.biz"
-              className="text-sm text-primary hover:underline mt-1"
+            <Link
+              href="/#about"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
-              support@t2ms.biz
-            </a>
+              About Us
+            </Link>
           </div>
         </CardContent>
 
