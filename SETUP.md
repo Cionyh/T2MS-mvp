@@ -93,7 +93,7 @@ STRIPE_TEST_ENTERPRISE_PRICE_ID="price_test_enterprise"
 STRIPE_TEST_CHURCH_STARTER_PRICE_ID="price_test_church"
 NEXT_PUBLIC_STRIPE_TEST_CHURCH_STARTER_PRICE_ID="price_test_church"
 
-NEXT_PUBLIC_CHURCH_INTRO_PRICE_LABEL="$7.99"
+# Church price label is read from the Stripe church price above ($7.00/mo).
 # Optional: auto-verify church attestation at signup (skip admin approval wait). Default: true (campaign path continues to Stripe after attestation). Set false to require admin approval before checkout.
 CHURCH_INTRO_AUTO_VERIFY="true"
 

@@ -16,6 +16,8 @@ import {
 import { Loader2, Church, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { churchVerificationLabel } from "@/lib/church-verification";
+import { useChurchIntroPrice } from "@/hooks/use-church-intro-price";
+import { getChurchIntroPriceLabel } from "@/lib/church-pricing";
 
 type ChurchRequest = {
   userId: string;
@@ -33,6 +35,8 @@ type ChurchRequest = {
 export default function ChurchVerificationsPage() {
   const queryClient = useQueryClient();
   const [actionUserId, setActionUserId] = useState<string | null>(null);
+  const { label: churchPriceLabel } = useChurchIntroPrice();
+  const priceLabel = churchPriceLabel ?? getChurchIntroPriceLabel();
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-church-verifications"],
@@ -83,7 +87,7 @@ export default function ChurchVerificationsPage() {
           Church verifications
         </h1>
         <p className="text-muted-foreground mt-1">
-          Review church intro pricing eligibility ($7.99/mo, 14-day trial, 3-year price lock).
+          Review church intro pricing eligibility ({priceLabel}/mo, 14-day trial, 3-year price lock).
         </p>
       </div>
 

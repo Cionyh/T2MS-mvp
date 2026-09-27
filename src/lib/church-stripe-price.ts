@@ -6,7 +6,7 @@ import {
 import { tryGetStripeServerClient } from "@/lib/stripe-config"
 
 export type ChurchPriceDisplay = {
-  /** Formatted for UI, e.g. "$7.99" */
+  /** Formatted for UI, e.g. "$7.00" */
   label: string
   amount: number
   currency: string

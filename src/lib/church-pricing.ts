@@ -2,7 +2,7 @@ import { getPublicChurchStripePriceId, getStripePriceIds } from "@/lib/stripe-co
 
 export const CHURCH_PLAN_ID = "church" as const
 
-export const CHURCH_INTRO_PRICE_AMOUNT = 7.99
+export const CHURCH_INTRO_PRICE_AMOUNT = 7.0
 
 /**
  * Church / hosted-page Stripe price ID (mode-aware via LIVE_MODE).

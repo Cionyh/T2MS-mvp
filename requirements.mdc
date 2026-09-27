@@ -209,14 +209,14 @@ Church pricing applies **only** to **verified churches / religious organizations
 | Term | Value |
 |------|-------|
 | Free trial | **14 days** |
-| Monthly price | **$7.99/month** |
+| Monthly price | **$7.00/month** |
 | Price lock | Locked for **up to 3 years** for early church adopters |
 | Eligibility | Verified church / religious organization during intro launch phase |
 
 **Implementation notes (non-functional requirements):**
 
 - Church checkout/plan must be **gated** so only verified eligible organizations can subscribe at the intro rate (verification mechanism TBD — e.g. admin approval, attestation + review).
-- Stripe must use a dedicated **$7.99/mo** price with **14-day trial**; price-lock for 3 years must be enforced via Stripe configuration and/or customer metadata (e.g. grandfathered price ID, subscription metadata, launch cutoff date).
+- Stripe must use a dedicated **$7.00/mo** price with **14-day trial**; price-lock for 3 years must be enforced via Stripe configuration and/or customer metadata (e.g. grandfathered price ID, subscription metadata, launch cutoff date).
 - Plan marketing copy must **not** present hosted page and widget as separate paid monthly products for church (or general) plans.
 
 ---

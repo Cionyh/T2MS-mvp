@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server"
 import { getCachedChurchPriceFromStripe } from "@/lib/church-stripe-price"
+import {
+  CHURCH_INTRO_PRICE_AMOUNT,
+  getChurchIntroPriceLabel,
+} from "@/lib/church-pricing"
 
 /**
  * Public: church partner price label from Stripe
@@ -18,8 +22,8 @@ export async function GET() {
     console.error("[api/church/price]", error)
     return NextResponse.json(
       {
-        label: "$7.99",
-        amount: 7.99,
+        label: getChurchIntroPriceLabel(),
+        amount: CHURCH_INTRO_PRICE_AMOUNT,
         currency: "usd",
         enabled: false,
         priceId: null,

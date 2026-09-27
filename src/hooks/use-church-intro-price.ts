@@ -7,7 +7,7 @@ import {
 } from "@/lib/church-pricing"
 
 export type ChurchIntroPriceState = {
-  /** Formatted label from Stripe, e.g. "$7.99". Null while loading. */
+  /** Formatted label from Stripe, e.g. "$7.00". Null while loading. */
   label: string | null
   amount: number | null
   loading: boolean
